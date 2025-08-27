@@ -57,15 +57,6 @@ jobs:
           **/*.trx
           coverage/report/
         retention-days: 7
-        
-    - name: Publish Test Results
-      uses: dorny/test-reporter@v1
-      if: always()
-      with:
-        name: Test Results
-        path: '**/*.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
 
   quality-checks:
     name: Code Quality

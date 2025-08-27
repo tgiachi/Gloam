@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -6,46 +7,109 @@ namespace Gloam.Core.Json;
 
 public static class JsonUtils
 {
-    private static readonly List<IJsonTypeInfoResolver> JsonSerializerContexts = new(8);
+    private static readonly ConcurrentBag<IJsonTypeInfoResolver> JsonSerializerContexts = new();
+    private static readonly ConcurrentBag<JsonConverter> JsonConverters = new();
+    private static readonly object _lockObject = new();
 
-    private static JsonSerializerOptions _jsonSerializerOptions = null!;
+    private static volatile JsonSerializerOptions? _jsonSerializerOptions;
 
     static JsonUtils()
     {
+        // Add default converters
+        JsonConverters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         RebuildJsonSerializerContexts();
     }
 
-    public static List<JsonConverter> JsonConverters { get; } = new(8)
-    {
-        new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
-    };
-
+    /// <summary>
+    /// Adds a JSON converter to the global converter list. Thread-safe.
+    /// </summary>
+    /// <param name="converter">The converter to add.</param>
     public static void AddJsonConverter(JsonConverter converter)
     {
         ArgumentNullException.ThrowIfNull(converter);
 
+        // Check if converter type already exists
+        var converterType = converter.GetType();
+        if (JsonConverters.Any(c => c.GetType() == converterType))
+        {
+            return; // Prevent duplicates
+        }
+
         JsonConverters.Add(converter);
-        _jsonSerializerOptions.Converters.Add(converter);
+        RebuildJsonSerializerContexts();
+    }
+
+    /// <summary>
+    /// Removes all converters of the specified type. Thread-safe.
+    /// </summary>
+    /// <typeparam name="T">The converter type to remove.</typeparam>
+    /// <returns>True if any converters were removed.</returns>
+    public static bool RemoveJsonConverter<T>() where T : JsonConverter
+    {
+        var removed = false;
+        var newConverters = new ConcurrentBag<JsonConverter>();
+
+        foreach (var converter in JsonConverters)
+        {
+            if (converter is not T)
+            {
+                newConverters.Add(converter);
+            }
+            else
+            {
+                removed = true;
+            }
+        }
+
+        if (removed)
+        {
+            // Replace the collection - this is not atomic, but thread-safe enough for this use case
+            JsonConverters.Clear();
+            foreach (var converter in newConverters)
+            {
+                JsonConverters.Add(converter);
+            }
+            RebuildJsonSerializerContexts();
+        }
+
+        return removed;
+    }
+
+    /// <summary>
+    /// Gets a read-only view of the current JSON converters.
+    /// </summary>
+    public static IReadOnlyList<JsonConverter> GetJsonConverters()
+    {
+        return JsonConverters.ToList().AsReadOnly();
     }
 
     private static void RebuildJsonSerializerContexts()
     {
-        _jsonSerializerOptions = new JsonSerializerOptions
+        lock (_lockObject)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true,
-            AllowTrailingCommas = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            TypeInfoResolver = JsonTypeInfoResolver.Combine(JsonSerializerContexts.ToArray())
-        };
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                PropertyNameCaseInsensitive = true,
+                WriteIndented = true,
+                AllowTrailingCommas = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                TypeInfoResolver = JsonTypeInfoResolver.Combine(JsonSerializerContexts.ToArray())
+            };
 
-        foreach (var converter in JsonConverters)
-        {
-            _jsonSerializerOptions.Converters.Add(converter);
+            foreach (var converter in JsonConverters)
+            {
+                options.Converters.Add(converter);
+            }
+
+            _jsonSerializerOptions = options;
         }
     }
 
+    /// <summary>
+    /// Registers a JSON serializer context for source generation. Thread-safe.
+    /// </summary>
+    /// <param name="context">The context to register.</param>
     public static void RegisterJsonContext(JsonSerializerContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -54,71 +118,284 @@ public static class JsonUtils
         RebuildJsonSerializerContexts();
     }
 
+    /// <summary>
+    /// Gets the current JSON serializer options. Thread-safe.
+    /// </summary>
+    private static JsonSerializerOptions GetJsonSerializerOptions()
+    {
+        return _jsonSerializerOptions ?? throw new InvalidOperationException("JsonSerializerOptions not initialized");
+    }
 
+
+    /// <summary>
+    /// Serializes an object to JSON string using global options.
+    /// </summary>
+    /// <typeparam name="T">The type to serialize.</typeparam>
+    /// <param name="obj">The object to serialize.</param>
+    /// <returns>JSON string representation.</returns>
     public static string Serialize<T>(T obj)
     {
         ArgumentNullException.ThrowIfNull(obj);
 
-        return JsonSerializer.Serialize(obj, typeof(T), _jsonSerializerOptions);
+        try
+        {
+            return JsonSerializer.Serialize(obj, typeof(T), GetJsonSerializerOptions());
+        }
+        catch (JsonException ex)
+        {
+            throw new JsonException($"Failed to serialize object of type {typeof(T).Name}: {ex.Message}", ex);
+        }
     }
 
-    public static T Deserialize<T>(string json)
+    /// <summary>
+    /// Serializes an object to JSON string using custom options.
+    /// </summary>
+    /// <typeparam name="T">The type to serialize.</typeparam>
+    /// <param name="obj">The object to serialize.</param>
+    /// <param name="options">Custom serialization options.</param>
+    /// <returns>JSON string representation.</returns>
+    public static string Serialize<T>(T obj, JsonSerializerOptions options)
     {
-        ArgumentNullException.ThrowIfNull(json);
+        ArgumentNullException.ThrowIfNull(obj);
+        ArgumentNullException.ThrowIfNull(options);
 
-        return JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions) ??
-               throw new JsonException("Deserialization failed.");
+        try
+        {
+            return JsonSerializer.Serialize(obj, typeof(T), options);
+        }
+        catch (JsonException ex)
+        {
+            throw new JsonException($"Failed to serialize object of type {typeof(T).Name}: {ex.Message}", ex);
+        }
     }
 
-    public static T DeserializeFromString<T>(string json)
+    /// <summary>
+    /// Deserializes a JSON string to an object using global options.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize to.</typeparam>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <returns>Deserialized object.</returns>
+    public static T? Deserialize<T>(string json)
     {
-        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
-        return JsonSerializer.Deserialize<T>(json, _jsonSerializerOptions) ??
-               throw new JsonException("Deserialization failed.");
+        try
+        {
+            return JsonSerializer.Deserialize<T>(json, GetJsonSerializerOptions()) ??
+                   throw new JsonException($"Deserialization returned null for type {typeof(T).Name}");
+        }
+        catch (JsonException ex)
+        {
+            throw new JsonException($"Failed to deserialize JSON to type {typeof(T).Name}: {ex.Message}", ex);
+        }
     }
 
+    /// <summary>
+    /// Deserializes a JSON string to an object with fallback value.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize to.</typeparam>
+    /// <param name="json">The JSON string to deserialize.</param>
+    /// <param name="defaultValue">Default value if deserialization fails.</param>
+    /// <returns>Deserialized object or default value.</returns>
+    public static T? DeserializeOrDefault<T>(string json, T? defaultValue = default)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return defaultValue;
+
+        try
+        {
+            return JsonSerializer.Deserialize<T>(json, GetJsonSerializerOptions()) ?? defaultValue;
+        }
+        catch (JsonException)
+        {
+            return defaultValue;
+        }
+    }
+
+    /// <summary>
+    /// Validates if a string is valid JSON without deserializing.
+    /// </summary>
+    /// <param name="json">The JSON string to validate.</param>
+    /// <returns>True if valid JSON, false otherwise.</returns>
+    public static bool IsValidJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return false;
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Deserializes an object from a JSON file.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize to.</typeparam>
+    /// <param name="filePath">Path to the JSON file.</param>
+    /// <returns>Deserialized object.</returns>
     public static T DeserializeFromFile<T>(string filePath)
     {
-        ArgumentNullException.ThrowIfNull(filePath);
-        if (!File.Exists(filePath))
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var normalizedPath = Path.GetFullPath(filePath);
+        if (!File.Exists(normalizedPath))
         {
-            throw new FileNotFoundException($"The file '{filePath}' does not exist.");
+            throw new FileNotFoundException($"The file '{normalizedPath}' does not exist.", normalizedPath);
         }
 
-        var json = File.ReadAllText(filePath);
-        return Deserialize<T>(json);
+        try
+        {
+            var json = File.ReadAllText(normalizedPath);
+            return Deserialize<T>(json);
+        }
+        catch (Exception ex) when (ex is not JsonException)
+        {
+            throw new JsonException($"Failed to read or deserialize file '{normalizedPath}': {ex.Message}", ex);
+        }
     }
 
+    /// <summary>
+    /// Deserializes an object from a stream asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize to.</typeparam>
+    /// <param name="stream">The stream containing JSON data.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deserialized object.</returns>
+    public static async Task<T> DeserializeFromStreamAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
 
+        try
+        {
+            var result = await JsonSerializer.DeserializeAsync<T>(stream, GetJsonSerializerOptions(), cancellationToken).ConfigureAwait(false);
+            return result ?? throw new JsonException($"Deserialization returned null for type {typeof(T).Name}");
+        }
+        catch (JsonException ex)
+        {
+            throw new JsonException($"Failed to deserialize stream to type {typeof(T).Name}: {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Serializes an object to a JSON file with directory creation.
+    /// </summary>
+    /// <typeparam name="T">The type to serialize.</typeparam>
+    /// <param name="obj">The object to serialize.</param>
+    /// <param name="filePath">Path to the output JSON file.</param>
     public static void SerializeToFile<T>(T obj, string filePath)
     {
         ArgumentNullException.ThrowIfNull(obj);
-        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
-        var json = Serialize(obj);
-        File.WriteAllText(filePath, json);
-    }
+        var normalizedPath = Path.GetFullPath(filePath);
+        var directory = Path.GetDirectoryName(normalizedPath);
 
-    public static async Task SerializeToFileAsync<T>(T obj, string filePath)
-    {
-        ArgumentNullException.ThrowIfNull(obj);
-        ArgumentNullException.ThrowIfNull(filePath);
-
-        var json = Serialize(obj);
-        await File.WriteAllTextAsync(filePath, json).ConfigureAwait(false);
-    }
-
-    public static async Task<T> DeserializeFromFileAsync<T>(string filePath)
-    {
-        ArgumentNullException.ThrowIfNull(filePath);
-        if (!File.Exists(filePath))
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
-            throw new FileNotFoundException($"The file '{filePath}' does not exist.");
+            Directory.CreateDirectory(directory);
         }
 
-        var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
-        return Deserialize<T>(json);
+        try
+        {
+            var json = Serialize(obj);
+            File.WriteAllText(normalizedPath, json);
+        }
+        catch (Exception ex) when (ex is not JsonException)
+        {
+            throw new JsonException($"Failed to serialize or write file '{normalizedPath}': {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Serializes an object to a JSON file asynchronously with directory creation.
+    /// </summary>
+    /// <typeparam name="T">The type to serialize.</typeparam>
+    /// <param name="obj">The object to serialize.</param>
+    /// <param name="filePath">Path to the output JSON file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public static async Task SerializeToFileAsync<T>(T obj, string filePath, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(obj);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var normalizedPath = Path.GetFullPath(filePath);
+        var directory = Path.GetDirectoryName(normalizedPath);
+
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        try
+        {
+            var json = Serialize(obj);
+            await File.WriteAllTextAsync(normalizedPath, json, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not JsonException)
+        {
+            throw new JsonException($"Failed to serialize or write file '{normalizedPath}': {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Deserializes an object from a JSON file asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The type to deserialize to.</typeparam>
+    /// <param name="filePath">Path to the JSON file.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deserialized object.</returns>
+    public static async Task<T> DeserializeFromFileAsync<T>(string filePath, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        var normalizedPath = Path.GetFullPath(filePath);
+        if (!File.Exists(normalizedPath))
+        {
+            throw new FileNotFoundException($"The file '{normalizedPath}' does not exist.", normalizedPath);
+        }
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(normalizedPath, cancellationToken).ConfigureAwait(false);
+            return Deserialize<T>(json);
+        }
+        catch (Exception ex) when (ex is not JsonException)
+        {
+            throw new JsonException($"Failed to read or deserialize file '{normalizedPath}': {ex.Message}", ex);
+        }
+    }
+
+    /// <summary>
+    /// Serializes multiple objects to JSON files in a directory.
+    /// </summary>
+    /// <typeparam name="T">The type to serialize.</typeparam>
+    /// <param name="objects">Dictionary of filename to object mappings.</param>
+    /// <param name="directory">Target directory path.</param>
+    public static void SerializeMultipleToDirectory<T>(Dictionary<string, T> objects, string directory)
+    {
+        ArgumentNullException.ThrowIfNull(objects);
+        ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+
+        var normalizedDirectory = Path.GetFullPath(directory);
+        if (!Directory.Exists(normalizedDirectory))
+        {
+            Directory.CreateDirectory(normalizedDirectory);
+        }
+
+        foreach (var kvp in objects)
+        {
+            if (kvp.Value == null) continue;
+
+            var fileName = Path.GetFileNameWithoutExtension(kvp.Key);
+            var filePath = Path.Combine(normalizedDirectory, $"{fileName}.json");
+            SerializeToFile(kvp.Value, filePath);
+        }
     }
 
     /// <summary>
@@ -131,7 +408,7 @@ public static class JsonUtils
         ArgumentNullException.ThrowIfNull(type);
 
         var typeName = type.Name;
-        
+
         // Remove "Entity" suffix if present
         if (typeName.EndsWith("Entity"))
         {
@@ -140,7 +417,7 @@ public static class JsonUtils
 
         // Convert PascalCase to snake_case
         var snakeCaseName = ConvertToSnakeCase(typeName);
-        
+
         return $"{snakeCaseName}.schema.json";
     }
 

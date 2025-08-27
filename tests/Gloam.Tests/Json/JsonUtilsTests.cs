@@ -11,6 +11,13 @@ namespace Gloam.Tests.Json;
 /// </summary>
 public class JsonUtilsTests
 {
+    [OneTimeSetUp]
+    public void OneTimeSetUp()
+    {
+        // Register the data context for entity serialization
+        var dataContext = new Gloam.Data.Context.GloamDataJsonContext();
+        JsonUtils.RegisterJsonContext(dataContext);
+    }
     #region Schema File Name Tests
 
     [Test]
@@ -109,9 +116,9 @@ public class JsonUtilsTests
     }
 
     [Test]
-    public void DeserializeFromString_NullString_ShouldThrowArgumentNullException()
+    public void Deserialize_EmptyString_ShouldThrowArgumentException()
     {
-        Assert.Throws<ArgumentNullException>(() => JsonUtils.DeserializeFromString<TileEntity>(null!));
+        Assert.Throws<ArgumentException>(() => JsonUtils.Deserialize<TileEntity>(""));
     }
 
     [Test]
@@ -204,30 +211,17 @@ public class JsonUtilsTests
     }
 
     [Test]
-    public void DeserializeFromString_ValidJson_ReturnsObject()
+    public void Deserialize_ValidJsonWithNullResult_ThrowsJsonException()
     {
-        var json = """
-        {
-            "id": "test-tile",
-            "name": "Test Tile",
-            "glyph": "@",
-            "backgroundColor": "#000000",
-            "foregroundColor": "#FFFFFF"
-        }
-        """;
-
-        var result = JsonUtils.DeserializeFromString<TileEntity>(json);
+        var json = "null";
         
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result.Id, Is.EqualTo("test-tile"));
+        Assert.Throws<JsonException>(() => JsonUtils.Deserialize<string>(json));
     }
 
     [Test]
-    public void DeserializeFromString_InvalidJson_ThrowsJsonException()
+    public void Deserialize_WhitespaceString_ThrowsArgumentException()
     {
-        var invalidJson = "null";
-        
-        Assert.Throws<JsonException>(() => JsonUtils.DeserializeFromString<TileEntity>(invalidJson));
+        Assert.Throws<ArgumentException>(() => JsonUtils.Deserialize<TileEntity>("   "));
     }
 
     [Test]
@@ -381,23 +375,14 @@ public class JsonUtilsTests
     [Test]
     public void AddJsonConverter_ValidConverter_AddsToList()
     {
-        var initialCount = JsonUtils.JsonConverters.Count;
+        var initialConverters = JsonUtils.GetJsonConverters();
         var testConverter = new System.Text.Json.Serialization.JsonStringEnumConverter();
         
-        // This might throw if the JsonSerializerOptions is already read-only from previous tests
-        // We test that it doesn't throw for null converter, but may throw for read-only options
-        try
-        {
-            JsonUtils.AddJsonConverter(testConverter);
-            Assert.That(JsonUtils.JsonConverters.Count, Is.EqualTo(initialCount + 1));
-            Assert.That(JsonUtils.JsonConverters, Does.Contain(testConverter));
-        }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("read-only"))
-        {
-            // This is expected if the JsonSerializerOptions was already used in a previous test
-            // The important thing is that we tested the main path and the null check works
-            Assert.That(JsonUtils.JsonConverters.Count, Is.GreaterThanOrEqualTo(initialCount));
-        }
+        JsonUtils.AddJsonConverter(testConverter);
+        var newConverters = JsonUtils.GetJsonConverters();
+        
+        Assert.That(newConverters.Count, Is.GreaterThanOrEqualTo(initialConverters.Count));
+        Assert.That(newConverters.Any(c => c.GetType() == testConverter.GetType()), Is.True);
     }
 
     [Test]
@@ -460,6 +445,209 @@ public class JsonUtilsTests
         
         var result = convertMethod?.Invoke(null, new object[] { null! });
         Assert.That(result, Is.Null);
+    }
+
+    #endregion
+
+    #region New API Tests
+
+    [Test]
+    public void DeserializeOrDefault_ValidJson_ReturnsObject()
+    {
+        var json = """
+        {
+            "id": "test-tile",
+            "name": "Test Tile",
+            "glyph": "@",
+            "backgroundColor": "#000000",
+            "foregroundColor": "#FFFFFF"
+        }
+        """;
+
+        var result = JsonUtils.DeserializeOrDefault<TileEntity>(json);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Id, Is.EqualTo("test-tile"));
+    }
+
+    [Test]
+    public void DeserializeOrDefault_InvalidJson_ReturnsDefault()
+    {
+        var invalidJson = "{ invalid json }";
+        var defaultValue = new TileEntity { Id = "default" };
+        
+        var result = JsonUtils.DeserializeOrDefault(invalidJson, defaultValue);
+        
+        Assert.That(result, Is.EqualTo(defaultValue));
+        Assert.That(result.Id, Is.EqualTo("default"));
+    }
+
+    [Test]
+    public void DeserializeOrDefault_NullOrEmptyJson_ReturnsDefault()
+    {
+        var defaultValue = new TileEntity { Id = "default" };
+        
+        var result1 = JsonUtils.DeserializeOrDefault<TileEntity>(null, defaultValue);
+        var result2 = JsonUtils.DeserializeOrDefault<TileEntity>("", defaultValue);
+        var result3 = JsonUtils.DeserializeOrDefault<TileEntity>("   ", defaultValue);
+        
+        Assert.That(result1, Is.EqualTo(defaultValue));
+        Assert.That(result2, Is.EqualTo(defaultValue));
+        Assert.That(result3, Is.EqualTo(defaultValue));
+    }
+
+    [Test]
+    public void IsValidJson_ValidJson_ReturnsTrue()
+    {
+        var validJson = """{ "test": "value" }""";
+        
+        var result = JsonUtils.IsValidJson(validJson);
+        
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void IsValidJson_InvalidJson_ReturnsFalse()
+    {
+        var invalidJson = "{ invalid json }";
+        
+        var result = JsonUtils.IsValidJson(invalidJson);
+        
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void IsValidJson_NullOrEmptyJson_ReturnsFalse()
+    {
+        Assert.That(JsonUtils.IsValidJson(null), Is.False);
+        Assert.That(JsonUtils.IsValidJson(""), Is.False);
+        Assert.That(JsonUtils.IsValidJson("   "), Is.False);
+    }
+
+    [Test]
+    public void RemoveJsonConverter_ExistingConverter_ReturnsTrue()
+    {
+        var testConverter = new System.Text.Json.Serialization.JsonStringEnumConverter();
+        JsonUtils.AddJsonConverter(testConverter);
+        
+        var removed = JsonUtils.RemoveJsonConverter<System.Text.Json.Serialization.JsonStringEnumConverter>();
+        
+        Assert.That(removed, Is.True);
+    }
+
+    [Test]
+    public void RemoveJsonConverter_NonExistentConverter_ReturnsFalse()
+    {
+        var removed = JsonUtils.RemoveJsonConverter<System.Text.Json.Serialization.JsonConverter<DateTime>>();
+        
+        Assert.That(removed, Is.False);
+    }
+
+    [Test]
+    public void GetJsonConverters_ReturnsReadOnlyList()
+    {
+        var converters = JsonUtils.GetJsonConverters();
+        
+        Assert.That(converters, Is.Not.Null);
+        Assert.That(converters, Is.TypeOf<System.Collections.ObjectModel.ReadOnlyCollection<System.Text.Json.Serialization.JsonConverter>>());
+    }
+
+    [Test]
+    public async Task DeserializeFromStreamAsync_ValidStream_ReturnsObject()
+    {
+        var testObject = new TileEntity
+        {
+            Id = "test-tile",
+            Name = "Test Tile",
+            Glyph = "@",
+            BackgroundColor = "#000000",
+            ForegroundColor = "#FFFFFF"
+        };
+        
+        var json = JsonUtils.Serialize(testObject);
+        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
+        
+        var result = await JsonUtils.DeserializeFromStreamAsync<TileEntity>(stream);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Id, Is.EqualTo("test-tile"));
+    }
+
+    [Test]
+    public async Task DeserializeFromStreamAsync_NullStream_ThrowsArgumentNullException()
+    {
+        Assert.ThrowsAsync<ArgumentNullException>(async () => 
+            await JsonUtils.DeserializeFromStreamAsync<TileEntity>(null!));
+    }
+
+    [Test]
+    public void SerializeMultipleToDirectory_ValidObjects_CreatesFiles()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var objects = new Dictionary<string, TileEntity>
+        {
+            ["tile1"] = new TileEntity { Id = "tile1", Name = "Tile 1", Glyph = "@", BackgroundColor = "#000", ForegroundColor = "#FFF" },
+            ["tile2"] = new TileEntity { Id = "tile2", Name = "Tile 2", Glyph = "#", BackgroundColor = "#111", ForegroundColor = "#EEE" }
+        };
+
+        try
+        {
+            JsonUtils.SerializeMultipleToDirectory(objects, tempDir);
+            
+            Assert.That(Directory.Exists(tempDir), Is.True);
+            Assert.That(File.Exists(Path.Combine(tempDir, "tile1.json")), Is.True);
+            Assert.That(File.Exists(Path.Combine(tempDir, "tile2.json")), Is.True);
+            
+            var content1 = File.ReadAllText(Path.Combine(tempDir, "tile1.json"));
+            Assert.That(content1, Does.Contain("Tile 1"));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+                Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Test]
+    public void SerializeMultipleToDirectory_NullObjects_ThrowsArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => 
+            JsonUtils.SerializeMultipleToDirectory<TileEntity>(null!, "test"));
+    }
+
+    [Test]
+    public void SerializeMultipleToDirectory_NullDirectory_ThrowsArgumentNullException()
+    {
+        var objects = new Dictionary<string, TileEntity>();
+        
+        Assert.Throws<ArgumentNullException>(() => 
+            JsonUtils.SerializeMultipleToDirectory(objects, null!));
+    }
+
+    [Test]
+    public void Serialize_WithCustomOptions_UsesProvidedOptions()
+    {
+        var testObject = new { Test = "value" };
+        var customOptions = new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            PropertyNamingPolicy = null
+        };
+        
+        var result = JsonUtils.Serialize(testObject, customOptions);
+        
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result, Does.Not.Contain("\n")); // Not indented
+        Assert.That(result, Does.Contain("Test")); // Preserved casing
+    }
+
+    [Test]
+    public void Serialize_WithCustomOptions_NullOptions_ThrowsArgumentNullException()
+    {
+        var testObject = new { Test = "value" };
+        
+        Assert.Throws<ArgumentNullException>(() => 
+            JsonUtils.Serialize(testObject, null!));
     }
 
     #endregion

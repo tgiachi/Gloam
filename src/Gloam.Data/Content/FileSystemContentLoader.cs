@@ -2,7 +2,7 @@ using Gloam.Data.Interfaces.Content;
 
 namespace Gloam.Data.Content;
 
-public class FileSystemContentLoader : IContentSource
+public class FileSystemContentLoader : IContentLoader
 {
     private readonly string _basePath;
 

@@ -6,4 +6,13 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="DryIoc.dll" Version="5.4.3" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Gloam.Core\Gloam.Core.csproj" />
+      <ProjectReference Include="..\Gloam.Data\Gloam.Data.csproj" />
+    </ItemGroup>
+
 </Project>
