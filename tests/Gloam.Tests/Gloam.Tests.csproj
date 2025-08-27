@@ -28,6 +28,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Gloam.Data\Gloam.Data.csproj" />
+        <ProjectReference Include="..\..\src\Gloam.Runtime\Gloam.Runtime.csproj" />
     </ItemGroup>
 
 </Project>

@@ -23,7 +23,7 @@ public class GloamHost : IDisposable
 
     public GloamHost(GloamHostConfig config)
     {
-        _config = config;
+        _config = config ?? throw new ArgumentNullException(nameof(config));
         Container = CreateContainer();
         ConfigureServices();
     }
@@ -60,8 +60,11 @@ public class GloamHost : IDisposable
         if (_config.LoaderType == ContentLoaderType.FileSystem)
         {
             var directoryConfig = new DirectoriesConfig(_config.RootDirectory, ["templates"]);
-            Container.Register<IContentLoader, FileSystemContentLoader>();
             Container.RegisterInstance(directoryConfig);
+            
+            // Register FileSystemContentLoader with basePath from config
+            var contentLoader = new FileSystemContentLoader(_config.RootDirectory);
+            Container.RegisterInstance<IContentLoader>(contentLoader);
         }
         else
         {
