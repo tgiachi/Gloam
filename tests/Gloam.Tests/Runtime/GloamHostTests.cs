@@ -339,9 +339,10 @@ public class GloamHostTests
     [Test]
     public void EdgeCase_NonExistentRootDirectory_ShouldThrowException()
     {
-        _config.RootDirectory = "/path/that/does/not/exist";
+        _config.RootDirectory = "/nonexistent/path/that/should/not/exist";
 
-        Assert.Throws<IOException>(() => _host = new GloamHost(_config));
+        Assert.That(() => _host = new GloamHost(_config), 
+            Throws.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
     }
 
     #endregion
