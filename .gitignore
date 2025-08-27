@@ -566,8 +566,6 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 *.dll
-test_server/elderforge.pid
-Elderforge.Client/.idea
-Elderforge.Client_old/Assets/.DS_Store
 **/**/.DS_Store
 *.world
+coverage/*

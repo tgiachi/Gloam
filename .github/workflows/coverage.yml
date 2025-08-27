@@ -1,0 +1,95 @@
+name: Coverage Report
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  MINIMUM_COVERAGE: 80
+
+jobs:
+  coverage:
+    name: Generate Coverage Report
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+      
+    - name: Run tests with coverage
+      run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger trx
+      
+    - name: Install ReportGenerator tool
+      run: dotnet tool install -g dotnet-reportgenerator-globaltool
+      
+    - name: Generate coverage report
+      run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage/report" -reporttypes:"Html;Cobertura;TextSummary"
+      
+    - name: Extract coverage percentage
+      id: coverage
+      run: |
+        COVERAGE=$(grep -oP 'Line coverage: \K[\d.]+' coverage/report/Summary.txt | head -1)
+        echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Coverage: $COVERAGE%"
+        
+    - name: Check coverage threshold
+      run: |
+        COVERAGE=${{ steps.coverage.outputs.percentage }}
+        if (( $(echo "$COVERAGE < $MINIMUM_COVERAGE" | bc -l) )); then
+          echo "❌ Coverage $COVERAGE% is below minimum threshold of $MINIMUM_COVERAGE%"
+          exit 1
+        else
+          echo "✅ Coverage $COVERAGE% meets minimum threshold of $MINIMUM_COVERAGE%"
+        fi
+        
+    - name: Create coverage badge
+      uses: schneegans/dynamic-badges-action@v1.7.0
+      with:
+        auth: ${{ secrets.GITHUB_TOKEN }}
+        gistID: ${{ secrets.COVERAGE_GIST_ID }}
+        filename: coverage-badge.json
+        label: coverage
+        message: ${{ steps.coverage.outputs.percentage }}%
+        color: ${{ steps.coverage.outputs.percentage >= 90 && 'brightgreen' || steps.coverage.outputs.percentage >= 80 && 'green' || steps.coverage.outputs.percentage >= 70 && 'yellowgreen' || steps.coverage.outputs.percentage >= 60 && 'yellow' || 'red' }}
+        
+    - name: Upload coverage to GitHub Pages
+      if: github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./coverage/report
+        destination_dir: coverage
+        
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        message: |
+          ## 📊 Coverage Report
+          
+          **Line Coverage:** ${{ steps.coverage.outputs.percentage }}%
+          
+          ${{ steps.coverage.outputs.percentage >= 80 && '✅ Coverage meets minimum threshold' || '❌ Coverage is below minimum threshold of 80%' }}
+          
+          📋 [Full Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/report/
+        retention-days: 30

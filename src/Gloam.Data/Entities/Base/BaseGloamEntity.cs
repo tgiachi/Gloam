@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Gloam.Data.Entities.Colors;
 using Gloam.Data.Entities.Tiles;
@@ -15,11 +16,13 @@ public class BaseGloamEntity
     /// <summary>
     /// Gets or sets the unique identifier for this entity.
     /// </summary>
+    [Required]
     public string Id { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the display name of the entity.
     /// </summary>
+    [Required]
     public string Name { get; set; }
 
     /// <summary>
@@ -27,12 +30,12 @@ public class BaseGloamEntity
     /// </summary>
     [JsonPropertyName("#")]
     public string Comment { get; set; }
-    
+
     /// <summary>
     /// Gets or sets a detailed description of the entity.
     /// </summary>
     public string Description { get; set; }
-    
+
     /// <summary>
     /// Gets or sets a list of tags associated with this entity for categorization.
     /// </summary>

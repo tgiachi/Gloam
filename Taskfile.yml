@@ -1,0 +1,96 @@
+version: '3'
+
+vars:
+  SOLUTION: Gloam.slnx
+  TEST_PROJECT: tests/Gloam.Tests/Gloam.Tests.csproj
+  COVERAGE_DIR: coverage
+  COVERAGE_FILE: '{{.COVERAGE_DIR}}/coverage.xml'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - dotnet clean {{.SOLUTION}}
+      - rm -rf {{.COVERAGE_DIR}}
+
+  restore:
+    desc: Restore NuGet packages
+    cmds:
+      - dotnet restore {{.SOLUTION}}
+
+  build:
+    desc: Build the solution
+    deps: [restore]
+    cmds:
+      - dotnet build {{.SOLUTION}} --no-restore
+
+  test:
+    desc: Run all tests
+    deps: [build]
+    cmds:
+      - dotnet test {{.SOLUTION}} --no-build --verbosity normal
+
+  test-watch:
+    desc: Run tests in watch mode
+    cmds:
+      - dotnet watch test {{.TEST_PROJECT}}
+
+  test-filter:
+    desc: Run tests with filter (usage - task test-filter FILTER="TestName")
+    deps: [build]
+    cmds:
+      - dotnet test {{.SOLUTION}} --no-build --filter "{{.FILTER}}"
+
+  coverage:
+    desc: Run tests with coverage
+    deps: [build]
+    cmds:
+      - mkdir -p {{.COVERAGE_DIR}}
+      - dotnet test {{.SOLUTION}} --no-build --collect:"XPlat Code Coverage" --results-directory {{.COVERAGE_DIR}}
+      - find {{.COVERAGE_DIR}} -name "coverage.cobertura.xml" -exec cp {} {{.COVERAGE_FILE}} \;
+
+  coverage-report:
+    desc: Generate HTML coverage report
+    deps: [coverage]
+    cmds:
+      - dotnet tool install -g dotnet-reportgenerator-globaltool || true
+      - reportgenerator -reports:{{.COVERAGE_FILE}} -targetdir:{{.COVERAGE_DIR}}/html -reporttypes:Html
+      - echo "Coverage report generated at {{.COVERAGE_DIR}}/html/index.html"
+
+  coverage-open:
+    desc: Open coverage report in browser
+    deps: [coverage-report]
+    cmds:
+      - open {{.COVERAGE_DIR}}/html/index.html
+
+  schema:
+    desc: Generate JSON schemas
+    deps: [build]
+    cmds:
+      - dotnet test {{.TEST_PROJECT}} --no-build --filter "GenerateAllEntitySchemas"
+
+  lint:
+    desc: Run code formatting and linting
+    cmds:
+      - dotnet format {{.SOLUTION}}
+
+  ci:
+    desc: Run CI pipeline (clean, build, test, coverage)
+    cmds:
+      - task: clean
+      - task: build
+      - task: test
+      - task: coverage
+
+  dev:
+    desc: Development setup (restore, build, test)
+    cmds:
+      - task: restore
+      - task: build
+      - task: test
+      - echo "Development setup complete!"

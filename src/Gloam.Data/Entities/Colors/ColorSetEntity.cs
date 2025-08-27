@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Gloam.Data.Entities.Base;
 
 namespace Gloam.Data.Entities.Colors;
@@ -11,5 +12,6 @@ public class ColorSetEntity : BaseGloamEntity
     /// Gets or sets a dictionary mapping color names to their hex color codes.
     /// Example: "white" -> "#FFFFFF"
     /// </summary>
+    [Required]
     public Dictionary<string, string> Colors { get; set; } = new();
 }

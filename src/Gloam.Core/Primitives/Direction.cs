@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace Gloam.Core.Primitives.Math;
+namespace Gloam.Core.Primitives;
 
 /// <summary>
 /// Represents a direction in 2D space using 8-directional movement (cardinal and diagonal directions).
@@ -16,7 +16,7 @@ public readonly struct Direction : IEquatable<Direction>
     public static readonly Direction West = new(-1, 0);
     public static readonly Direction NorthWest = new(-1, -1);
 
-    public static readonly Direction[] All8 = 
+    public static readonly Direction[] All8 =
     [
         North, NorthEast, East, SouthEast,
         South, SouthWest, West, NorthWest
@@ -36,7 +36,7 @@ public readonly struct Direction : IEquatable<Direction>
     public static Position operator +(Position position, Direction direction) =>
         position.Move(direction.X, direction.Y);
 
-    public static implicit operator Vector2(Direction direction) => 
+    public static implicit operator Vector2(Direction direction) =>
         direction.AsVector2();
 
     public bool Equals(Direction other) => X == other.X && Y == other.Y;
@@ -51,7 +51,7 @@ public readonly struct Direction : IEquatable<Direction>
     public override string ToString() => this switch
     {
         var d when d == North => "North",
-        var d when d == NorthEast => "NorthEast", 
+        var d when d == NorthEast => "NorthEast",
         var d when d == East => "East",
         var d when d == SouthEast => "SouthEast",
         var d when d == South => "South",

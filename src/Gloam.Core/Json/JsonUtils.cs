@@ -120,4 +120,51 @@ public static class JsonUtils
         var json = await File.ReadAllTextAsync(filePath).ConfigureAwait(false);
         return Deserialize<T>(json);
     }
+
+    /// <summary>
+    /// Generates a schema file name for the given type using snake_case convention.
+    /// </summary>
+    /// <param name="type">The type to generate a schema name for.</param>
+    /// <returns>A schema file name in the format "type_name.schema.json".</returns>
+    public static string GetSchemaFileName(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+
+        var typeName = type.Name;
+        
+        // Remove "Entity" suffix if present
+        if (typeName.EndsWith("Entity"))
+        {
+            typeName = typeName[..^6]; // Remove last 6 characters ("Entity")
+        }
+
+        // Convert PascalCase to snake_case
+        var snakeCaseName = ConvertToSnakeCase(typeName);
+        
+        return $"{snakeCaseName}.schema.json";
+    }
+
+    private static string ConvertToSnakeCase(string pascalCase)
+    {
+        if (string.IsNullOrEmpty(pascalCase))
+            return pascalCase;
+
+        var result = new System.Text.StringBuilder();
+        result.Append(char.ToLowerInvariant(pascalCase[0]));
+
+        for (int i = 1; i < pascalCase.Length; i++)
+        {
+            if (char.IsUpper(pascalCase[i]))
+            {
+                result.Append('_');
+                result.Append(char.ToLowerInvariant(pascalCase[i]));
+            }
+            else
+            {
+                result.Append(pascalCase[i]);
+            }
+        }
+
+        return result.ToString();
+    }
 }
