@@ -56,17 +56,6 @@ jobs:
           echo "✅ Coverage $COVERAGE% meets minimum threshold of $MINIMUM_COVERAGE%"
         fi
         
-    - name: Create coverage badge
-      uses: schneegans/dynamic-badges-action@v1.7.0
-      if: secrets.COVERAGE_GIST_ID != ''
-      with:
-        auth: ${{ secrets.GITHUB_TOKEN }}
-        gistID: ${{ secrets.COVERAGE_GIST_ID }}
-        filename: coverage-badge.json
-        label: coverage
-        message: ${{ steps.coverage.outputs.percentage }}%
-        color: ${{ steps.coverage.outputs.percentage >= 90 && 'brightgreen' || steps.coverage.outputs.percentage >= 80 && 'green' || steps.coverage.outputs.percentage >= 70 && 'yellowgreen' || steps.coverage.outputs.percentage >= 60 && 'yellow' || 'red' }}
-        
     - name: Create coverage summary
       run: |
         echo "## 📊 Coverage Summary" >> $GITHUB_STEP_SUMMARY
