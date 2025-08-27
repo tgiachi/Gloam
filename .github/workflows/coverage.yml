@@ -58,6 +58,7 @@ jobs:
         
     - name: Create coverage badge
       uses: schneegans/dynamic-badges-action@v1.7.0
+      if: secrets.COVERAGE_GIST_ID != ''
       with:
         auth: ${{ secrets.GITHUB_TOKEN }}
         gistID: ${{ secrets.COVERAGE_GIST_ID }}
@@ -65,6 +66,22 @@ jobs:
         label: coverage
         message: ${{ steps.coverage.outputs.percentage }}%
         color: ${{ steps.coverage.outputs.percentage >= 90 && 'brightgreen' || steps.coverage.outputs.percentage >= 80 && 'green' || steps.coverage.outputs.percentage >= 70 && 'yellowgreen' || steps.coverage.outputs.percentage >= 60 && 'yellow' || 'red' }}
+        
+    - name: Create coverage summary
+      run: |
+        echo "## 📊 Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Line Coverage:** ${{ steps.coverage.outputs.percentage }}%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if (( $(echo "${{ steps.coverage.outputs.percentage }} >= 90" | bc -l) )); then
+          echo "🟢 **Excellent coverage!**" >> $GITHUB_STEP_SUMMARY
+        elif (( $(echo "${{ steps.coverage.outputs.percentage }} >= 80" | bc -l) )); then
+          echo "🟡 **Good coverage**" >> $GITHUB_STEP_SUMMARY
+        elif (( $(echo "${{ steps.coverage.outputs.percentage }} >= 70" | bc -l) )); then
+          echo "🟠 **Moderate coverage**" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "🔴 **Low coverage - needs improvement**" >> $GITHUB_STEP_SUMMARY
+        fi
         
     - name: Upload coverage to GitHub Pages
       if: github.ref == 'refs/heads/main'
