@@ -29,7 +29,7 @@ public static partial class StringUtils
     {
         if (string.IsNullOrEmpty(text))
         {
-            throw new ArgumentNullException(nameof(text));
+            return string.Empty;
         }
 
         if (text.Length < 2)
@@ -81,7 +81,7 @@ public static partial class StringUtils
     {
         if (string.IsNullOrEmpty(text))
         {
-            throw new ArgumentNullException(nameof(text));
+            return string.Empty;
         }
 
         if (text.Length < 2)
@@ -120,7 +120,7 @@ public static partial class StringUtils
     {
         if (string.IsNullOrEmpty(text))
         {
-            throw new ArgumentNullException(nameof(text));
+            return string.Empty;
         }
 
         if (text.Length < 2)
@@ -159,7 +159,7 @@ public static partial class StringUtils
     {
         if (string.IsNullOrEmpty(text))
         {
-            throw new ArgumentNullException(nameof(text));
+            return string.Empty;
         }
 
         if (text.Length < 2)
@@ -221,7 +221,7 @@ public static partial class StringUtils
     {
         if (string.IsNullOrEmpty(text))
         {
-            throw new ArgumentNullException(nameof(text));
+            return string.Empty;
         }
 
         var words = WordSplitterRegex.Split(text);

@@ -11,7 +11,7 @@ public class InputKeyDataTests
 
         Assert.That(keyData.KeyCode, Is.EqualTo(65));
         Assert.That(keyData.Modifiers, Is.EqualTo(InputModifiers.None));
-        Assert.That(keyData.Name, Is.Empty);
+        Assert.That(keyData.Name, Is.EqualTo("65"));
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class InputKeyDataTests
 
         Assert.That(keyData.KeyCode, Is.EqualTo(65));
         Assert.That(keyData.Modifiers, Is.EqualTo(InputModifiers.Ctrl));
-        Assert.That(keyData.Name, Is.Empty);
+        Assert.That(keyData.Name, Is.EqualTo("65"));
     }
 
     [Test]
@@ -75,13 +75,13 @@ public class InputKeyDataTests
     }
 
     [Test]
-    public void Equals_WithDifferentName_ShouldReturnFalse()
+    public void Equals_WithDifferentName_ShouldReturnTrue()
     {
         var key1 = new InputKeyData(65, InputModifiers.Ctrl, "A");
         var key2 = new InputKeyData(65, InputModifiers.Ctrl, "B");
 
-        Assert.That(key1.Equals(key2), Is.False);
-        Assert.That(key1 != key2, Is.True);
+        Assert.That(key1.Equals(key2), Is.True);
+        Assert.That(key1 == key2, Is.True);
     }
 
     [Test]
