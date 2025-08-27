@@ -1,9 +1,9 @@
 <Solution>
-  <Folder Name="/src/">
-    <Project Path="src\Gloam.Core\Gloam.Core.csproj" />
-    <Project Path="src\Gloam.Data\Gloam.Data.csproj" Type="Classic C#" />
-    <Project Path="src\Gloam.Runtime\Gloam.Runtime.csproj" Type="Classic C#" />
-  </Folder>
-  <Project Path="tests\Gloam.Tests\Gloam.Tests.csproj" Type="Classic C#" />
-  <Project Path="tools\Gloam.Cli\Gloam.Cli.csproj" Type="Classic C#" />
+    <Folder Name="/src/">
+        <Project Path="src\Gloam.Core\Gloam.Core.csproj"/>
+        <Project Path="src\Gloam.Data\Gloam.Data.csproj" Type="Classic C#"/>
+        <Project Path="src\Gloam.Runtime\Gloam.Runtime.csproj" Type="Classic C#"/>
+    </Folder>
+    <Project Path="tests\Gloam.Tests\Gloam.Tests.csproj" Type="Classic C#"/>
+    <Project Path="tools\Gloam.Cli\Gloam.Cli.csproj" Type="Classic C#"/>
 </Solution>

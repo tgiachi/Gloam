@@ -3,7 +3,7 @@ using System.Numerics;
 namespace Gloam.Core.Primitives;
 
 /// <summary>
-/// Represents a position in 2D space with both discrete grid coordinates and continuous offsets for smooth movement.
+///     Represents a position in 2D space with both discrete grid coordinates and continuous offsets for smooth movement.
 /// </summary>
 public readonly struct Position : IEquatable<Position>
 {
@@ -12,7 +12,7 @@ public readonly struct Position : IEquatable<Position>
     public float OffsetX { get; }
     public float OffsetY { get; }
 
-    public Position(int x, int y, float offsetX = 0f, float offsetY = 0f)
+    public Position(int x, int y, float offsetX = 0, float offsetY = 0)
     {
         X = x;
         Y = y;
@@ -31,16 +31,25 @@ public readonly struct Position : IEquatable<Position>
     public float TotalX => X + OffsetX;
     public float TotalY => Y + OffsetY;
 
-    public Vector2 AsVector2() => new(TotalX, TotalY);
+    public Vector2 AsVector2()
+    {
+        return new Vector2(TotalX, TotalY);
+    }
 
-    public Position WithOffset(float offsetX, float offsetY) =>
-        new(X, Y, offsetX, offsetY);
+    public Position WithOffset(float offsetX, float offsetY)
+    {
+        return new Position(X, Y, offsetX, offsetY);
+    }
 
-    public Position WithGridPosition(int x, int y) =>
-        new(x, y, OffsetX, OffsetY);
+    public Position WithGridPosition(int x, int y)
+    {
+        return new Position(x, y, OffsetX, OffsetY);
+    }
 
-    public Position Move(int deltaX, int deltaY) =>
-        new(X + deltaX, Y + deltaY, OffsetX, OffsetY);
+    public Position Move(int deltaX, int deltaY)
+    {
+        return new Position(X + deltaX, Y + deltaY, OffsetX, OffsetY);
+    }
 
     public Position Move(float deltaX, float deltaY)
     {
@@ -49,39 +58,64 @@ public readonly struct Position : IEquatable<Position>
         return new Position(new Vector2(newTotalX, newTotalY));
     }
 
-    public Position Move(Vector2 delta) => Move(delta.X, delta.Y);
+    public Position Move(Vector2 delta)
+    {
+        return Move(delta.X, delta.Y);
+    }
 
-    public static Position operator +(Position position, Vector2 vector) =>
-        position.Move(vector);
+    public static Position operator +(Position position, Vector2 vector)
+    {
+        return position.Move(vector);
+    }
 
-    public static Position operator -(Position position, Vector2 vector) =>
-        position.Move(-vector);
+    public static Position operator -(Position position, Vector2 vector)
+    {
+        return position.Move(-vector);
+    }
 
-    public static Vector2 operator -(Position a, Position b) =>
-        a.AsVector2() - b.AsVector2();
+    public static Vector2 operator -(Position a, Position b)
+    {
+        return a.AsVector2() - b.AsVector2();
+    }
 
-    public static implicit operator Vector2(Position position) =>
-        position.AsVector2();
+    public static implicit operator Vector2(Position position)
+    {
+        return position.AsVector2();
+    }
 
-    public static implicit operator Position(Vector2 vector) =>
-        new(vector);
+    public static implicit operator Position(Vector2 vector)
+    {
+        return new Position(vector);
+    }
 
-    public bool Equals(Position other) =>
-        X == other.X && Y == other.Y &&
-        OffsetX.Equals(other.OffsetX) && OffsetY.Equals(other.OffsetY);
+    public bool Equals(Position other)
+    {
+        return X == other.X && Y == other.Y &&
+               OffsetX.Equals(other.OffsetX) && OffsetY.Equals(other.OffsetY);
+    }
 
-    public override bool Equals(object? obj) =>
-        obj is Position other && Equals(other);
+    public override bool Equals(object? obj)
+    {
+        return obj is Position other && Equals(other);
+    }
 
-    public override int GetHashCode() =>
-        HashCode.Combine(X, Y, OffsetX, OffsetY);
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(X, Y, OffsetX, OffsetY);
+    }
 
-    public static bool operator ==(Position left, Position right) =>
-        left.Equals(right);
+    public static bool operator ==(Position left, Position right)
+    {
+        return left.Equals(right);
+    }
 
-    public static bool operator !=(Position left, Position right) =>
-        !left.Equals(right);
+    public static bool operator !=(Position left, Position right)
+    {
+        return !left.Equals(right);
+    }
 
-    public override string ToString() =>
-        $"Position({X}, {Y}, {OffsetX:F2}, {OffsetY:F2})";
+    public override string ToString()
+    {
+        return $"Position({X}, {Y}, {OffsetX:F2}, {OffsetY:F2})";
+    }
 }

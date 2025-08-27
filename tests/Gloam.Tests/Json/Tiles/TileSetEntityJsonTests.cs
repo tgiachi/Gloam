@@ -145,11 +145,11 @@ public class TileSetEntityJsonTests
     public void Deserialize_WithMissingTiles_ShouldInitializeEmptyList()
     {
         var json = """
-        {
-            "id": "no-tiles-set",
-            "name": "No Tiles Set"
-        }
-        """;
+                   {
+                       "id": "no-tiles-set",
+                       "name": "No Tiles Set"
+                   }
+                   """;
 
         var tileSet = JsonUtils.Deserialize<TileSetEntity>(json);
 
@@ -258,15 +258,17 @@ public class TileSetEntityJsonTests
             Name = "Large Tileset"
         };
 
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
-            tileSet.Tiles.Add(new TileEntity
-            {
-                Id = $"tile-{i:D3}",
-                Name = $"Tile {i}",
-                Glyph = ((char)('A' + (i % 26))).ToString(),
-                Tags = [$"auto-generated", $"batch-{i / 10}"]
-            });
+            tileSet.Tiles.Add(
+                new TileEntity
+                {
+                    Id = $"tile-{i:D3}",
+                    Name = $"Tile {i}",
+                    Glyph = ((char)('A' + i % 26)).ToString(),
+                    Tags = ["auto-generated", $"batch-{i / 10}"]
+                }
+            );
         }
 
         var json = JsonUtils.Serialize(tileSet);

@@ -1,10 +1,9 @@
-using Gloam.Data.Objects;
 using Gloam.Data.Validators;
 
 namespace Gloam.Tests.Validators;
 
 /// <summary>
-/// Tests for JsonSchemaValidator functionality.
+///     Tests for JsonSchemaValidator functionality.
 /// </summary>
 public class JsonSchemaValidatorTests
 {
@@ -32,22 +31,22 @@ public class JsonSchemaValidatorTests
     public void Validate_WithValidEntityAndSchema_ShouldReturnSuccess()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "name": { "type": "string" },
-                "age": { "type": "number" }
-            },
-            "required": ["name"]
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "name": { "type": "string" },
+                             "age": { "type": "number" }
+                         },
+                         "required": ["name"]
+                     }
+                     """;
 
         var entity = """
-        {
-            "name": "John Doe",
-            "age": 30
-        }
-        """;
+                     {
+                         "name": "John Doe",
+                         "age": 30
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -59,20 +58,20 @@ public class JsonSchemaValidatorTests
     public void Validate_WithMinimalValidEntity_ShouldReturnSuccess()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "id": { "type": "string" }
-            },
-            "required": ["id"]
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "id": { "type": "string" }
+                         },
+                         "required": ["id"]
+                     }
+                     """;
 
         var entity = """
-        {
-            "id": "test-123"
-        }
-        """;
+                     {
+                         "id": "test-123"
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -84,19 +83,19 @@ public class JsonSchemaValidatorTests
     public void Validate_WithTrailingCommasInEntity_ShouldReturnSuccess()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "name": { "type": "string" }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "name": { "type": "string" }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "name": "Test",
-        }
-        """;
+                     {
+                         "name": "Test",
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -107,40 +106,40 @@ public class JsonSchemaValidatorTests
     public void Validate_WithComplexNestedSchema_ShouldReturnSuccess()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "name": { "type": "string" },
-                        "contacts": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "type": { "type": "string" },
-                                    "value": { "type": "string" }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "user": {
+                                 "type": "object",
+                                 "properties": {
+                                     "name": { "type": "string" },
+                                     "contacts": {
+                                         "type": "array",
+                                         "items": {
+                                             "type": "object",
+                                             "properties": {
+                                                 "type": { "type": "string" },
+                                                 "value": { "type": "string" }
+                                             }
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "user": {
-                "name": "Alice",
-                "contacts": [
-                    { "type": "email", "value": "alice@example.com" },
-                    { "type": "phone", "value": "+1234567890" }
-                ]
-            }
-        }
-        """;
+                     {
+                         "user": {
+                             "name": "Alice",
+                             "contacts": [
+                                 { "type": "email", "value": "alice@example.com" },
+                                 { "type": "phone", "value": "+1234567890" }
+                             ]
+                         }
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -155,21 +154,21 @@ public class JsonSchemaValidatorTests
     public void Validate_WithMissingRequiredProperty_ShouldReturnFailure()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "name": { "type": "string" },
-                "id": { "type": "string" }
-            },
-            "required": ["id"]
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "name": { "type": "string" },
+                             "id": { "type": "string" }
+                         },
+                         "required": ["id"]
+                     }
+                     """;
 
         var entity = """
-        {
-            "name": "John Doe"
-        }
-        """;
+                     {
+                         "name": "John Doe"
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -182,19 +181,19 @@ public class JsonSchemaValidatorTests
     public void Validate_WithWrongPropertyType_ShouldReturnFailure()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "age": { "type": "number" }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "age": { "type": "number" }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "age": "thirty"
-        }
-        """;
+                     {
+                         "age": "thirty"
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -206,22 +205,22 @@ public class JsonSchemaValidatorTests
     public void Validate_WithArrayValidationFailure_ShouldReturnFailure()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "numbers": {
-                    "type": "array",
-                    "items": { "type": "number" }
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "numbers": {
+                                 "type": "array",
+                                 "items": { "type": "number" }
+                             }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "numbers": [1, 2, "three", 4]
-        }
-        """;
+                     {
+                         "numbers": [1, 2, "three", 4]
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -233,23 +232,23 @@ public class JsonSchemaValidatorTests
     public void Validate_WithStringLengthConstraint_ShouldReturnFailure()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "name": { 
-                    "type": "string",
-                    "minLength": 3,
-                    "maxLength": 10
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "name": { 
+                                 "type": "string",
+                                 "minLength": 3,
+                                 "maxLength": 10
+                             }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "name": "A very long name that exceeds the maximum length"
-        }
-        """;
+                     {
+                         "name": "A very long name that exceeds the maximum length"
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -261,23 +260,23 @@ public class JsonSchemaValidatorTests
     public void Validate_WithNumericRangeConstraint_ShouldReturnFailure()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "score": { 
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 100
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "score": { 
+                                 "type": "number",
+                                 "minimum": 0,
+                                 "maximum": 100
+                             }
+                         }
+                     }
+                     """;
 
         var entity = """
-        {
-            "score": 150
-        }
-        """;
+                     {
+                         "score": 150
+                     }
+                     """;
 
         var result = _validator.Validate(entity, schema);
 
@@ -293,7 +292,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithNullEntity_ShouldThrowArgumentException()
     {
         var schema = """{ "type": "object" }""";
-        
+
         Assert.Throws<ArgumentNullException>(() => _validator.Validate(null!, schema));
     }
 
@@ -301,7 +300,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithEmptyEntity_ShouldThrowArgumentException()
     {
         var schema = """{ "type": "object" }""";
-        
+
         Assert.Throws<ArgumentException>(() => _validator.Validate("", schema));
     }
 
@@ -309,7 +308,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithWhitespaceEntity_ShouldThrowArgumentException()
     {
         var schema = """{ "type": "object" }""";
-        
+
         Assert.Throws<ArgumentException>(() => _validator.Validate("   ", schema));
     }
 
@@ -317,7 +316,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithNullSchema_ShouldThrowArgumentException()
     {
         var entity = """{ "test": "value" }""";
-        
+
         Assert.Throws<ArgumentNullException>(() => _validator.Validate(entity, null!));
     }
 
@@ -325,7 +324,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithEmptySchema_ShouldThrowArgumentException()
     {
         var entity = """{ "test": "value" }""";
-        
+
         Assert.Throws<ArgumentException>(() => _validator.Validate(entity, ""));
     }
 
@@ -333,7 +332,7 @@ public class JsonSchemaValidatorTests
     public void Validate_WithWhitespaceSchema_ShouldThrowArgumentException()
     {
         var entity = """{ "test": "value" }""";
-        
+
         Assert.Throws<ArgumentException>(() => _validator.Validate(entity, "   "));
     }
 
@@ -399,11 +398,11 @@ public class JsonSchemaValidatorTests
     public void Validate_WithArrayEntity_ShouldWork()
     {
         var schema = """
-        {
-            "type": "array",
-            "items": { "type": "string" }
-        }
-        """;
+                     {
+                         "type": "array",
+                         "items": { "type": "string" }
+                     }
+                     """;
 
         var entity = """["item1", "item2", "item3"]""";
 
@@ -453,16 +452,16 @@ public class JsonSchemaValidatorTests
     public void Validate_WithEnumConstraint_ShouldWork()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "enum": ["active", "inactive", "pending"]
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "status": {
+                                 "type": "string",
+                                 "enum": ["active", "inactive", "pending"]
+                             }
+                         }
+                     }
+                     """;
 
         var validEntity = """{ "status": "active" }""";
         var invalidEntity = """{ "status": "unknown" }""";
@@ -478,16 +477,16 @@ public class JsonSchemaValidatorTests
     public void Validate_WithPatternConstraint_ShouldWork()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "pattern": "^[^@]+@[^@]+\\.[^@]+$"
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "email": {
+                                 "type": "string",
+                                 "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+                             }
+                         }
+                     }
+                     """;
 
         var validEntity = """{ "email": "test@example.com" }""";
         var invalidEntity = """{ "email": "invalid-email" }""";
@@ -503,35 +502,35 @@ public class JsonSchemaValidatorTests
     public void Validate_WithConditionalSchema_ShouldWork()
     {
         var schema = """
-        {
-            "type": "object",
-            "properties": {
-                "type": { "type": "string" },
-                "data": {}
-            },
-            "if": {
-                "properties": { "type": { "const": "user" } }
-            },
-            "then": {
-                "properties": {
-                    "data": {
-                        "type": "object",
-                        "properties": {
-                            "name": { "type": "string" }
-                        },
-                        "required": ["name"]
-                    }
-                }
-            }
-        }
-        """;
+                     {
+                         "type": "object",
+                         "properties": {
+                             "type": { "type": "string" },
+                             "data": {}
+                         },
+                         "if": {
+                             "properties": { "type": { "const": "user" } }
+                         },
+                         "then": {
+                             "properties": {
+                                 "data": {
+                                     "type": "object",
+                                     "properties": {
+                                         "name": { "type": "string" }
+                                     },
+                                     "required": ["name"]
+                                 }
+                             }
+                         }
+                     }
+                     """;
 
         var validEntity = """
-        {
-            "type": "user",
-            "data": { "name": "John Doe" }
-        }
-        """;
+                          {
+                              "type": "user",
+                              "data": { "name": "John Doe" }
+                          }
+                          """;
 
         var result = _validator.Validate(validEntity, schema);
         Assert.That(result.Ok, Is.True);

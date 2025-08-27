@@ -9,29 +9,29 @@ using ValidationResult = Gloam.Data.Objects.ValidationResult;
 namespace Gloam.Data.Validators;
 
 /// <summary>
-/// Validates JSON entities against JSON Schema specifications.
+///     Validates JSON entities against JSON Schema specifications.
 /// </summary>
 public class JsonSchemaValidator : IEntitySchemaValidator
 {
-    private readonly JsonSerializerOptions _jsonOptions;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        AllowTrailingCommas = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private static readonly JsonDocumentOptions DocumentOptions = new()
+    {
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip
+    };
 
     private readonly Dictionary<Type, string> _schemas = new();
 
-
-    public JsonSchemaValidator()
-    {
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true,
-            AllowTrailingCommas = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
-    }
-
     /// <summary>
-    /// Validates an entity JSON string against a JSON Schema.
+    ///     Validates an entity JSON string against a JSON Schema.
     /// </summary>
     /// <param name="entity">The JSON string representation of the entity to validate.</param>
     /// <param name="schema">The JSON Schema string to validate against.</param>
@@ -50,14 +50,7 @@ public class JsonSchemaValidator : IEntitySchemaValidator
             JsonDocument entityDocument;
             try
             {
-                entityDocument = JsonDocument.Parse(
-                    entity,
-                    new JsonDocumentOptions
-                    {
-                        AllowTrailingCommas = true,
-                        CommentHandling = JsonCommentHandling.Skip
-                    }
-                );
+                entityDocument = JsonDocument.Parse(entity, DocumentOptions);
             }
             catch (JsonException ex)
             {
@@ -90,7 +83,7 @@ public class JsonSchemaValidator : IEntitySchemaValidator
     }
 
     /// <summary>
-    ///  Generates a schema for the specified entity type.
+    ///     Generates a schema for the specified entity type.
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <typeparam name="T"></typeparam>
@@ -106,7 +99,7 @@ public class JsonSchemaValidator : IEntitySchemaValidator
             .FromType<T>()
             .Build();
 
-        var schemaJson = JsonSerializer.Serialize(schema, _jsonOptions);
+        var schemaJson = JsonSerializer.Serialize(schema, JsonOptions);
 
         _schemas[typeof(T)] = schemaJson;
 
@@ -115,7 +108,7 @@ public class JsonSchemaValidator : IEntitySchemaValidator
     }
 
     /// <summary>
-    /// Recursively collects validation error messages from the evaluation results.
+    ///     Recursively collects validation error messages from the evaluation results.
     /// </summary>
     /// <param name="results">The validation results to process.</param>
     /// <returns>An enumerable of error messages.</returns>

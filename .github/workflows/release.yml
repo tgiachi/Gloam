@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Required for GitVersion
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
+        
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        
+    - name: Restore dependencies
+      run: dotnet restore Gloam.sln
+      
+    - name: Build solution
+      run: dotnet build Gloam.sln --no-restore --configuration Release -p:Version=${{ steps.version.outputs.VERSION }}
+      
+    - name: Run tests
+      run: dotnet test Gloam.sln --no-build --configuration Release
+      
+    - name: Pack NuGet packages
+      run: |
+        dotnet pack src/Gloam.Core/Gloam.Core.csproj --no-build --configuration Release -p:PackageVersion=${{ steps.version.outputs.VERSION }} --output nuget-packages
+        dotnet pack src/Gloam.Data/Gloam.Data.csproj --no-build --configuration Release -p:PackageVersion=${{ steps.version.outputs.VERSION }} --output nuget-packages
+        dotnet pack src/Gloam.Runtime/Gloam.Runtime.csproj --no-build --configuration Release -p:PackageVersion=${{ steps.version.outputs.VERSION }} --output nuget-packages
+        
+    - name: Build CLI tool
+      run: |
+        dotnet publish tools/Gloam.Cli/Gloam.Cli.csproj --configuration Release --output cli-tool/linux-x64 --runtime linux-x64 --self-contained
+        dotnet publish tools/Gloam.Cli/Gloam.Cli.csproj --configuration Release --output cli-tool/win-x64 --runtime win-x64 --self-contained
+        dotnet publish tools/Gloam.Cli/Gloam.Cli.csproj --configuration Release --output cli-tool/osx-x64 --runtime osx-x64 --self-contained
+        
+    - name: Create CLI archives
+      run: |
+        cd cli-tool
+        tar -czf gloam-cli-${{ steps.version.outputs.VERSION }}-linux-x64.tar.gz -C linux-x64 .
+        zip -r gloam-cli-${{ steps.version.outputs.VERSION }}-win-x64.zip win-x64/*
+        tar -czf gloam-cli-${{ steps.version.outputs.VERSION }}-osx-x64.tar.gz -C osx-x64 .
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          nuget-packages/*.nupkg
+          cli-tool/*.tar.gz
+          cli-tool/*.zip
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    # TODO: Uncomment when ready to publish to NuGet.org
+    # - name: Push to NuGet.org
+    #   run: dotnet nuget push "nuget-packages/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+    #   if: "!contains(steps.version.outputs.VERSION, '-')" # Only stable releases

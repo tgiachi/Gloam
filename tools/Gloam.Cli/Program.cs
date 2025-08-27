@@ -1,3 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using ConsoleAppFramework;
+using Gloam.Cli.Commands;
 
-Console.WriteLine("Hello, World!");
+var app = ConsoleApp.Create();
+app.Add("validate", Validate.ValidateAsync);
+app.Run(args);

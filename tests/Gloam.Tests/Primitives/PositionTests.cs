@@ -4,7 +4,7 @@ using Gloam.Core.Primitives;
 namespace Gloam.Tests.Primitives;
 
 /// <summary>
-/// Tests for the Position struct.
+///     Tests for the Position struct.
 /// </summary>
 public class PositionTests
 {
@@ -262,8 +262,8 @@ public class PositionTests
         var moved = position.Move(-6.7f, -8.3f);
 
         // Total after move: (5 - 6.7, 5 - 8.3) = (-1.7, -3.3)
-        Assert.That(moved.X, Is.EqualTo(-2)); // Floor of -1.7
-        Assert.That(moved.Y, Is.EqualTo(-4)); // Floor of -3.3
+        Assert.That(moved.X, Is.EqualTo(-2));                        // Floor of -1.7
+        Assert.That(moved.Y, Is.EqualTo(-4));                        // Floor of -3.3
         Assert.That(moved.OffsetX, Is.EqualTo(0.3f).Within(0.001f)); // -1.7 - (-2)
         Assert.That(moved.OffsetY, Is.EqualTo(0.7f).Within(0.001f)); // -3.3 - (-4)
     }

@@ -6,7 +6,7 @@ using Gloam.Data.Entities.Tiles;
 namespace Gloam.Data.Entities.Base;
 
 /// <summary>
-/// Base class for all Gloam entities with common properties and JSON polymorphism support.
+///     Base class for all Gloam entities with common properties and JSON polymorphism support.
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(TileSetEntity), "tiles")]
@@ -14,30 +14,30 @@ namespace Gloam.Data.Entities.Base;
 public class BaseGloamEntity
 {
     /// <summary>
-    /// Gets or sets the unique identifier for this entity.
+    ///     Gets or sets the unique identifier for this entity.
     /// </summary>
     [Required]
     public string Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the display name of the entity.
+    ///     Gets or sets the display name of the entity.
     /// </summary>
     [Required]
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets a comment associated with this entity.
+    ///     Gets or sets a comment associated with this entity.
     /// </summary>
     [JsonPropertyName("#")]
     public string Comment { get; set; }
 
     /// <summary>
-    /// Gets or sets a detailed description of the entity.
+    ///     Gets or sets a detailed description of the entity.
     /// </summary>
     public string Description { get; set; }
 
     /// <summary>
-    /// Gets or sets a list of tags associated with this entity for categorization.
+    ///     Gets or sets a list of tags associated with this entity for categorization.
     /// </summary>
     public List<string> Tags { get; set; } = new();
 }

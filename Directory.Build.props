@@ -1,0 +1,39 @@
+<Project>
+
+    <!-- Common properties for all projects -->
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <!-- Quality settings - temporarily disabled for warnings as errors -->
+        <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+        <EnableNETAnalyzers>true</EnableNETAnalyzers>
+        <AnalysisMode>Recommended</AnalysisMode>
+
+        <!-- Build reproducibility -->
+        <Deterministic>true</Deterministic>
+        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+        <!-- Package metadata -->
+        <Authors>Gloam Contributors</Authors>
+        <Company>Gloam Project</Company>
+        <Product>Gloam Roguelike Engine</Product>
+        <Copyright>Copyright © 2025 Gloam Contributors</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/squid-box/gloam</RepositoryUrl>
+    </PropertyGroup>
+
+    <!-- Suppress specific analyzer warnings for initial development -->
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);CA1303;CA1815;CA1052;CA2225;CA1043;CA1305;CA1307;CA1310;CA1062;CA2263</NoWarn>
+    </PropertyGroup>
+
+    <!-- Source Link for debugging -->
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+    </ItemGroup>
+
+</Project>

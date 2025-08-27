@@ -29,13 +29,15 @@ public static partial class ResourceUtils
 
         if (fullResourceName == null)
         {
-            throw new Exception($"Resource {resourceName} not found in assembly {assembly.FullName}");
+            throw new FileNotFoundException($"Resource {resourceName} not found in assembly {assembly.FullName}");
         }
 
         using var stream = assembly.GetManifestResourceStream(fullResourceName);
         if (stream == null)
         {
-            throw new Exception($"Resource {resourceName} not found in assembly {assembly.FullName}");
+            throw new InvalidOperationException(
+                $"Unable to open resource stream for {resourceName} in assembly {assembly.FullName}"
+            );
         }
 
         using var reader = new StreamReader(stream);
@@ -48,7 +50,7 @@ public static partial class ResourceUtils
     /// <param name="assembly">The assembly to search in (if null, uses current assembly)</param>
     /// <param name="directoryPath">Directory path to search (e.g. "Assets.Templates")</param>
     /// <returns>A list of resource names found</returns>
-    public static IEnumerable<string> GetEmbeddedResourceNames(Assembly assembly = null, string directoryPath = null)
+    public static string[] GetEmbeddedResourceNames(Assembly assembly = null, string directoryPath = null)
     {
         // If no assembly is specified, use the current one
         assembly ??= Assembly.GetExecutingAssembly();
@@ -66,13 +68,13 @@ public static partial class ResourceUtils
         var normalizedPath = directoryPath.Replace('/', '.').Replace('\\', '.');
 
         // If it doesn't end with a dot, add one to ensure we're looking for that specific path
-        if (!normalizedPath.EndsWith("."))
+        if (!normalizedPath.EndsWith('.'))
         {
             normalizedPath += ".";
         }
 
         // Filter resources that contain the specified path
-        return resourceNames.Where(name => name.Contains(normalizedPath));
+        return resourceNames.Where(name => name.Contains(normalizedPath)).ToArray();
     }
 
     public static string EmbeddedNameToPath(string resourceName, string assemblyPrefix)
@@ -91,7 +93,7 @@ public static partial class ResourceUtils
     /// <param name="assembly">The assembly to search in (if null, uses current assembly)</param>
     /// <param name="directoryPath">Directory path to search (e.g. "Assets/Templates")</param>
     /// <returns>A list of file names (without the full path)</returns>
-    public static IEnumerable<string> GetEmbeddedResourceFileNames(
+    public static List<string> GetEmbeddedResourceFileNames(
         Assembly assembly = null, string directoryPath = "Assets/Templates"
     )
     {

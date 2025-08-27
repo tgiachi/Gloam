@@ -30,10 +30,10 @@ public readonly struct Color
             throw new ArgumentException("Hex string must be 6 or 8 characters long.", nameof(hex));
         }
 
-        int r = Convert.ToInt32(hex[..2], 16);
-        int g = Convert.ToInt32(hex.Substring(2, 2), 16);
-        int b = Convert.ToInt32(hex.Substring(4, 2), 16);
-        int a = hex.Length == 8 ? Convert.ToInt32(hex.Substring(6, 2), 16) : 255;
+        var r = Convert.ToInt32(hex[..2], 16);
+        var g = Convert.ToInt32(hex.Substring(2, 2), 16);
+        var b = Convert.ToInt32(hex.Substring(4, 2), 16);
+        var a = hex.Length == 8 ? Convert.ToInt32(hex.Substring(6, 2), 16) : 255;
 
         return new Color(r, g, b, a);
     }

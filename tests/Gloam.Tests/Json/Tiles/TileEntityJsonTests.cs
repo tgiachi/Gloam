@@ -108,11 +108,11 @@ public class TileEntityJsonTests
     public void Deserialize_WithMissingProperties_ShouldUseDefaults()
     {
         var json = """
-        {
-            "id": "minimal-tile",
-            "name": "Minimal Tile"
-        }
-        """;
+                   {
+                       "id": "minimal-tile",
+                       "name": "Minimal Tile"
+                   }
+                   """;
 
         var tile = JsonUtils.Deserialize<TileEntity>(json);
 

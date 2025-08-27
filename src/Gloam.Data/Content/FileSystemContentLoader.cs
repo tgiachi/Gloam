@@ -2,6 +2,9 @@ using Gloam.Data.Interfaces.Content;
 
 namespace Gloam.Data.Content;
 
+/// <summary>
+/// Implementation of IContentLoader that loads content from the file system with security restrictions
+/// </summary>
 public class FileSystemContentLoader : IContentLoader
 {
     private readonly string _basePath;

@@ -9,12 +9,11 @@ namespace Gloam.Data.Loaders;
 
 public class EntityDataLoader : IEntityDataLoader
 {
-    private readonly ILogger _logger = Log.ForContext<EntityDataLoader>();
-
     private readonly IContentLoader _contentLoader;
-    private readonly IEntitySchemaValidator _entitySchemaValidator;
 
     private readonly Dictionary<Type, List<Func<BaseGloamEntity, ValueTask>>> _entityLoadSubscribers = new();
+    private readonly IEntitySchemaValidator _entitySchemaValidator;
+    private readonly ILogger _logger = Log.ForContext<EntityDataLoader>();
 
 
     public EntityDataLoader(IContentLoader contentLoader, IEntitySchemaValidator entitySchemaValidator)
@@ -28,7 +27,7 @@ public class EntityDataLoader : IEntityDataLoader
     {
         ArgumentNullException.ThrowIfNull(onEntityLoaded);
         var entityType = typeof(TEntity);
-        if (!_entityLoadSubscribers.TryGetValue(entityType, out List<Func<BaseGloamEntity, ValueTask>>? value))
+        if (!_entityLoadSubscribers.TryGetValue(entityType, out var value))
         {
             value = [];
             _entityLoadSubscribers[entityType] = value;

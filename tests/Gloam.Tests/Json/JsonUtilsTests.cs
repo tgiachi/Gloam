@@ -1,13 +1,18 @@
+using System.Collections.ObjectModel;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Gloam.Core.Json;
+using Gloam.Data.Context;
 using Gloam.Data.Entities.Base;
 using Gloam.Data.Entities.Colors;
 using Gloam.Data.Entities.Tiles;
-using System.Text.Json;
 
 namespace Gloam.Tests.Json;
 
 /// <summary>
-/// Tests for JsonUtils functionality.
+///     Tests for JsonUtils functionality.
 /// </summary>
 public class JsonUtilsTests
 {
@@ -15,9 +20,10 @@ public class JsonUtilsTests
     public void OneTimeSetUp()
     {
         // Register the data context for entity serialization
-        var dataContext = new Gloam.Data.Context.GloamDataJsonContext();
+        var dataContext = new GloamDataJsonContext();
         JsonUtils.RegisterJsonContext(dataContext);
     }
+
     #region Schema File Name Tests
 
     [Test]
@@ -73,7 +79,7 @@ public class JsonUtilsTests
     {
         var fileName1 = JsonUtils.GetSchemaFileName(typeof(TileEntity));
         var fileName2 = JsonUtils.GetSchemaFileName(typeof(ColorSetEntity));
-        
+
         Assert.That(fileName1, Is.EqualTo("tile.schema.json"));
         Assert.That(fileName2, Is.EqualTo("color_set.schema.json"));
     }
@@ -130,33 +136,34 @@ public class JsonUtilsTests
     [Test]
     public void SerializeToFile_NullPath_ShouldThrowArgumentNullException()
     {
-        var testObject = new TileEntity 
-        { 
-            Id = "test", 
+        var testObject = new TileEntity
+        {
+            Id = "test",
             Name = "Test",
             Glyph = "@",
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        
+
         Assert.Throws<ArgumentNullException>(() => JsonUtils.SerializeToFile(testObject, null!));
     }
 
     [Test]
     public void DeserializeFromFile_NonExistentFile_ShouldThrowFileNotFoundException()
     {
-        var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
-        
+        var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+
         Assert.Throws<FileNotFoundException>(() => JsonUtils.DeserializeFromFile<TileEntity>(nonExistentPath));
     }
 
     [Test]
     public async Task DeserializeFromFileAsync_NonExistentFile_ShouldThrowFileNotFoundException()
     {
-        var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
-        
-        Assert.ThrowsAsync<FileNotFoundException>(async () => 
-            await JsonUtils.DeserializeFromFileAsync<TileEntity>(nonExistentPath));
+        var nonExistentPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
+
+        Assert.ThrowsAsync<FileNotFoundException>(async () =>
+            await JsonUtils.DeserializeFromFileAsync<TileEntity>(nonExistentPath)
+        );
     }
 
     #endregion
@@ -176,7 +183,7 @@ public class JsonUtilsTests
         };
 
         var json = JsonUtils.Serialize(testObject);
-        
+
         Assert.That(json, Is.Not.Null);
         Assert.That(json, Does.Contain("test-tile"));
         Assert.That(json, Does.Contain("Test Tile"));
@@ -186,17 +193,17 @@ public class JsonUtilsTests
     public void Deserialize_ValidJson_ReturnsObject()
     {
         var json = """
-        {
-            "id": "test-tile",
-            "name": "Test Tile",
-            "glyph": "@",
-            "backgroundColor": "#000000",
-            "foregroundColor": "#FFFFFF"
-        }
-        """;
+                   {
+                       "id": "test-tile",
+                       "name": "Test Tile",
+                       "glyph": "@",
+                       "backgroundColor": "#000000",
+                       "foregroundColor": "#FFFFFF"
+                   }
+                   """;
 
         var result = JsonUtils.Deserialize<TileEntity>(json);
-        
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Id, Is.EqualTo("test-tile"));
         Assert.That(result.Name, Is.EqualTo("Test Tile"));
@@ -206,7 +213,7 @@ public class JsonUtilsTests
     public void Deserialize_InvalidJson_ThrowsJsonException()
     {
         var invalidJson = "null";
-        
+
         Assert.Throws<JsonException>(() => JsonUtils.Deserialize<TileEntity>(invalidJson));
     }
 
@@ -214,7 +221,7 @@ public class JsonUtilsTests
     public void Deserialize_ValidJsonWithNullResult_ThrowsJsonException()
     {
         var json = "null";
-        
+
         Assert.Throws<JsonException>(() => JsonUtils.Deserialize<string>(json));
     }
 
@@ -235,12 +242,12 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
+        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
 
         try
         {
             JsonUtils.SerializeToFile(testObject, tempFilePath);
-            
+
             Assert.That(File.Exists(tempFilePath), Is.True);
             var content = File.ReadAllText(tempFilePath);
             Assert.That(content, Does.Contain("test-tile"));
@@ -248,7 +255,9 @@ public class JsonUtilsTests
         finally
         {
             if (File.Exists(tempFilePath))
+            {
                 File.Delete(tempFilePath);
+            }
         }
     }
 
@@ -263,12 +272,12 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
+        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
 
         try
         {
             await JsonUtils.SerializeToFileAsync(testObject, tempFilePath);
-            
+
             Assert.That(File.Exists(tempFilePath), Is.True);
             var content = File.ReadAllText(tempFilePath);
             Assert.That(content, Does.Contain("test-tile"));
@@ -276,15 +285,18 @@ public class JsonUtilsTests
         finally
         {
             if (File.Exists(tempFilePath))
+            {
                 File.Delete(tempFilePath);
+            }
         }
     }
 
     [Test]
     public async Task SerializeToFileAsync_NullObject_ThrowsArgumentNullException()
     {
-        Assert.ThrowsAsync<ArgumentNullException>(async () => 
-            await JsonUtils.SerializeToFileAsync<TileEntity>(null!, "test.json"));
+        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await JsonUtils.SerializeToFileAsync<TileEntity>(null!, "test.json")
+        );
     }
 
     [Test]
@@ -298,9 +310,10 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        
-        Assert.ThrowsAsync<ArgumentNullException>(async () => 
-            await JsonUtils.SerializeToFileAsync(testObject, null!));
+
+        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await JsonUtils.SerializeToFileAsync(testObject, null!)
+        );
     }
 
     [Test]
@@ -314,13 +327,13 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
+        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
 
         try
         {
             JsonUtils.SerializeToFile(testObject, tempFilePath);
             var result = JsonUtils.DeserializeFromFile<TileEntity>(tempFilePath);
-            
+
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Id, Is.EqualTo("test-tile"));
             Assert.That(result.Name, Is.EqualTo("Test Tile"));
@@ -328,7 +341,9 @@ public class JsonUtilsTests
         finally
         {
             if (File.Exists(tempFilePath))
+            {
                 File.Delete(tempFilePath);
+            }
         }
     }
 
@@ -343,13 +358,13 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
+        var tempFilePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".json");
 
         try
         {
             await JsonUtils.SerializeToFileAsync(testObject, tempFilePath);
             var result = await JsonUtils.DeserializeFromFileAsync<TileEntity>(tempFilePath);
-            
+
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Id, Is.EqualTo("test-tile"));
             Assert.That(result.Name, Is.EqualTo("Test Tile"));
@@ -357,15 +372,18 @@ public class JsonUtilsTests
         finally
         {
             if (File.Exists(tempFilePath))
+            {
                 File.Delete(tempFilePath);
+            }
         }
     }
 
     [Test]
     public async Task DeserializeFromFileAsync_NullPath_ThrowsArgumentNullException()
     {
-        Assert.ThrowsAsync<ArgumentNullException>(async () => 
-            await JsonUtils.DeserializeFromFileAsync<TileEntity>(null!));
+        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await JsonUtils.DeserializeFromFileAsync<TileEntity>(null!)
+        );
     }
 
     #endregion
@@ -376,11 +394,11 @@ public class JsonUtilsTests
     public void AddJsonConverter_ValidConverter_AddsToList()
     {
         var initialConverters = JsonUtils.GetJsonConverters();
-        var testConverter = new System.Text.Json.Serialization.JsonStringEnumConverter();
-        
+        var testConverter = new JsonStringEnumConverter();
+
         JsonUtils.AddJsonConverter(testConverter);
         var newConverters = JsonUtils.GetJsonConverters();
-        
+
         Assert.That(newConverters.Count, Is.GreaterThanOrEqualTo(initialConverters.Count));
         Assert.That(newConverters.Any(c => c.GetType() == testConverter.GetType()), Is.True);
     }
@@ -399,8 +417,8 @@ public class JsonUtilsTests
     public void RegisterJsonContext_ValidContext_AddsToContexts()
     {
         // Use the existing context from Gloam.Data since it's already available
-        var dataContext = new Gloam.Data.Context.GloamDataJsonContext();
-        
+        var dataContext = new GloamDataJsonContext();
+
         // This should not throw - we're testing the null check and basic functionality
         Assert.DoesNotThrow(() => JsonUtils.RegisterJsonContext(dataContext));
     }
@@ -428,21 +446,25 @@ public class JsonUtilsTests
     {
         // Test the edge case where pascalCase is empty via reflection
         var jsonUtilsType = typeof(JsonUtils);
-        var convertMethod = jsonUtilsType.GetMethod("ConvertToSnakeCase", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        
+        var convertMethod = jsonUtilsType.GetMethod(
+            "ConvertToSnakeCase",
+            BindingFlags.NonPublic | BindingFlags.Static
+        );
+
         var result = convertMethod?.Invoke(null, new object[] { "" });
         Assert.That(result, Is.EqualTo(""));
     }
 
-    [Test] 
+    [Test]
     public void ConvertToSnakeCase_WithNullString_ShouldReturnNull()
     {
         // Test the edge case where pascalCase is null via reflection
         var jsonUtilsType = typeof(JsonUtils);
-        var convertMethod = jsonUtilsType.GetMethod("ConvertToSnakeCase", 
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        
+        var convertMethod = jsonUtilsType.GetMethod(
+            "ConvertToSnakeCase",
+            BindingFlags.NonPublic | BindingFlags.Static
+        );
+
         var result = convertMethod?.Invoke(null, new object[] { null! });
         Assert.That(result, Is.Null);
     }
@@ -455,17 +477,17 @@ public class JsonUtilsTests
     public void DeserializeOrDefault_ValidJson_ReturnsObject()
     {
         var json = """
-        {
-            "id": "test-tile",
-            "name": "Test Tile",
-            "glyph": "@",
-            "backgroundColor": "#000000",
-            "foregroundColor": "#FFFFFF"
-        }
-        """;
+                   {
+                       "id": "test-tile",
+                       "name": "Test Tile",
+                       "glyph": "@",
+                       "backgroundColor": "#000000",
+                       "foregroundColor": "#FFFFFF"
+                   }
+                   """;
 
         var result = JsonUtils.DeserializeOrDefault<TileEntity>(json);
-        
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Id, Is.EqualTo("test-tile"));
     }
@@ -475,9 +497,9 @@ public class JsonUtilsTests
     {
         var invalidJson = "{ invalid json }";
         var defaultValue = new TileEntity { Id = "default" };
-        
+
         var result = JsonUtils.DeserializeOrDefault(invalidJson, defaultValue);
-        
+
         Assert.That(result, Is.EqualTo(defaultValue));
         Assert.That(result.Id, Is.EqualTo("default"));
     }
@@ -486,11 +508,11 @@ public class JsonUtilsTests
     public void DeserializeOrDefault_NullOrEmptyJson_ReturnsDefault()
     {
         var defaultValue = new TileEntity { Id = "default" };
-        
-        var result1 = JsonUtils.DeserializeOrDefault<TileEntity>(null, defaultValue);
-        var result2 = JsonUtils.DeserializeOrDefault<TileEntity>("", defaultValue);
-        var result3 = JsonUtils.DeserializeOrDefault<TileEntity>("   ", defaultValue);
-        
+
+        var result1 = JsonUtils.DeserializeOrDefault(null, defaultValue);
+        var result2 = JsonUtils.DeserializeOrDefault("", defaultValue);
+        var result3 = JsonUtils.DeserializeOrDefault("   ", defaultValue);
+
         Assert.That(result1, Is.EqualTo(defaultValue));
         Assert.That(result2, Is.EqualTo(defaultValue));
         Assert.That(result3, Is.EqualTo(defaultValue));
@@ -500,9 +522,9 @@ public class JsonUtilsTests
     public void IsValidJson_ValidJson_ReturnsTrue()
     {
         var validJson = """{ "test": "value" }""";
-        
+
         var result = JsonUtils.IsValidJson(validJson);
-        
+
         Assert.That(result, Is.True);
     }
 
@@ -510,9 +532,9 @@ public class JsonUtilsTests
     public void IsValidJson_InvalidJson_ReturnsFalse()
     {
         var invalidJson = "{ invalid json }";
-        
+
         var result = JsonUtils.IsValidJson(invalidJson);
-        
+
         Assert.That(result, Is.False);
     }
 
@@ -527,19 +549,19 @@ public class JsonUtilsTests
     [Test]
     public void RemoveJsonConverter_ExistingConverter_ReturnsTrue()
     {
-        var testConverter = new System.Text.Json.Serialization.JsonStringEnumConverter();
+        var testConverter = new JsonStringEnumConverter();
         JsonUtils.AddJsonConverter(testConverter);
-        
-        var removed = JsonUtils.RemoveJsonConverter<System.Text.Json.Serialization.JsonStringEnumConverter>();
-        
+
+        var removed = JsonUtils.RemoveJsonConverter<JsonStringEnumConverter>();
+
         Assert.That(removed, Is.True);
     }
 
     [Test]
     public void RemoveJsonConverter_NonExistentConverter_ReturnsFalse()
     {
-        var removed = JsonUtils.RemoveJsonConverter<System.Text.Json.Serialization.JsonConverter<DateTime>>();
-        
+        var removed = JsonUtils.RemoveJsonConverter<JsonConverter<DateTime>>();
+
         Assert.That(removed, Is.False);
     }
 
@@ -547,9 +569,9 @@ public class JsonUtilsTests
     public void GetJsonConverters_ReturnsReadOnlyList()
     {
         var converters = JsonUtils.GetJsonConverters();
-        
+
         Assert.That(converters, Is.Not.Null);
-        Assert.That(converters, Is.TypeOf<System.Collections.ObjectModel.ReadOnlyCollection<System.Text.Json.Serialization.JsonConverter>>());
+        Assert.That(converters, Is.TypeOf<ReadOnlyCollection<JsonConverter>>());
     }
 
     [Test]
@@ -563,12 +585,12 @@ public class JsonUtilsTests
             BackgroundColor = "#000000",
             ForegroundColor = "#FFFFFF"
         };
-        
+
         var json = JsonUtils.Serialize(testObject);
-        using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(json));
-        
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+
         var result = await JsonUtils.DeserializeFromStreamAsync<TileEntity>(stream);
-        
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Id, Is.EqualTo("test-tile"));
     }
@@ -576,8 +598,9 @@ public class JsonUtilsTests
     [Test]
     public async Task DeserializeFromStreamAsync_NullStream_ThrowsArgumentNullException()
     {
-        Assert.ThrowsAsync<ArgumentNullException>(async () => 
-            await JsonUtils.DeserializeFromStreamAsync<TileEntity>(null!));
+        Assert.ThrowsAsync<ArgumentNullException>(async () =>
+            await JsonUtils.DeserializeFromStreamAsync<TileEntity>(null!)
+        );
     }
 
     [Test]
@@ -586,42 +609,48 @@ public class JsonUtilsTests
         var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
         var objects = new Dictionary<string, TileEntity>
         {
-            ["tile1"] = new TileEntity { Id = "tile1", Name = "Tile 1", Glyph = "@", BackgroundColor = "#000", ForegroundColor = "#FFF" },
-            ["tile2"] = new TileEntity { Id = "tile2", Name = "Tile 2", Glyph = "#", BackgroundColor = "#111", ForegroundColor = "#EEE" }
+            ["tile1"] = new()
+                { Id = "tile1", Name = "Tile 1", Glyph = "@", BackgroundColor = "#000", ForegroundColor = "#FFF" },
+            ["tile2"] = new()
+                { Id = "tile2", Name = "Tile 2", Glyph = "#", BackgroundColor = "#111", ForegroundColor = "#EEE" }
         };
 
         try
         {
             JsonUtils.SerializeMultipleToDirectory(objects, tempDir);
-            
+
             Assert.That(Directory.Exists(tempDir), Is.True);
             Assert.That(File.Exists(Path.Combine(tempDir, "tile1.json")), Is.True);
             Assert.That(File.Exists(Path.Combine(tempDir, "tile2.json")), Is.True);
-            
+
             var content1 = File.ReadAllText(Path.Combine(tempDir, "tile1.json"));
             Assert.That(content1, Does.Contain("Tile 1"));
         }
         finally
         {
             if (Directory.Exists(tempDir))
+            {
                 Directory.Delete(tempDir, true);
+            }
         }
     }
 
     [Test]
     public void SerializeMultipleToDirectory_NullObjects_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => 
-            JsonUtils.SerializeMultipleToDirectory<TileEntity>(null!, "test"));
+        Assert.Throws<ArgumentNullException>(() =>
+            JsonUtils.SerializeMultipleToDirectory<TileEntity>(null!, "test")
+        );
     }
 
     [Test]
     public void SerializeMultipleToDirectory_NullDirectory_ThrowsArgumentNullException()
     {
         var objects = new Dictionary<string, TileEntity>();
-        
-        Assert.Throws<ArgumentNullException>(() => 
-            JsonUtils.SerializeMultipleToDirectory(objects, null!));
+
+        Assert.Throws<ArgumentNullException>(() =>
+            JsonUtils.SerializeMultipleToDirectory(objects, null!)
+        );
     }
 
     [Test]
@@ -633,21 +662,22 @@ public class JsonUtilsTests
             WriteIndented = false,
             PropertyNamingPolicy = null
         };
-        
+
         var result = JsonUtils.Serialize(testObject, customOptions);
-        
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result, Does.Not.Contain("\n")); // Not indented
-        Assert.That(result, Does.Contain("Test")); // Preserved casing
+        Assert.That(result, Does.Contain("Test"));   // Preserved casing
     }
 
     [Test]
     public void Serialize_WithCustomOptions_NullOptions_ThrowsArgumentNullException()
     {
         var testObject = new { Test = "value" };
-        
-        Assert.Throws<ArgumentNullException>(() => 
-            JsonUtils.Serialize(testObject, null!));
+
+        Assert.Throws<ArgumentNullException>(() =>
+            JsonUtils.Serialize(testObject, null!)
+        );
     }
 
     #endregion
@@ -655,12 +685,25 @@ public class JsonUtilsTests
     #region Test Data Classes
 
     // Test class for PascalCase conversion
-    private class MyComplexTypeEntity { }
-    private class MyVeryComplexTypeName { }
-    private class SimpleEntity { }
-    private class TestType { }
-    private class TestEmptyType { }
+    private class MyComplexTypeEntity
+    {
+    }
 
+    private class MyVeryComplexTypeName
+    {
+    }
+
+    private class SimpleEntity
+    {
+    }
+
+    private class TestType
+    {
+    }
+
+    private class TestEmptyType
+    {
+    }
 
     #endregion
 }

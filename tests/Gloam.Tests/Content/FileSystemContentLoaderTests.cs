@@ -3,12 +3,12 @@ using Gloam.Data.Content;
 namespace Gloam.Tests.Content;
 
 /// <summary>
-/// Tests for FileSystemContentLoader functionality.
+///     Tests for FileSystemContentLoader functionality.
 /// </summary>
 public class FileSystemContentLoaderTests
 {
-    private string _tempDirectory = null!;
     private FileSystemContentLoader _loader = null!;
+    private string _tempDirectory = null!;
 
     [SetUp]
     public void SetUp()
@@ -23,7 +23,7 @@ public class FileSystemContentLoaderTests
     {
         if (Directory.Exists(_tempDirectory))
         {
-            Directory.Delete(_tempDirectory, recursive: true);
+            Directory.Delete(_tempDirectory, true);
         }
     }
 

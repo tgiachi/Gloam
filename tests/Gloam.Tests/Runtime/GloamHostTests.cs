@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DryIoc;
 using Gloam.Data.Content;
 using Gloam.Data.Interfaces.Content;
@@ -13,12 +14,12 @@ using Mosaic.Engine.Directories;
 namespace Gloam.Tests.Runtime;
 
 /// <summary>
-/// Tests for GloamHost functionality and DryIoc container configuration.
+///     Tests for GloamHost functionality and DryIoc container configuration.
 /// </summary>
 public class GloamHostTests
 {
-    private GloamHost _host = null!;
     private GloamHostConfig _config = null!;
+    private GloamHost _host = null!;
     private string _tempDirectory = null!;
 
     [SetUp]
@@ -27,7 +28,7 @@ public class GloamHostTests
         // Create a unique temporary directory for each test
         _tempDirectory = Path.Combine(Path.GetTempPath(), "GloamTests", Guid.NewGuid().ToString());
         Directory.CreateDirectory(_tempDirectory);
-        
+
         _config = new GloamHostConfig
         {
             RootDirectory = _tempDirectory,
@@ -39,11 +40,11 @@ public class GloamHostTests
     public void TearDown()
     {
         _host?.Dispose();
-        
+
         // Clean up temporary directory
         if (Directory.Exists(_tempDirectory))
         {
-            Directory.Delete(_tempDirectory, recursive: true);
+            Directory.Delete(_tempDirectory, true);
         }
     }
 
@@ -70,7 +71,7 @@ public class GloamHostTests
         _host = new GloamHost(_config);
 
         var resolvedConfig = _host.Container.Resolve<GloamHostConfig>();
-        
+
         Assert.That(resolvedConfig, Is.SameAs(_config));
     }
 
@@ -92,13 +93,13 @@ public class GloamHostTests
     public void Container_ShouldSupportTransientReuse()
     {
         _host = new GloamHost(_config);
-        
+
         // Register a transient service
         _host.Container.Register<TestTransientService>();
-        
+
         var instance1 = _host.Container.Resolve<TestTransientService>();
         var instance2 = _host.Container.Resolve<TestTransientService>();
-        
+
         Assert.That(instance1, Is.Not.SameAs(instance2));
     }
 
@@ -106,13 +107,13 @@ public class GloamHostTests
     public void Container_ShouldSupportSingletonReuse()
     {
         _host = new GloamHost(_config);
-        
+
         // Register a singleton service
         _host.Container.Register<TestSingletonService>(Reuse.Singleton);
-        
+
         var instance1 = _host.Container.Resolve<TestSingletonService>();
         var instance2 = _host.Container.Resolve<TestSingletonService>();
-        
+
         Assert.That(instance1, Is.SameAs(instance2));
     }
 
@@ -127,7 +128,7 @@ public class GloamHostTests
         _host = new GloamHost(_config);
 
         var contentLoader = _host.Container.Resolve<IContentLoader>();
-        
+
         Assert.That(contentLoader, Is.TypeOf<FileSystemContentLoader>());
     }
 
@@ -138,7 +139,7 @@ public class GloamHostTests
         _host = new GloamHost(_config);
 
         var directoriesConfig = _host.Container.Resolve<DirectoriesConfig>();
-        
+
         Assert.That(directoriesConfig, Is.Not.Null);
         Assert.That(directoriesConfig.Root, Is.EqualTo(_config.RootDirectory));
         // DirectoriesConfig doesn't expose subdirectories array, but we can test path resolution
@@ -149,7 +150,7 @@ public class GloamHostTests
     public void ConfigureServices_UnsupportedLoaderType_ShouldThrowNotImplementedException()
     {
         _config.LoaderType = (ContentLoaderType)999; // Invalid loader type
-        
+
         Assert.Throws<NotImplementedException>(() => new GloamHost(_config));
     }
 
@@ -163,7 +164,7 @@ public class GloamHostTests
         _host = new GloamHost(_config);
 
         var validator = _host.Container.Resolve<IEntitySchemaValidator>();
-        
+
         Assert.That(validator, Is.TypeOf<JsonSchemaValidator>());
     }
 
@@ -173,7 +174,7 @@ public class GloamHostTests
         _host = new GloamHost(_config);
 
         var dataLoader = _host.Container.Resolve<IEntityDataLoader>();
-        
+
         Assert.That(dataLoader, Is.TypeOf<EntityDataLoader>());
     }
 
@@ -184,7 +185,7 @@ public class GloamHostTests
 
         var validator1 = _host.Container.Resolve<IEntitySchemaValidator>();
         var validator2 = _host.Container.Resolve<IEntitySchemaValidator>();
-        
+
         Assert.That(validator1, Is.SameAs(validator2));
     }
 
@@ -195,7 +196,7 @@ public class GloamHostTests
 
         var loader1 = _host.Container.Resolve<IEntityDataLoader>();
         var loader2 = _host.Container.Resolve<IEntityDataLoader>();
-        
+
         Assert.That(loader1, Is.SameAs(loader2));
     }
 
@@ -210,7 +211,7 @@ public class GloamHostTests
 
         // EntityDataLoader depends on IContentLoader and IEntitySchemaValidator
         var dataLoader = _host.Container.Resolve<IEntityDataLoader>();
-        
+
         Assert.That(dataLoader, Is.Not.Null);
         Assert.That(dataLoader, Is.TypeOf<EntityDataLoader>());
     }
@@ -236,9 +237,9 @@ public class GloamHostTests
     {
         _host = new GloamHost(_config);
         var container = _host.Container;
-        
+
         _host.Dispose();
-        
+
         // After disposal, container should be disposed
         Assert.Throws<ContainerException>(() => container.Resolve<GloamHostConfig>());
     }
@@ -247,9 +248,9 @@ public class GloamHostTests
     public void Dispose_MultipleCalls_ShouldNotThrow()
     {
         _host = new GloamHost(_config);
-        
+
         _host.Dispose();
-        
+
         Assert.DoesNotThrow(() => _host.Dispose());
     }
 
@@ -257,13 +258,13 @@ public class GloamHostTests
     public void Dispose_WithUsingStatement_ShouldWorkCorrectly()
     {
         IContainer? containerRef = null;
-        
+
         using (var host = new GloamHost(_config))
         {
             containerRef = host.Container;
             Assert.That(containerRef, Is.Not.Null);
         }
-        
+
         // After using block, container should be disposed
         Assert.Throws<ContainerException>(() => containerRef!.Resolve<GloamHostConfig>());
     }
@@ -276,23 +277,23 @@ public class GloamHostTests
     public void Performance_RepeatedResolution_ShouldBeEfficient()
     {
         _host = new GloamHost(_config);
-        
+
         // Warm up
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             _host.Container.Resolve<IEntitySchemaValidator>();
         }
-        
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
+
+        var stopwatch = Stopwatch.StartNew();
+
         // Test repeated singleton resolution
-        for (int i = 0; i < 10000; i++)
+        for (var i = 0; i < 10000; i++)
         {
             _host.Container.Resolve<IEntitySchemaValidator>();
         }
-        
+
         stopwatch.Stop();
-        
+
         // Should resolve 10k singletons in reasonable time (less than 100ms)
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(100));
     }
@@ -302,23 +303,23 @@ public class GloamHostTests
     {
         _host = new GloamHost(_config);
         _host.Container.Register<TestTransientService>();
-        
+
         // Warm up
-        for (int i = 0; i < 100; i++)
+        for (var i = 0; i < 100; i++)
         {
             _host.Container.Resolve<TestTransientService>();
         }
-        
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-        
+
+        var stopwatch = Stopwatch.StartNew();
+
         // Test repeated transient creation
-        for (int i = 0; i < 1000; i++)
+        for (var i = 0; i < 1000; i++)
         {
             _host.Container.Resolve<TestTransientService>();
         }
-        
+
         stopwatch.Stop();
-        
+
         // Should create 1k transients in reasonable time (less than 50ms)
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(50));
     }
@@ -331,7 +332,7 @@ public class GloamHostTests
     public void EdgeCase_EmptyRootDirectory_ShouldThrowException()
     {
         _config.RootDirectory = "";
-        
+
         Assert.Throws<ArgumentException>(() => _host = new GloamHost(_config));
     }
 
@@ -339,7 +340,7 @@ public class GloamHostTests
     public void EdgeCase_NonExistentRootDirectory_ShouldThrowException()
     {
         _config.RootDirectory = "/path/that/does/not/exist";
-        
+
         Assert.Throws<IOException>(() => _host = new GloamHost(_config));
     }
 

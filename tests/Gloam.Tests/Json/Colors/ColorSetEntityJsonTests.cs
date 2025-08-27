@@ -239,11 +239,11 @@ public class ColorSetEntityJsonTests
             Name = "Large Color Palette"
         };
 
-        for (int r = 0; r < 16; r++)
+        for (var r = 0; r < 16; r++)
         {
-            for (int g = 0; g < 16; g++)
+            for (var g = 0; g < 16; g++)
             {
-                for (int b = 0; b < 4; b++)
+                for (var b = 0; b < 4; b++)
                 {
                     var hex = $"#{r:X}{r:X}{g:X}{g:X}{b:X}{b:X}";
                     var name = $"color_{r:X}{g:X}{b:X}";

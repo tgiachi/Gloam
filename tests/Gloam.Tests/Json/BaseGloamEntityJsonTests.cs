@@ -2,7 +2,6 @@ using System.Text.Json;
 using Gloam.Core.Json;
 using Gloam.Data.Context;
 using Gloam.Data.Entities.Base;
-using Gloam.Data.Entities.Colors;
 using Gloam.Data.Entities.Tiles;
 
 namespace Gloam.Tests.Json;
@@ -42,24 +41,24 @@ public class BaseGloamEntityJsonTests
     public void Deserialize_WithTypeDiscriminator_ShouldCreateCorrectType()
     {
         var json = """
-        {
-            "type": "tiles",
-            "id": "deserialization-test",
-            "name": "Deserialization Test",
-            "#": "Testing polymorphic deserialization",
-            "description": "A test tileset for polymorphic deserialization",
-            "tags": ["test", "polymorphic"],
-            "tiles": [
-                {
-                    "id": "test-tile",
-                    "name": "Test Tile",
-                    "glyph": "@",
-                    "backgroundColor": "#FF0000",
-                    "tags": ["test"]
-                }
-            ]
-        }
-        """;
+                   {
+                       "type": "tiles",
+                       "id": "deserialization-test",
+                       "name": "Deserialization Test",
+                       "#": "Testing polymorphic deserialization",
+                       "description": "A test tileset for polymorphic deserialization",
+                       "tags": ["test", "polymorphic"],
+                       "tiles": [
+                           {
+                               "id": "test-tile",
+                               "name": "Test Tile",
+                               "glyph": "@",
+                               "backgroundColor": "#FF0000",
+                               "tags": ["test"]
+                           }
+                       ]
+                   }
+                   """;
 
         var entity = JsonUtils.Deserialize<BaseGloamEntity>(json);
 
@@ -191,12 +190,12 @@ public class BaseGloamEntityJsonTests
     public void Deserialize_InvalidTypeDiscriminator_ShouldThrowException()
     {
         var json = """
-        {
-            "type": "invalid-type",
-            "id": "invalid-test",
-            "name": "Invalid Type Test"
-        }
-        """;
+                   {
+                       "type": "invalid-type",
+                       "id": "invalid-test",
+                       "name": "Invalid Type Test"
+                   }
+                   """;
 
         Assert.Throws<JsonException>(() => JsonUtils.Deserialize<BaseGloamEntity>(json));
     }

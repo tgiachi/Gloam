@@ -4,7 +4,7 @@ using Gloam.Core.Primitives;
 namespace Gloam.Tests.Primitives;
 
 /// <summary>
-/// Tests for the Direction struct.
+///     Tests for the Direction struct.
 /// </summary>
 public class DirectionTests
 {

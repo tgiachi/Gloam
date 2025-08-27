@@ -1,20 +1,29 @@
-using Json.Schema;
-using Json.Schema.Generation;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Gloam.Core.Json;
 using Gloam.Data.Entities.Base;
 using Gloam.Data.Entities.Colors;
 using Gloam.Data.Entities.Tiles;
-using Gloam.Core.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Json.Schema;
+using Json.Schema.Generation;
 
 namespace Gloam.Tests.Json.Schema;
 
 /// <summary>
-/// Generates JSON schema files for Gloam entities.
+///     Generates JSON schema files for Gloam entities.
 /// </summary>
 public class SchemaFileGenerator
 {
     private static readonly string OutputDirectory = "schemas";
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        AllowTrailingCommas = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
 
     [Test]
     public async Task GenerateAllEntitySchemas()
@@ -51,14 +60,7 @@ public class SchemaFileGenerator
             .FromType(entityType)
             .Build();
 
-        var schemaJson = JsonSerializer.Serialize(schema, new JsonSerializerOptions 
-        { 
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true,
-            AllowTrailingCommas = true,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        });
+        var schemaJson = JsonSerializer.Serialize(schema, JsonOptions);
 
         var filePath = Path.Combine(OutputDirectory, fileName);
         await File.WriteAllTextAsync(filePath, schemaJson);

@@ -1,16 +1,15 @@
 using Gloam.Data.Entities.Base;
 using Gloam.Data.Objects;
-using Json.Schema;
 
 namespace Gloam.Data.Interfaces.Validation;
 
 /// <summary>
-/// Provides functionality for validating entities against schemas.
+///     Provides functionality for validating entities against schemas.
 /// </summary>
 public interface IEntitySchemaValidator
 {
     /// <summary>
-    /// Validates an entity against a schema.
+    ///     Validates an entity against a schema.
     /// </summary>
     /// <param name="entity">The entity data to validate.</param>
     /// <param name="schema">The schema to validate against.</param>
@@ -19,7 +18,7 @@ public interface IEntitySchemaValidator
 
 
     /// <summary>
-    ///  Generates a schema for the specified entity type.
+    ///     Generates a schema for the specified entity type.
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <typeparam name="T"></typeparam>

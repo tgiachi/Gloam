@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -21,7 +22,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Adds a JSON converter to the global converter list. Thread-safe.
+    ///     Adds a JSON converter to the global converter list. Thread-safe.
     /// </summary>
     /// <param name="converter">The converter to add.</param>
     public static void AddJsonConverter(JsonConverter converter)
@@ -40,7 +41,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Removes all converters of the specified type. Thread-safe.
+    ///     Removes all converters of the specified type. Thread-safe.
     /// </summary>
     /// <typeparam name="T">The converter type to remove.</typeparam>
     /// <returns>True if any converters were removed.</returns>
@@ -69,6 +70,7 @@ public static class JsonUtils
             {
                 JsonConverters.Add(converter);
             }
+
             RebuildJsonSerializerContexts();
         }
 
@@ -76,7 +78,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Gets a read-only view of the current JSON converters.
+    ///     Gets a read-only view of the current JSON converters.
     /// </summary>
     public static IReadOnlyList<JsonConverter> GetJsonConverters()
     {
@@ -107,7 +109,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Registers a JSON serializer context for source generation. Thread-safe.
+    ///     Registers a JSON serializer context for source generation. Thread-safe.
     /// </summary>
     /// <param name="context">The context to register.</param>
     public static void RegisterJsonContext(JsonSerializerContext context)
@@ -119,7 +121,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Gets the current JSON serializer options. Thread-safe.
+    ///     Gets the current JSON serializer options. Thread-safe.
     /// </summary>
     private static JsonSerializerOptions GetJsonSerializerOptions()
     {
@@ -128,7 +130,7 @@ public static class JsonUtils
 
 
     /// <summary>
-    /// Serializes an object to JSON string using global options.
+    ///     Serializes an object to JSON string using global options.
     /// </summary>
     /// <typeparam name="T">The type to serialize.</typeparam>
     /// <param name="obj">The object to serialize.</param>
@@ -148,7 +150,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Serializes an object to JSON string using custom options.
+    ///     Serializes an object to JSON string using custom options.
     /// </summary>
     /// <typeparam name="T">The type to serialize.</typeparam>
     /// <param name="obj">The object to serialize.</param>
@@ -170,7 +172,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Deserializes a JSON string to an object using global options.
+    ///     Deserializes a JSON string to an object using global options.
     /// </summary>
     /// <typeparam name="T">The type to deserialize to.</typeparam>
     /// <param name="json">The JSON string to deserialize.</param>
@@ -191,7 +193,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Deserializes a JSON string to an object with fallback value.
+    ///     Deserializes a JSON string to an object with fallback value.
     /// </summary>
     /// <typeparam name="T">The type to deserialize to.</typeparam>
     /// <param name="json">The JSON string to deserialize.</param>
@@ -200,7 +202,9 @@ public static class JsonUtils
     public static T? DeserializeOrDefault<T>(string json, T? defaultValue = default)
     {
         if (string.IsNullOrWhiteSpace(json))
+        {
             return defaultValue;
+        }
 
         try
         {
@@ -213,14 +217,16 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Validates if a string is valid JSON without deserializing.
+    ///     Validates if a string is valid JSON without deserializing.
     /// </summary>
     /// <param name="json">The JSON string to validate.</param>
     /// <returns>True if valid JSON, false otherwise.</returns>
     public static bool IsValidJson(string json)
     {
         if (string.IsNullOrWhiteSpace(json))
+        {
             return false;
+        }
 
         try
         {
@@ -234,7 +240,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Deserializes an object from a JSON file.
+    ///     Deserializes an object from a JSON file.
     /// </summary>
     /// <typeparam name="T">The type to deserialize to.</typeparam>
     /// <param name="filePath">Path to the JSON file.</param>
@@ -261,7 +267,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Deserializes an object from a stream asynchronously.
+    ///     Deserializes an object from a stream asynchronously.
     /// </summary>
     /// <typeparam name="T">The type to deserialize to.</typeparam>
     /// <param name="stream">The stream containing JSON data.</param>
@@ -273,7 +279,8 @@ public static class JsonUtils
 
         try
         {
-            var result = await JsonSerializer.DeserializeAsync<T>(stream, GetJsonSerializerOptions(), cancellationToken).ConfigureAwait(false);
+            var result = await JsonSerializer.DeserializeAsync<T>(stream, GetJsonSerializerOptions(), cancellationToken)
+                .ConfigureAwait(false);
             return result ?? throw new JsonException($"Deserialization returned null for type {typeof(T).Name}");
         }
         catch (JsonException ex)
@@ -283,7 +290,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Serializes an object to a JSON file with directory creation.
+    ///     Serializes an object to a JSON file with directory creation.
     /// </summary>
     /// <typeparam name="T">The type to serialize.</typeparam>
     /// <param name="obj">The object to serialize.</param>
@@ -313,7 +320,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Serializes an object to a JSON file asynchronously with directory creation.
+    ///     Serializes an object to a JSON file asynchronously with directory creation.
     /// </summary>
     /// <typeparam name="T">The type to serialize.</typeparam>
     /// <param name="obj">The object to serialize.</param>
@@ -344,7 +351,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Deserializes an object from a JSON file asynchronously.
+    ///     Deserializes an object from a JSON file asynchronously.
     /// </summary>
     /// <typeparam name="T">The type to deserialize to.</typeparam>
     /// <param name="filePath">Path to the JSON file.</param>
@@ -372,7 +379,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Serializes multiple objects to JSON files in a directory.
+    ///     Serializes multiple objects to JSON files in a directory.
     /// </summary>
     /// <typeparam name="T">The type to serialize.</typeparam>
     /// <param name="objects">Dictionary of filename to object mappings.</param>
@@ -390,7 +397,10 @@ public static class JsonUtils
 
         foreach (var kvp in objects)
         {
-            if (kvp.Value == null) continue;
+            if (kvp.Value == null)
+            {
+                continue;
+            }
 
             var fileName = Path.GetFileNameWithoutExtension(kvp.Key);
             var filePath = Path.Combine(normalizedDirectory, $"{fileName}.json");
@@ -399,7 +409,7 @@ public static class JsonUtils
     }
 
     /// <summary>
-    /// Generates a schema file name for the given type using snake_case convention.
+    ///     Generates a schema file name for the given type using snake_case convention.
     /// </summary>
     /// <param name="type">The type to generate a schema name for.</param>
     /// <returns>A schema file name in the format "type_name.schema.json".</returns>
@@ -424,12 +434,14 @@ public static class JsonUtils
     private static string ConvertToSnakeCase(string pascalCase)
     {
         if (string.IsNullOrEmpty(pascalCase))
+        {
             return pascalCase;
+        }
 
-        var result = new System.Text.StringBuilder();
+        var result = new StringBuilder();
         result.Append(char.ToLowerInvariant(pascalCase[0]));
 
-        for (int i = 1; i < pascalCase.Length; i++)
+        for (var i = 1; i < pascalCase.Length; i++)
         {
             if (char.IsUpper(pascalCase[i]))
             {
