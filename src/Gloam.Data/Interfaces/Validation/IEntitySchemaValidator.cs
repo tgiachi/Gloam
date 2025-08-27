@@ -18,10 +18,10 @@ public interface IEntitySchemaValidator
 
 
     /// <summary>
-    ///     Generates a schema for the specified entity type.
+    ///     Generates a JSON schema for the specified entity type.
     /// </summary>
-    /// <param name="cancellationToken"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
+    /// <typeparam name="T">The entity type to generate a schema for</typeparam>
+    /// <param name="cancellationToken">Cancellation token for the operation</param>
+    /// <returns>A JSON schema string for the specified entity type</returns>
     Task<string> GetSchemaAsync<T>(CancellationToken cancellationToken = default) where T : BaseGloamEntity;
 }

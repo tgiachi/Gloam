@@ -8,6 +8,12 @@ namespace Gloam.Core.Interfaces;
 public interface IInputDevice
 {
     /// <summary>
+    /// Gets the current mouse state including position and button states
+    /// </summary>
+    MouseState Mouse { get; }
+
+
+    /// <summary>
     ///     Polls the input device for current state
     /// </summary>
     void Poll();

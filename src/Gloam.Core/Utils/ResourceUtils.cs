@@ -77,6 +77,12 @@ public static partial class ResourceUtils
         return resourceNames.Where(name => name.Contains(normalizedPath)).ToArray();
     }
 
+    /// <summary>
+    /// Converts an embedded resource name to a file path format
+    /// </summary>
+    /// <param name="resourceName">The full embedded resource name</param>
+    /// <param name="assemblyPrefix">The assembly prefix to remove from the resource name</param>
+    /// <returns>A file path representation of the resource name</returns>
     public static string EmbeddedNameToPath(string resourceName, string assemblyPrefix)
     {
         if (resourceName.StartsWith(assemblyPrefix + ".", StringComparison.Ordinal))

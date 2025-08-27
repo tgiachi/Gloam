@@ -22,11 +22,18 @@ namespace Gloam.Runtime;
 /// </summary>
 public class GloamHost : IGloamHost
 {
+    /// <summary>
+    /// Gets the current state of the host
+    /// </summary>
     public HostState State { get; private set; }
 
     private readonly GloamHostConfig _config;
 
-
+    /// <summary>
+    /// Initializes a new instance of GloamHost with the specified configuration
+    /// </summary>
+    /// <param name="config">The host configuration</param>
+    /// <exception cref="ArgumentNullException">Thrown when config is null</exception>
     public GloamHost(GloamHostConfig config)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -36,6 +43,9 @@ public class GloamHost : IGloamHost
         State = HostState.Created;
     }
 
+    /// <summary>
+    /// Gets the dependency injection container
+    /// </summary>
     public IContainer Container { get; }
 
     private static Container CreateContainer()
@@ -111,13 +121,19 @@ public class GloamHost : IGloamHost
     }
 
 
-    // Cleanup method
+    /// <summary>
+    /// Disposes the host and releases all resources
+    /// </summary>
     public void Dispose()
     {
         Container.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>
+    /// Asynchronously disposes the host and releases all resources
+    /// </summary>
+    /// <returns>A ValueTask representing the asynchronous dispose operation</returns>
     public async ValueTask DisposeAsync()
     {
         if (Container is IAsyncDisposable containerAsyncDisposable)
@@ -133,27 +149,55 @@ public class GloamHost : IGloamHost
     }
 
 
+    /// <summary>
+    /// Initializes the host asynchronously
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A ValueTask representing the initialization operation</returns>
     public async ValueTask InitializeAsync(CancellationToken ct = default)
     {
         State = HostState.Initialized;
     }
 
+    /// <summary>
+    /// Loads content from the specified root directory
+    /// </summary>
+    /// <param name="contentRoot">The root directory for content loading</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A ValueTask representing the content loading operation</returns>
     public async ValueTask LoadContentAsync(string contentRoot, CancellationToken ct = default)
     {
         State = HostState.ContentLoaded;
     }
 
+    /// <summary>
+    /// Starts the host and begins the game loop
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the start operation</returns>
     public async Task StartAsync(CancellationToken ct = default)
     {
         await InitializeAsync(ct);
         State = HostState.Running;
     }
 
+    /// <summary>
+    /// Runs the game loop with the specified timing and condition
+    /// </summary>
+    /// <param name="keepRunning">Function that returns true while the game should continue running</param>
+    /// <param name="fixedStep">Fixed time step for the game loop</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the game loop execution</returns>
     public Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
     {
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Stops the host and game loop gracefully
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the stop operation</returns>
     public async Task StopAsync(CancellationToken ct = default)
     {
         State = HostState.Stopped;
