@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
@@ -8,15 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="DryIoc.dll" Version="5.4.3"/>
-        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0"/>
-        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
-        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="DryIoc.dll" Version="5.4.3" />
+        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Gloam.Core\Gloam.Core.csproj"/>
-        <ProjectReference Include="..\Gloam.Data\Gloam.Data.csproj"/>
+        <ProjectReference Include="..\Gloam.Core\Gloam.Core.csproj" />
+        <ProjectReference Include="..\Gloam.Data\Gloam.Data.csproj" />
     </ItemGroup>
 
 </Project>
