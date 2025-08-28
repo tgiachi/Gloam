@@ -10,7 +10,7 @@ public sealed class SceneManager : ISceneManager
     private readonly ILayerRenderingManager _layerRenderingManager;
     private readonly Dictionary<string, IScene> _scenes;
     private readonly List<ILayerRenderer> _globalLayers;
-    private ISceneTransition? _currentTransition;
+    private SceneTransition? _currentTransition;
 
     /// <summary>
     /// Initializes a new SceneManager
