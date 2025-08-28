@@ -12,7 +12,6 @@ public interface IInputDevice
     /// </summary>
     MouseState Mouse { get; }
 
-
     /// <summary>
     ///     Polls the input device for current state
     /// </summary>

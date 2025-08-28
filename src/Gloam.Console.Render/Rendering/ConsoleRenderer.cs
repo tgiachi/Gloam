@@ -328,7 +328,7 @@ public sealed class ConsoleRenderer : IRenderer
     /// <returns>ANSI escape sequence</returns>
     private static string GetAnsi24BitForeground(Color color)
     {
-        return $"\u001b[38;2;{color.R};{color.G};{color.B}m";
+        return $"\e[38;2;{color.R};{color.G};{color.B}m";
     }
 
     /// <summary>
@@ -338,17 +338,17 @@ public sealed class ConsoleRenderer : IRenderer
     /// <returns>ANSI escape sequence</returns>
     private static string GetAnsi24BitBackground(Color color)
     {
-        return $"\u001b[48;2;{color.R};{color.G};{color.B}m";
+        return $"\e[48;2;{color.R};{color.G};{color.B}m";
     }
 
     /// <summary>
     /// ANSI reset sequence to clear all formatting
     /// </summary>
-    private const string AnsiReset = "\u001b[0m";
+    private const string AnsiReset = "\e[0m";
 
     private static ConsoleColor ConvertToConsoleColor(Color color)
     {
-        // Simple RGB to ConsoleColor mappingr
+        // Simple RGB to ConsoleColor mapping
         // This is a basic implementation - could be enhanced with better color matching
         var (r, g, b) = (color.R, color.G, color.B);
 

@@ -11,7 +11,7 @@ public abstract class BaseInputDevice : IInputDevice
     private readonly Dictionary<InputKeyData, bool> _currentKeyStates = new();
     private readonly Dictionary<InputKeyData, bool> _previousKeyStates = new();
 
-    public MouseState Mouse { get; private set; }
+    public MouseState Mouse { get; protected set; }
 
     public virtual void Poll()
     {

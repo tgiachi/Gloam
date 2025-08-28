@@ -1,3 +1,5 @@
+using Gloam.Core.Types;
+
 namespace Gloam.Core.Input;
 
 /// <summary>
@@ -5,13 +7,13 @@ namespace Gloam.Core.Input;
 /// </summary>
 /// <param name="X">The X coordinate in cells</param>
 /// <param name="Y">The Y coordinate in cells</param>
-/// <param name="LeftDown">True if the left mouse button is currently pressed</param>
-/// <param name="RightDown">True if the right mouse button is currently pressed</param>
-/// <param name="MiddleDown">True if the middle mouse button is currently pressed</param>
 public readonly record struct MouseState(
     int X,
     int Y,
-    bool LeftDown,
-    bool RightDown,
-    bool MiddleDown
+    MouseButtonType Button,
+    bool Pressed,
+    bool Shift,
+    bool Alt,
+    bool Ctrl,
+    bool Move
 );
