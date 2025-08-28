@@ -51,7 +51,21 @@ public interface IGloamHost : IAsyncDisposable, IDisposable
     /// <returns>A Task representing the stop operation</returns>
     Task StopAsync(CancellationToken ct = default);
 
+    /// <summary>
+    /// Sets the renderer for the host to use for drawing operations
+    /// </summary>
+    /// <param name="renderer">The renderer instance to use</param>
     void SetRenderer(IRenderer renderer);
 
+    /// <summary>
+    /// Sets the input device for the host to use for user input
+    /// </summary>
+    /// <param name="inputDevice">The input device instance to use</param>
     void SetInputDevice(IInputDevice inputDevice);
+
+
+    /// <summary>
+    ///  /// Gets the layer rendering manager responsible for managing and rendering layers
+    /// </summary>
+    ILayerRenderingManager LayerRenderingManager { get; }
 }

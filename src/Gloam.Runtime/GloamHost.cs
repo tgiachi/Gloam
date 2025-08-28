@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DryIoc;
+using Gloam.Core.Contexts;
 using Gloam.Core.Interfaces;
 using Gloam.Data.Content;
 using Gloam.Data.Interfaces.Content;
@@ -10,6 +11,7 @@ using Gloam.Data.Validators;
 using Gloam.Runtime.Config;
 using Gloam.Runtime.Extensions;
 using Gloam.Runtime.Interfaces;
+using Gloam.Runtime.Services;
 using Gloam.Runtime.Types;
 using Mosaic.Engine.Directories;
 using Serilog;
@@ -29,9 +31,12 @@ public class GloamHost : IGloamHost
     /// </summary>
     public HostState State { get; private set; }
 
+    public ILayerRenderingManager LayerRenderingManager => Container.Resolve<ILayerRenderingManager>();
+
     private readonly GloamHostConfig _config;
     private IRenderer? _renderer;
     private IInputDevice? _inputDevice;
+
 
     /// <summary>
     /// Initializes a new instance of GloamHost with the specified configuration
@@ -122,6 +127,14 @@ public class GloamHost : IGloamHost
     {
         Container.Register<IEntitySchemaValidator, JsonSchemaValidator>(Reuse.Singleton);
         Container.Register<IEntityDataLoader, EntityDataLoader>(Reuse.Singleton);
+
+
+        // RENDERING STUFF
+        // Note: RegisterMany will be used when concrete implementations are available
+        // For now, just register the manager since there are no concrete ILayerRenderer implementations yet
+
+        // Register the layer rendering manager
+        Container.Register<ILayerRenderingManager, LayerRenderingManager>(Reuse.Singleton);
     }
 
 
@@ -215,27 +228,41 @@ public class GloamHost : IGloamHost
 
         State = HostState.Running;
 
-        var lastRenderTimestamp = Stopwatch.GetTimestamp();
+        // Resolve layer rendering manager lazily
+        var layerRenderingManager = Container.Resolve<ILayerRenderingManager>();
+
+        var startTimestamp = Stopwatch.GetTimestamp();
+        var lastRenderTimestamp = startTimestamp;
         var isFirstFrame = true;
 
         while (config.KeepRunning() && !ct.IsCancellationRequested)
         {
             var now = Stopwatch.GetTimestamp();
 
-            // Input polling (always poll for roguelike input)
             _inputDevice?.Poll();
-
-            // TODO: Process game actions based on input
-            // This is where scheduler/turn system would be triggered
-            // Example: if (_inputDevice.WasPressed(Keys.Space)) _scheduler.ProcessPlayerAction();
 
             // Rendering (if it's time to render)
             var timeSinceLastRender = Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
             if ((isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
             {
                 _renderer.BeginDraw();
-                // TODO: Render game content when game logic is implemented
-                // Example: _game.Render(_renderer);
+
+                // Render all layers using the layer rendering manager
+                if (layerRenderingManager != null && _inputDevice != null)
+                {
+                    var renderContext = RenderLayerContext.Create(
+                        _renderer,
+                        _inputDevice,
+                        startTimestamp,
+                        now,
+                        timeSinceLastRender,
+                        isFirstFrame,
+                        config.RenderStep
+                    );
+
+                    await layerRenderingManager.RenderAllLayersAsync(renderContext, ct);
+                }
+
                 _renderer.EndDraw();
                 lastRenderTimestamp = now;
             }
@@ -276,4 +303,6 @@ public class GloamHost : IGloamHost
     {
         _inputDevice = inputDevice;
     }
+
+
 }

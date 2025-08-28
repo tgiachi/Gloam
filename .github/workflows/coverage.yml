@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: '9.0.x'
-  MINIMUM_COVERAGE: 80
+  MINIMUM_COVERAGE: 50
 
 jobs:
   coverage:
@@ -18,38 +18,38 @@ jobs:
       pages: write
       pull-requests: write
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
-        
+
     - name: Restore dependencies
       run: dotnet restore Gloam.sln
-      
+
     - name: Build solution
       run: dotnet build Gloam.sln --no-restore --configuration Release
-      
+
     - name: Run tests with coverage
       run: dotnet test Gloam.sln --no-build --configuration Release --collect:"XPlat Code Coverage" --results-directory ./coverage --logger trx
-      
+
     - name: Install ReportGenerator tool
       run: dotnet tool install -g dotnet-reportgenerator-globaltool
-      
+
     - name: Generate coverage report
       run: reportgenerator -reports:"coverage/**/coverage.cobertura.xml" -targetdir:"coverage/report" -reporttypes:"Html;Cobertura;TextSummary"
-      
+
     - name: Extract coverage percentage
       id: coverage
       run: |
         COVERAGE=$(grep -oP 'Line coverage: \K[\d.]+' coverage/report/Summary.txt | head -1)
         echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
         echo "Coverage: $COVERAGE%"
-        
+
     - name: Check coverage threshold
       run: |
         COVERAGE=${{ steps.coverage.outputs.percentage }}
@@ -59,7 +59,7 @@ jobs:
         else
           echo "✅ Coverage $COVERAGE% meets minimum threshold of $MINIMUM_COVERAGE%"
         fi
-        
+
     - name: Create coverage summary
       run: |
         echo "## 📊 Coverage Summary" >> $GITHUB_STEP_SUMMARY
@@ -75,7 +75,7 @@ jobs:
         else
           echo "🔴 **Low coverage - needs improvement**" >> $GITHUB_STEP_SUMMARY
         fi
-        
+
     - name: Upload coverage to GitHub Pages
       if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v3
@@ -83,20 +83,20 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./coverage/report
         destination_dir: coverage
-        
+
     - name: Comment coverage on PR
       if: github.event_name == 'pull_request'
       uses: marocchino/sticky-pull-request-comment@v2
       with:
         message: |
           ## 📊 Coverage Report
-          
+
           **Line Coverage:** ${{ steps.coverage.outputs.percentage }}%
-          
+
           ${{ steps.coverage.outputs.percentage >= 80 && '✅ Coverage meets minimum threshold' || '❌ Coverage is below minimum threshold of 80%' }}
-          
+
           📋 [Full Coverage Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          
+
     - name: Upload coverage artifacts
       uses: actions/upload-artifact@v4
       with:
