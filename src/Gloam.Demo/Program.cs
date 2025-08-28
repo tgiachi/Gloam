@@ -1,8 +1,8 @@
 using Gloam.Console.Render.Input;
 using Gloam.Console.Render.Layers;
 using Gloam.Console.Render.Rendering;
-using Gloam.Console.Render.Scenes;
 using Gloam.Console.Render.Surfaces;
+using Gloam.Demo.Scenes;
 using Gloam.Core.Input;
 using Gloam.Runtime;
 using Gloam.Runtime.Config;
@@ -60,6 +60,7 @@ public class Program
             
             // Add global layers (always visible)
             sceneManager.AddGlobalLayer(new StatusLayerRenderer());
+            sceneManager.AddGlobalLayer(new TransitionLayer(sceneManager));
             
             // Register scenes
             var mainMenuScene = new MainMenuScene();

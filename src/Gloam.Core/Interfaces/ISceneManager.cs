@@ -21,6 +21,11 @@ public interface ISceneManager
     IReadOnlyList<ILayerRenderer> GlobalLayers { get; }
 
     /// <summary>
+    /// Gets the current scene transition, if any is active
+    /// </summary>
+    ISceneTransition? CurrentTransition { get; }
+
+    /// <summary>
     /// Registers a scene with the manager
     /// </summary>
     /// <param name="scene">The scene to register</param>
@@ -55,6 +60,16 @@ public interface ISceneManager
     /// <returns>A ValueTask representing the scene switch operation</returns>
     /// <exception cref="ArgumentException">Thrown when the specified scene is not found</exception>
     ValueTask SwitchToSceneAsync(string sceneName, CancellationToken ct = default);
+
+    /// <summary>
+    /// Switches to the specified scene with a transition effect
+    /// </summary>
+    /// <param name="sceneName">The name of the scene to switch to</param>
+    /// <param name="transition">The transition effect to use</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A ValueTask representing the scene switch operation</returns>
+    /// <exception cref="ArgumentException">Thrown when the specified scene is not found</exception>
+    ValueTask SwitchToSceneAsync(string sceneName, ITransition? transition, CancellationToken ct = default);
 
     /// <summary>
     /// Updates the current scene if one is active

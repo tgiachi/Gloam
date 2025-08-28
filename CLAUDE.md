@@ -161,6 +161,8 @@ Comprehensive color management for roguelike rendering:
 - **Always build after modifications**: After making any code changes, **ALWAYS** run `dotnet build Gloam.slnx` as the final step to check for compilation errors. This prevents accumulating build errors and catches issues early.
 - **KISS over SOLID**: Prefer simple, direct implementations over complex interface hierarchies
 - **XML Documentation**: All public types must have /// English comments explaining their purpose
+- **File Organization**: **One file per class/struct/enum** - Each type should have its own dedicated file
+- **Namespace Conventions**: **Enums must be in `.Types` namespace** - All enumerations should be organized under the appropriate `*.Types` namespace (e.g., `Gloam.Core.Types`, `Gloam.Runtime.Types`)
 
 ## Project Structure Notes
 

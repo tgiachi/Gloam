@@ -10,7 +10,7 @@ public sealed class SceneManager : ISceneManager
     private readonly ILayerRenderingManager _layerRenderingManager;
     private readonly Dictionary<string, IScene> _scenes;
     private readonly List<ILayerRenderer> _globalLayers;
-    private IScene? _currentScene;
+    private ISceneTransition? _currentTransition;
 
     /// <summary>
     /// Initializes a new SceneManager
@@ -24,7 +24,7 @@ public sealed class SceneManager : ISceneManager
     }
 
     /// <inheritdoc />
-    public IScene? CurrentScene => _currentScene;
+    public IScene? CurrentScene { get; private set; }
 
     /// <inheritdoc />
     public IReadOnlyDictionary<string, IScene> Scenes => _scenes.AsReadOnly();
@@ -33,16 +33,17 @@ public sealed class SceneManager : ISceneManager
     public IReadOnlyList<ILayerRenderer> GlobalLayers => _globalLayers.AsReadOnly();
 
     /// <inheritdoc />
+    public ISceneTransition? CurrentTransition => _currentTransition;
+
+    /// <inheritdoc />
     public void RegisterScene(IScene scene)
     {
         ArgumentNullException.ThrowIfNull(scene);
 
-        if (_scenes.ContainsKey(scene.Name))
+        if (!_scenes.TryAdd(scene.Name, scene))
         {
             throw new ArgumentException($"A scene with the name '{scene.Name}' is already registered.", nameof(scene));
         }
-
-        _scenes[scene.Name] = scene;
     }
 
     /// <inheritdoc />
@@ -54,16 +55,16 @@ public sealed class SceneManager : ISceneManager
         }
 
         // If we're unregistering the current scene, deactivate it first
-        if (_currentScene?.Name == sceneName)
+        if (CurrentScene?.Name == sceneName)
         {
             // For sync method, we need to handle async deactivation
-            var deactivateTask = _currentScene.OnDeactivateAsync();
+            var deactivateTask = CurrentScene.OnDeactivateAsync();
             if (!deactivateTask.IsCompleted)
             {
                 deactivateTask.AsTask().Wait();
             }
-            RemoveSceneLayers(_currentScene);
-            _currentScene = null;
+            RemoveSceneLayers(CurrentScene);
+            CurrentScene = null;
         }
 
         return _scenes.Remove(sceneName);
@@ -101,6 +102,12 @@ public sealed class SceneManager : ISceneManager
     /// <inheritdoc />
     public async ValueTask SwitchToSceneAsync(string sceneName, CancellationToken ct = default)
     {
+        await SwitchToSceneAsync(sceneName, null, ct);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask SwitchToSceneAsync(string sceneName, ITransition? transition, CancellationToken ct = default)
+    {
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             throw new ArgumentException("Scene name cannot be null or empty.", nameof(sceneName));
@@ -112,31 +119,72 @@ public sealed class SceneManager : ISceneManager
         }
 
         // Don't switch if it's already the current scene
-        if (_currentScene?.Name == sceneName)
+        if (CurrentScene?.Name == sceneName)
         {
             return;
         }
 
-        // Deactivate current scene
-        if (_currentScene != null)
-        {
-            await _currentScene.OnDeactivateAsync(ct);
-            RemoveSceneLayers(_currentScene);
-        }
+        // Create scene transition
+        _currentTransition = new SceneTransition(CurrentScene, newScene, transition);
+        await _currentTransition.StartAsync(ct);
 
-        // Activate new scene
-        _currentScene = newScene;
-        AddSceneLayers(_currentScene);
-        await _currentScene.OnActivateAsync(ct);
+        // If there's no transition effect, switch immediately
+        if (transition == null)
+        {
+            await PerformSceneSwitchAsync(ct);
+        }
+        // Otherwise, the switch will happen when transition completes (in UpdateCurrentSceneAsync)
     }
 
     /// <inheritdoc />
     public async ValueTask UpdateCurrentSceneAsync(CancellationToken ct = default)
     {
-        if (_currentScene != null && _currentScene.IsActive)
+        // Update active transition if present
+        if (_currentTransition?.IsActive == true)
         {
-            await _currentScene.UpdateAsync(ct);
+            await _currentTransition.UpdateAsync(TimeSpan.FromMilliseconds(16), ct); // Assume ~60 FPS for now
+
+            // Check if transition completed and we need to perform the actual scene switch
+            if (_currentTransition.IsComplete)
+            {
+                await PerformSceneSwitchAsync(ct);
+            }
         }
+
+        // Update current scene if active
+        if (CurrentScene != null && CurrentScene.IsActive)
+        {
+            await CurrentScene.UpdateAsync(ct);
+        }
+    }
+
+    /// <summary>
+    /// Performs the actual scene switch (deactivate old, activate new)
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    private async ValueTask PerformSceneSwitchAsync(CancellationToken ct = default)
+    {
+        if (_currentTransition == null)
+        {
+            return;
+        }
+
+        var targetScene = _currentTransition.TargetScene;
+
+        // Deactivate current scene
+        if (CurrentScene != null)
+        {
+            await CurrentScene.OnDeactivateAsync(ct);
+            RemoveSceneLayers(CurrentScene);
+        }
+
+        // Activate new scene
+        CurrentScene = targetScene;
+        AddSceneLayers(CurrentScene);
+        await CurrentScene.OnActivateAsync(ct);
+
+        // Clear the transition
+        _currentTransition = null;
     }
 
     private void AddSceneLayers(IScene scene)

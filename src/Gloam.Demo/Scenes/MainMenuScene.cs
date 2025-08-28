@@ -1,11 +1,13 @@
 using Gloam.Console.Render.Layers;
+using Gloam.Console.Render.Transitions;
+using Gloam.Console.Render.Types;
 using Gloam.Core.Contexts;
 using Gloam.Core.Input;
 using Gloam.Core.Interfaces;
 using Gloam.Core.Interfaces.Base;
 using Gloam.Core.Primitives;
 
-namespace Gloam.Console.Render.Scenes;
+namespace Gloam.Demo.Scenes;
 
 /// <summary>
 /// Main menu scene with menu-specific layers
@@ -33,7 +35,8 @@ public sealed class MainMenuScene : BaseScene
         switch (selection)
         {
             case 1: // Start Game
-                await _sceneManager.SwitchToSceneAsync("Game", ct);
+                var fadeTransition = new FadeTransition(TimeSpan.FromMilliseconds(800), Colors.Black, FadeDirection.FadeInOut);
+                await _sceneManager.SwitchToSceneAsync("Game", fadeTransition, ct);
                 break;
             case 2: // Settings (not implemented yet)
                 // Could switch to a SettingsScene when implemented
