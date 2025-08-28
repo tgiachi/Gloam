@@ -57,6 +57,8 @@ public class GloamHost : IGloamHost
 
     public ILayerRenderingManager LayerRenderingManager => Container.Resolve<ILayerRenderingManager>();
 
+    public ISceneManager SceneManager => Container.Resolve<ISceneManager>();
+
 
     /// <summary>
     ///     Disposes the host and releases all resources
@@ -234,6 +236,9 @@ public class GloamHost : IGloamHost
 
         // Register the layer rendering manager
         Container.Register<ILayerRenderingManager, LayerRenderingManager>(Reuse.Singleton);
+
+        // Register the scene manager
+        Container.Register<ISceneManager, SceneManager>(Reuse.Singleton);
     }
 
     /// <summary>
@@ -249,8 +254,9 @@ public class GloamHost : IGloamHost
 
         State = HostState.Running;
 
-        // Resolve layer rendering manager lazily
+        // Resolve managers lazily
         var layerRenderingManager = Container.Resolve<ILayerRenderingManager>();
+        var sceneManager = Container.Resolve<ISceneManager>();
 
         var startTimestamp = Stopwatch.GetTimestamp();
         var lastRenderTimestamp = startTimestamp;
@@ -261,6 +267,9 @@ public class GloamHost : IGloamHost
             var now = Stopwatch.GetTimestamp();
 
             _inputDevice?.Poll();
+
+            // Update current scene
+            await sceneManager.UpdateCurrentSceneAsync(ct);
 
             // Rendering (if it's time to render)
             var timeSinceLastRender = Stopwatch.GetElapsedTime(lastRenderTimestamp, now);

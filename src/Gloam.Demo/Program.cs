@@ -1,6 +1,7 @@
 using Gloam.Console.Render.Input;
 using Gloam.Console.Render.Layers;
 using Gloam.Console.Render.Rendering;
+using Gloam.Console.Render.Scenes;
 using Gloam.Console.Render.Surfaces;
 using Gloam.Core.Input;
 using Gloam.Runtime;
@@ -54,10 +55,18 @@ public class Program
             // Initialize the host
             await host.InitializeAsync();
 
-            // Setup a basic layer rendering manager (empty for now)
-            var layerManager = host.LayerRenderingManager;
-
-            layerManager.AddLayerRenderer(new StatusLayerRenderer());
+            // Setup scene system
+            var sceneManager = host.SceneManager;
+            
+            // Add global layers (always visible)
+            sceneManager.AddGlobalLayer(new StatusLayerRenderer());
+            
+            // Register scenes
+            sceneManager.RegisterScene(new MainMenuScene());
+            sceneManager.RegisterScene(new GameScene());
+            
+            // Start with main menu
+            await sceneManager.SwitchToSceneAsync("MainMenu");
 
             // Configure game loop for demo
             var gameLoopConfig = new GameLoopConfig
