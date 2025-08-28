@@ -124,7 +124,7 @@ public class GloamHostConfigTests
 
         Assert.That(config.RuntimeConfig, Is.Not.Null);
         Assert.That(config.RuntimeConfig.SimulationStep, Is.EqualTo(0));
-        Assert.That(config.RuntimeConfig.RenderStep, Is.EqualTo(33));
+        Assert.That(config.RuntimeConfig.RenderStep, Is.EqualTo(15));
         Assert.That(config.RuntimeConfig.AllowFrameSkip, Is.True);
     }
 

@@ -10,7 +10,7 @@ public class RuntimeConfigTests
         var config = new RuntimeConfig();
 
         Assert.That(config.SimulationStep, Is.EqualTo(0));
-        Assert.That(config.RenderStep, Is.EqualTo(33));
+        Assert.That(config.RenderStep, Is.EqualTo(15));
         Assert.That(config.AllowFrameSkip, Is.True);
     }
 
