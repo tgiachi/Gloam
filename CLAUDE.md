@@ -63,9 +63,11 @@ dotnet build tools/Gloam.Cli/
 ## Architecture Overview
 
 ### Core Layers
-- **Gloam.Core**: Shared utilities, primitives, JSON handling, input abstractions
+- **Gloam.Core**: Shared utilities, primitives, JSON handling, input abstractions, layer rendering interfaces
 - **Gloam.Data**: Entity management, JSON schema validation, content loading
-- **Gloam.Runtime**: DryIoc-based host, service configuration, runtime management
+- **Gloam.Runtime**: DryIoc-based host, service configuration, runtime management, layer rendering services
+- **Gloam.Console.Render**: Console-based rendering implementation with ANSI color support
+- **Gloam.Demo**: Executable demo application showcasing console rendering
 - **Gloam.Cli**: ConsoleAppFramework-based command-line tools
 
 ### Key Patterns
@@ -90,6 +92,15 @@ Cross-platform input abstraction supporting Console, MonoGame, etc:
 - Support for multiple content loader types
 - Scoped services for game loop operations
 
+#### Layer-Based Rendering System
+Modern rendering architecture supporting multiple backends:
+- `ILayerRenderer` interface for prioritized layer rendering
+- `LayerRenderingManager` handles layer lifecycle and rendering order
+- `BaseLayerRenderer` abstract class with template method pattern
+- Console backend with `ConsoleRenderer`, `ConsoleSurface`, and `ConsoleInputDevice`
+- Transparent background support via alpha channel checking
+- Frame timing utilities in `FrameInfoUtils` and `RenderLayerContext`
+
 #### CLI Command Structure
 - ConsoleAppFramework v5.5.0 for command routing
 - Spectre.Console for rich terminal output
@@ -97,7 +108,8 @@ Cross-platform input abstraction supporting Console, MonoGame, etc:
 - Executable named `gloam` via `AssemblyName`
 
 ### Configuration System
-- `RuntimeConfig`: Game loop timing (turn-based vs real-time)
+- `RuntimeConfig`: Game loop timing (default: 15ms render step ≈67 FPS, 0ms simulation for turn-based)
+- `GameLoopConfig`: Modern game loop configuration with `KeepRunning` delegate and timing control
 - `GloamHostConfig`: Service container and logging configuration
 - Directory structure managed via `DirectoriesConfig`
 
@@ -125,8 +137,18 @@ The engine implements a flexible game loop with precise timing:
 - Supports both real-time and turn-based gameplay modes
 - Input polling integrated with `IInputDevice.Poll()` and `EndFrame()`
 - Rendering managed through `IRenderer.BeginDraw()` / `EndDraw()` pattern
+- Layer-based rendering with `LayerRenderingManager.RenderAllLayersAsync()`
+- Frame timing calculation fixed to start from game loop initialization (not system boot)
 - Configuration via `GameLoopConfig` record in `Gloam.Runtime.Config` namespace
 - KISS principle preferred over complex SOLID architectures for maintainability
+
+### Color System
+Comprehensive color management for roguelike rendering:
+- `Color` struct with RGBA components and hex string support
+- `Colors` static class with 60+ predefined colors including roguelike-specific colors
+- Support for transparency via alpha channel (alpha=0 treated as transparent in console rendering)
+- Console color mapping with RGB to `ConsoleColor` conversion
+- Background color bleed prevention in console rendering
 
 ### Documentation System
 - **DocFX Integration**: Custom documentation generation with alba/gloam dawn theme
@@ -150,7 +172,16 @@ The engine implements a flexible game loop with precise timing:
 
 ## Key Dependencies
 - **DryIoc**: Dependency injection container
-- **Serilog**: Structured logging
+- **Serilog**: Structured logging with file and console sinks
 - **ConsoleAppFramework**: CLI command framework
 - **Spectre.Console**: Rich terminal UI
 - **System.Text.Json**: JSON serialization with source generation
+
+## Recent Major Features (v0.6.0)
+- **Layer-Based Rendering System**: Complete implementation with `ILayerRenderer`, `LayerRenderingManager`, and `BaseLayerRenderer`
+- **Console Rendering Backend**: Full console rendering support with `ConsoleRenderer`, `ConsoleSurface`, and `ConsoleInputDevice`
+- **Color System**: Comprehensive color management with `Colors` class and transparency support
+- **Frame Timing Fix**: Corrected frame number calculation to start from game loop initialization
+- **Demo Application**: Working demo showcasing console rendering with status display
+- **Improved Testing**: All 520 tests passing with proper mock setup for `IsVisible` property
+- **CI/CD Optimization**: `validate-cli-tool` job now runs only on pull requests to main branch
