@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DryIoc;
 using Gloam.Core.Interfaces;
 using Gloam.Data.Content;
@@ -185,18 +186,17 @@ public class GloamHost : IGloamHost
     }
 
     /// <summary>
-    /// Runs the game loop with the specified timing and condition
+    /// Legacy overload for backward compatibility. Runs the roguelike game loop
     /// </summary>
     /// <param name="keepRunning">Function that returns true while the game should continue running</param>
-    /// <param name="fixedStep">Fixed time step for the game loop (TimeSpan.Zero for turn-based)</param>
+    /// <param name="fixedStep">Ignored in roguelike mode (kept for compatibility)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>A Task representing the game loop execution</returns>
     public async Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
     {
         var config = new GameLoopConfig
         {
-            KeepRunning = keepRunning,
-            SimulationStep = fixedStep
+            KeepRunning = keepRunning
         };
 
         await RunAsync(config, ct);
@@ -215,45 +215,22 @@ public class GloamHost : IGloamHost
 
         State = HostState.Running;
 
-        var lastTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
-        var simAccumulator = TimeSpan.Zero;
-        var lastRenderTimestamp = lastTimestamp;
+        var lastRenderTimestamp = Stopwatch.GetTimestamp();
         var isFirstFrame = true;
 
         while (config.KeepRunning() && !ct.IsCancellationRequested)
         {
-            var now = System.Diagnostics.Stopwatch.GetTimestamp();
-            var deltaTime = System.Diagnostics.Stopwatch.GetElapsedTime(lastTimestamp, now);
-            lastTimestamp = now;
-            simAccumulator += deltaTime;
+            var now = Stopwatch.GetTimestamp();
 
-            // Input polling (if available)
+            // Input polling (always poll for roguelike input)
             _inputDevice?.Poll();
 
-            // Simulation update
-            if (config.SimulationStep > TimeSpan.Zero)
-            {
-                // Fixed timestep - consume accumulated time
-                while (simAccumulator >= config.SimulationStep)
-                {
-                    // TODO: Update game simulation with fixed timestep
-                    simAccumulator -= config.SimulationStep;
-                }
-            }
-            else
-            {
-                // Turn-based or variable timestep
-                // Process any pending input actions
-                if (_inputDevice != null)
-                {
-                    // In turn-based mode, we can check for specific key presses
-                    // TODO: Add specific game actions when game logic is implemented
-                    // Example: if (_inputDevice.WasPressed(Keys.Space)) ProcessPlayerAction();
-                }
-            }
+            // TODO: Process game actions based on input
+            // This is where scheduler/turn system would be triggered
+            // Example: if (_inputDevice.WasPressed(Keys.Space)) _scheduler.ProcessPlayerAction();
 
             // Rendering (if it's time to render)
-            var timeSinceLastRender = System.Diagnostics.Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
+            var timeSinceLastRender = Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
             if ((isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
             {
                 _renderer.BeginDraw();
@@ -268,8 +245,8 @@ public class GloamHost : IGloamHost
             // End frame cleanup for input
             _inputDevice?.EndFrame();
 
-            // Calculate sleep time
-            var sleepMs = CalculateSleepTime(config.SimulationStep, simAccumulator, timeSinceLastRender, config.RenderStep);
+            // Sleep to avoid consuming too much CPU
+            var sleepMs = (int)config.SleepTime.TotalMilliseconds;
             if (sleepMs > 0)
             {
                 await Task.Delay(sleepMs, ct);
@@ -279,16 +256,6 @@ public class GloamHost : IGloamHost
         State = HostState.Paused;
     }
 
-    private static int CalculateSleepTime(TimeSpan fixedStep, TimeSpan simAccumulator, TimeSpan timeSinceLastRender, TimeSpan renderStep)
-    {
-        var renderSleep = Math.Max(0, (int)(renderStep - timeSinceLastRender).TotalMilliseconds);
-
-        var simSleep = fixedStep > TimeSpan.Zero
-            ? Math.Max(0, (int)(fixedStep - simAccumulator).TotalMilliseconds)
-            : 5; // Default 5ms for turn-based
-
-        return Math.Min(renderSleep, simSleep);
-    }
 
     /// <summary>
     /// Stops the host and game loop gracefully

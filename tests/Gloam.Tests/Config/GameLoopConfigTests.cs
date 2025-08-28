@@ -19,47 +19,33 @@ public class GameLoopConfigTests
         };
 
         Assert.That(config.KeepRunning, Is.SameAs(keepRunning));
-        Assert.That(config.SimulationStep, Is.EqualTo(TimeSpan.Zero));
         Assert.That(config.RenderStep, Is.EqualTo(TimeSpan.FromMilliseconds(33)));
-        Assert.That(config.MaxSleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
+        Assert.That(config.SleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
     }
 
     [Test]
     public void Constructor_WithAllProperties_ShouldCreateInstance()
     {
         var keepRunning = () => false;
-        var simulationStep = TimeSpan.FromMilliseconds(16);
         var renderStep = TimeSpan.FromMilliseconds(16);
-        var maxSleepTime = TimeSpan.FromMilliseconds(10);
+        var sleepTime = TimeSpan.FromMilliseconds(10);
 
         var config = new GameLoopConfig
         {
             KeepRunning = keepRunning,
-            SimulationStep = simulationStep,
             RenderStep = renderStep,
-            MaxSleepTime = maxSleepTime
+            SleepTime = sleepTime
         };
 
         Assert.That(config.KeepRunning, Is.SameAs(keepRunning));
-        Assert.That(config.SimulationStep, Is.EqualTo(simulationStep));
         Assert.That(config.RenderStep, Is.EqualTo(renderStep));
-        Assert.That(config.MaxSleepTime, Is.EqualTo(maxSleepTime));
+        Assert.That(config.SleepTime, Is.EqualTo(sleepTime));
     }
 
     #endregion
 
     #region Default Values Tests
 
-    [Test]
-    public void DefaultValues_SimulationStep_ShouldBeZero()
-    {
-        var config = new GameLoopConfig
-        {
-            KeepRunning = () => true
-        };
-
-        Assert.That(config.SimulationStep, Is.EqualTo(TimeSpan.Zero));
-    }
 
     [Test]
     public void DefaultValues_RenderStep_ShouldBe33Milliseconds()
@@ -73,14 +59,14 @@ public class GameLoopConfigTests
     }
 
     [Test]
-    public void DefaultValues_MaxSleepTime_ShouldBe5Milliseconds()
+    public void DefaultValues_SleepTime_ShouldBe5Milliseconds()
     {
         var config = new GameLoopConfig
         {
             KeepRunning = () => true
         };
 
-        Assert.That(config.MaxSleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
+        Assert.That(config.SleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
     }
 
     #endregion
@@ -91,24 +77,21 @@ public class GameLoopConfigTests
     public void Equality_SameValues_ShouldBeEqual()
     {
         var keepRunning = () => true;
-        var simulationStep = TimeSpan.FromMilliseconds(16);
         var renderStep = TimeSpan.FromMilliseconds(20);
-        var maxSleepTime = TimeSpan.FromMilliseconds(8);
+        var sleepTime = TimeSpan.FromMilliseconds(8);
 
         var config1 = new GameLoopConfig
         {
             KeepRunning = keepRunning,
-            SimulationStep = simulationStep,
             RenderStep = renderStep,
-            MaxSleepTime = maxSleepTime
+            SleepTime = sleepTime
         };
 
         var config2 = new GameLoopConfig
         {
             KeepRunning = keepRunning,
-            SimulationStep = simulationStep,
             RenderStep = renderStep,
-            MaxSleepTime = maxSleepTime
+            SleepTime = sleepTime
         };
 
         Assert.That(config1, Is.EqualTo(config2));
@@ -131,25 +114,6 @@ public class GameLoopConfigTests
         Assert.That(config1, Is.Not.EqualTo(config2));
     }
 
-    [Test]
-    public void Equality_DifferentSimulationStep_ShouldNotBeEqual()
-    {
-        var keepRunning = () => true;
-
-        var config1 = new GameLoopConfig
-        {
-            KeepRunning = keepRunning,
-            SimulationStep = TimeSpan.FromMilliseconds(16)
-        };
-
-        var config2 = new GameLoopConfig
-        {
-            KeepRunning = keepRunning,
-            SimulationStep = TimeSpan.FromMilliseconds(20)
-        };
-
-        Assert.That(config1, Is.Not.EqualTo(config2));
-    }
 
     [Test]
     public void Equality_DifferentRenderStep_ShouldNotBeEqual()
@@ -172,20 +136,20 @@ public class GameLoopConfigTests
     }
 
     [Test]
-    public void Equality_DifferentMaxSleepTime_ShouldNotBeEqual()
+    public void Equality_DifferentSleepTime_ShouldNotBeEqual()
     {
         var keepRunning = () => true;
 
         var config1 = new GameLoopConfig
         {
             KeepRunning = keepRunning,
-            MaxSleepTime = TimeSpan.FromMilliseconds(5)
+            SleepTime = TimeSpan.FromMilliseconds(5)
         };
 
         var config2 = new GameLoopConfig
         {
             KeepRunning = keepRunning,
-            MaxSleepTime = TimeSpan.FromMilliseconds(10)
+            SleepTime = TimeSpan.FromMilliseconds(10)
         };
 
         Assert.That(config1, Is.Not.EqualTo(config2));
@@ -210,27 +174,10 @@ public class GameLoopConfigTests
 
         Assert.That(original.KeepRunning, Is.SameAs(originalKeepRunning));
         Assert.That(modified.KeepRunning, Is.SameAs(newKeepRunning));
-        Assert.That(modified.SimulationStep, Is.EqualTo(original.SimulationStep));
         Assert.That(modified.RenderStep, Is.EqualTo(original.RenderStep));
-        Assert.That(modified.MaxSleepTime, Is.EqualTo(original.MaxSleepTime));
+        Assert.That(modified.SleepTime, Is.EqualTo(original.SleepTime));
     }
 
-    [Test]
-    public void With_ChangeSimulationStep_ShouldCreateNewInstance()
-    {
-        var original = new GameLoopConfig
-        {
-            KeepRunning = () => true,
-            SimulationStep = TimeSpan.FromMilliseconds(16)
-        };
-
-        var newSimulationStep = TimeSpan.FromMilliseconds(20);
-        var modified = original with { SimulationStep = newSimulationStep };
-
-        Assert.That(original.SimulationStep, Is.EqualTo(TimeSpan.FromMilliseconds(16)));
-        Assert.That(modified.SimulationStep, Is.EqualTo(newSimulationStep));
-        Assert.That(modified.KeepRunning, Is.SameAs(original.KeepRunning));
-    }
 
     [Test]
     public void With_ChangeRenderStep_ShouldCreateNewInstance()
@@ -250,19 +197,19 @@ public class GameLoopConfigTests
     }
 
     [Test]
-    public void With_ChangeMaxSleepTime_ShouldCreateNewInstance()
+    public void With_ChangeSleepTime_ShouldCreateNewInstance()
     {
         var original = new GameLoopConfig
         {
             KeepRunning = () => true,
-            MaxSleepTime = TimeSpan.FromMilliseconds(5)
+            SleepTime = TimeSpan.FromMilliseconds(5)
         };
 
-        var newMaxSleepTime = TimeSpan.FromMilliseconds(10);
-        var modified = original with { MaxSleepTime = newMaxSleepTime };
+        var newSleepTime = TimeSpan.FromMilliseconds(10);
+        var modified = original with { SleepTime = newSleepTime };
 
-        Assert.That(original.MaxSleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
-        Assert.That(modified.MaxSleepTime, Is.EqualTo(newMaxSleepTime));
+        Assert.That(original.SleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(5)));
+        Assert.That(modified.SleepTime, Is.EqualTo(newSleepTime));
         Assert.That(modified.KeepRunning, Is.SameAs(original.KeepRunning));
     }
 
@@ -270,31 +217,16 @@ public class GameLoopConfigTests
 
     #region Configuration Scenario Tests
 
+
     [Test]
-    public void Configuration_RealTimeMode_ShouldHaveFixedSimulationStep()
+    public void Configuration_RoguelikeMode_ShouldHaveReasonableRenderStep()
     {
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            SimulationStep = TimeSpan.FromMilliseconds(16), // 60 FPS
-            RenderStep = TimeSpan.FromMilliseconds(16)       // 60 FPS
+            RenderStep = TimeSpan.FromMilliseconds(100) // Slower refresh for roguelike
         };
 
-        Assert.That(config.SimulationStep, Is.GreaterThan(TimeSpan.Zero));
-        Assert.That(config.RenderStep, Is.GreaterThan(TimeSpan.Zero));
-    }
-
-    [Test]
-    public void Configuration_TurnBasedMode_ShouldHaveZeroSimulationStep()
-    {
-        var config = new GameLoopConfig
-        {
-            KeepRunning = () => true,
-            SimulationStep = TimeSpan.Zero,
-            RenderStep = TimeSpan.FromMilliseconds(100) // Slower refresh for turn-based
-        };
-
-        Assert.That(config.SimulationStep, Is.EqualTo(TimeSpan.Zero));
         Assert.That(config.RenderStep, Is.GreaterThan(TimeSpan.Zero));
     }
 
@@ -304,14 +236,12 @@ public class GameLoopConfigTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            SimulationStep = TimeSpan.FromMilliseconds(8),  // 120 FPS
             RenderStep = TimeSpan.FromMilliseconds(8),       // 120 FPS
-            MaxSleepTime = TimeSpan.FromMilliseconds(1)      // Minimal sleep
+            SleepTime = TimeSpan.FromMilliseconds(1)         // Minimal sleep
         };
 
-        Assert.That(config.SimulationStep.TotalMilliseconds, Is.LessThan(10));
         Assert.That(config.RenderStep.TotalMilliseconds, Is.LessThan(10));
-        Assert.That(config.MaxSleepTime.TotalMilliseconds, Is.LessThan(5));
+        Assert.That(config.SleepTime.TotalMilliseconds, Is.LessThan(5));
     }
 
     [Test]
@@ -320,14 +250,12 @@ public class GameLoopConfigTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            SimulationStep = TimeSpan.FromMilliseconds(50), // 20 FPS
             RenderStep = TimeSpan.FromMilliseconds(50),      // 20 FPS
-            MaxSleepTime = TimeSpan.FromMilliseconds(20)     // Longer sleep for battery saving
+            SleepTime = TimeSpan.FromMilliseconds(20)        // Longer sleep for battery saving
         };
 
-        Assert.That(config.SimulationStep.TotalMilliseconds, Is.GreaterThan(30));
         Assert.That(config.RenderStep.TotalMilliseconds, Is.GreaterThan(30));
-        Assert.That(config.MaxSleepTime.TotalMilliseconds, Is.GreaterThan(10));
+        Assert.That(config.SleepTime.TotalMilliseconds, Is.GreaterThan(10));
     }
 
     #endregion
@@ -335,17 +263,17 @@ public class GameLoopConfigTests
     #region Edge Cases Tests
 
     [Test]
-    public void EdgeCase_NegativeSimulationStep_ShouldBeAllowed()
+    public void EdgeCase_NegativeSleepTime_ShouldBeAllowed()
     {
         // Note: While unusual, negative TimeSpan values are technically valid
         // The implementation should handle this gracefully
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            SimulationStep = TimeSpan.FromMilliseconds(-10)
+            SleepTime = TimeSpan.FromMilliseconds(-10)
         };
 
-        Assert.That(config.SimulationStep, Is.EqualTo(TimeSpan.FromMilliseconds(-10)));
+        Assert.That(config.SleepTime, Is.EqualTo(TimeSpan.FromMilliseconds(-10)));
     }
 
     [Test]
@@ -355,14 +283,12 @@ public class GameLoopConfigTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            SimulationStep = largeTimeSpan,
             RenderStep = largeTimeSpan,
-            MaxSleepTime = largeTimeSpan
+            SleepTime = largeTimeSpan
         };
 
-        Assert.That(config.SimulationStep, Is.EqualTo(largeTimeSpan));
         Assert.That(config.RenderStep, Is.EqualTo(largeTimeSpan));
-        Assert.That(config.MaxSleepTime, Is.EqualTo(largeTimeSpan));
+        Assert.That(config.SleepTime, Is.EqualTo(largeTimeSpan));
     }
 
     [Test]
@@ -411,9 +337,8 @@ public class GameLoopConfigTests
             var config = new GameLoopConfig
             {
                 KeepRunning = keepRunning,
-                SimulationStep = TimeSpan.FromMilliseconds(i % 100),
                 RenderStep = TimeSpan.FromMilliseconds(33),
-                MaxSleepTime = TimeSpan.FromMilliseconds(5)
+                SleepTime = TimeSpan.FromMilliseconds(5)
             };
         }
 
@@ -437,14 +362,14 @@ public class GameLoopConfigTests
         GameLoopConfig? current = original;
         for (var i = 0; i < 1000; i++)
         {
-            current = current with { SimulationStep = TimeSpan.FromMilliseconds(i) };
+            current = current with { RenderStep = TimeSpan.FromMilliseconds(i) };
         }
 
         stopwatch.Stop();
 
         // Should create 1k modified records in reasonable time (less than 50ms)
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(50));
-        Assert.That(current.SimulationStep, Is.EqualTo(TimeSpan.FromMilliseconds(999)));
+        Assert.That(current.RenderStep, Is.EqualTo(TimeSpan.FromMilliseconds(999)));
     }
 
     #endregion

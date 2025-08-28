@@ -471,7 +471,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            SimulationStep = TimeSpan.FromMilliseconds(10),
             RenderStep = TimeSpan.FromMilliseconds(20)
         };
 
@@ -491,7 +490,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            SimulationStep = TimeSpan.Zero,
             RenderStep = TimeSpan.FromMilliseconds(50)
         };
 
@@ -549,7 +547,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 10,
-            SimulationStep = TimeSpan.FromMilliseconds(10),
             RenderStep = TimeSpan.FromMilliseconds(10)
         };
 
@@ -573,9 +570,8 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 100,
-            SimulationStep = TimeSpan.FromMilliseconds(1),
             RenderStep = TimeSpan.FromMilliseconds(1),
-            MaxSleepTime = TimeSpan.FromMilliseconds(1)
+            SleepTime = TimeSpan.FromMilliseconds(1)
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
@@ -690,7 +686,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            SimulationStep = TimeSpan.FromMilliseconds(20),
             RenderStep = TimeSpan.FromMilliseconds(20)
         };
 
@@ -716,7 +711,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            SimulationStep = TimeSpan.Zero,
             RenderStep = TimeSpan.FromMilliseconds(100)
         };
 
@@ -930,7 +924,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 10,
-            SimulationStep = TimeSpan.FromMilliseconds(1),
             RenderStep = TimeSpan.FromMilliseconds(50) // Render less frequently
         };
 
@@ -956,7 +949,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            SimulationStep = TimeSpan.FromMilliseconds(10),
             RenderStep = TimeSpan.FromMilliseconds(1) // Render very frequently
         };
 
@@ -984,7 +976,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            SimulationStep = TimeSpan.Zero, // Turn-based
             RenderStep = TimeSpan.FromMilliseconds(10)
         };
 
@@ -1008,7 +999,6 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            SimulationStep = TimeSpan.FromMilliseconds(10), // Real-time
             RenderStep = TimeSpan.FromMilliseconds(10)
         };
 
@@ -1087,9 +1077,8 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            SimulationStep = TimeSpan.FromMilliseconds(20),
             RenderStep = TimeSpan.FromMilliseconds(30),
-            MaxSleepTime = TimeSpan.FromMilliseconds(10)
+            SleepTime = TimeSpan.FromMilliseconds(10)
         };
 
         var startTime = DateTime.UtcNow;
