@@ -26,7 +26,7 @@ public sealed class ConsoleRenderer : IRenderer
         _drawBuffer = new Dictionary<Position, (char, ConsoleColor?, ConsoleColor?)>();
 
         // Initialize console settings
-        if (_surface.SupportsColor)
+        if (ConsoleSurface.SupportsColor)
         {
             System.Console.OutputEncoding = Encoding.UTF8;
         }
@@ -56,7 +56,7 @@ public sealed class ConsoleRenderer : IRenderer
         _surface.UpdateDimensions();
 
         // Clear screen and position cursor at top-left
-        if (_surface.SupportsCursorPositioning)
+        if (ConsoleSurface.SupportsCursorPositioning)
         {
             System.Console.Clear();
         }
@@ -122,7 +122,7 @@ public sealed class ConsoleRenderer : IRenderer
 
     private void RenderFrame()
     {
-        if (!_surface.SupportsCursorPositioning)
+        if (!ConsoleSurface.SupportsCursorPositioning)
         {
             // Fallback for redirected output: render line by line
             RenderToRedirectedOutput();
@@ -137,7 +137,7 @@ public sealed class ConsoleRenderer : IRenderer
 
             System.Console.SetCursorPosition(pos.X, pos.Y);
 
-            if (_surface.SupportsColor)
+            if (ConsoleSurface.SupportsColor)
             {
                 if (fg.HasValue)
                     System.Console.ForegroundColor = fg.Value;

@@ -13,22 +13,22 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     /// <summary>
     /// The X coordinate of the rectangle's top-left corner.
     /// </summary>
-    public readonly int X;
+    public int X { get; }
 
     /// <summary>
     /// The Y coordinate of the rectangle's top-left corner.
     /// </summary>
-    public readonly int Y;
+    public int Y { get; }
 
     /// <summary>
     /// The width of the rectangle.
     /// </summary>
-    public readonly int Width;
+    public int Width { get; }
 
     /// <summary>
     /// The height of the rectangle.
     /// </summary>
-    public readonly int Height;
+    public int Height { get; }
 
     #endregion
 

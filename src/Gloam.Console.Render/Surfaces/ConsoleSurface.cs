@@ -76,10 +76,10 @@ public sealed class ConsoleSurface : IRenderSurface
     /// <summary>
     /// Gets whether the console supports color output
     /// </summary>
-    public bool SupportsColor => !System.Console.IsOutputRedirected;
+    public static bool SupportsColor => !System.Console.IsOutputRedirected;
 
     /// <summary>
     /// Gets whether the console supports cursor positioning
     /// </summary>
-    public bool SupportsCursorPositioning => !System.Console.IsOutputRedirected;
+    public static bool SupportsCursorPositioning => !System.Console.IsOutputRedirected;
 }
