@@ -5,14 +5,14 @@ using ZLinq;
 namespace Gloam.Runtime.Services;
 
 /// <summary>
-/// Manages the rendering of multiple layers in priority order
+///     Manages the rendering of multiple layers in priority order
 /// </summary>
 public sealed class LayerRenderingManager : ILayerRenderingManager
 {
     private readonly List<ILayerRenderer> _layerRenderers = new();
 
     /// <summary>
-    /// Initializes a new instance with the provided layer renderers, sorted by priority
+    ///     Initializes a new instance with the provided layer renderers, sorted by priority
     /// </summary>
     /// <param name="layerRenderers">Collection of layer renderers to manage</param>
     public LayerRenderingManager()
@@ -20,12 +20,12 @@ public sealed class LayerRenderingManager : ILayerRenderingManager
     }
 
     /// <summary>
-    /// Gets the collection of registered layer renderers in priority order
+    ///     Gets the collection of registered layer renderers in priority order
     /// </summary>
     public IReadOnlyList<ILayerRenderer> LayerRenderers => _layerRenderers.AsReadOnly();
 
     /// <summary>
-    /// Renders all registered layers in priority order
+    ///     Renders all registered layers in priority order
     /// </summary>
     /// <param name="context">The rendering context containing renderer and frame information</param>
     /// <param name="ct">Cancellation token to cancel the operation</param>
@@ -38,7 +38,7 @@ public sealed class LayerRenderingManager : ILayerRenderingManager
     }
 
     /// <summary>
-    /// Adds a new layer renderer and re-sorts the collection by priority
+    ///     Adds a new layer renderer and re-sorts the collection by priority
     /// </summary>
     /// <param name="layerRenderer">The layer renderer to add</param>
     public void AddLayerRenderer(ILayerRenderer layerRenderer)
@@ -48,7 +48,7 @@ public sealed class LayerRenderingManager : ILayerRenderingManager
     }
 
     /// <summary>
-    /// Removes a layer renderer from the collection
+    ///     Removes a layer renderer from the collection
     /// </summary>
     /// <param name="layerRenderer">The layer renderer to remove</param>
     /// <returns>True if the renderer was removed, false if it was not found</returns>

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Gloam.Core.Interfaces;
 using Gloam.Core.Primitives;
 using Gloam.Core.Utils;
@@ -6,7 +5,7 @@ using Gloam.Core.Utils;
 namespace Gloam.Core.Contexts;
 
 /// <summary>
-/// Provides context information for layer rendering operations including renderer, input, timing, and screen dimensions
+///     Provides context information for layer rendering operations including renderer, input, timing, and screen dimensions
 /// </summary>
 /// <param name="Renderer">The renderer instance for drawing operations</param>
 /// <param name="InputDevice">The input device for handling user input</param>
@@ -26,7 +25,7 @@ public sealed record RenderLayerContext(
     public TimeSpan TotalTime => FrameInfo.TotalTime;
 
     /// <summary>
-    /// Creates a RenderLayerContext with calculated frame information
+    ///     Creates a RenderLayerContext with calculated frame information
     /// </summary>
     /// <param name="renderer">The renderer to draw with</param>
     /// <param name="inputDevice">The input device for user input</param>

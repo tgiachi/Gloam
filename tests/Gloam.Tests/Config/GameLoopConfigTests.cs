@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Gloam.Runtime.Config;
 
 namespace Gloam.Tests.Config;
@@ -7,6 +8,22 @@ namespace Gloam.Tests.Config;
 /// </summary>
 public class GameLoopConfigTests
 {
+    #region ToString Tests
+
+    [Test]
+    public void ToString_ShouldContainTypeName()
+    {
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => true
+        };
+
+        var toString = config.ToString();
+        Assert.That(toString, Does.Contain("GameLoopConfig"));
+    }
+
+    #endregion
+
     #region Constructor and Property Tests
 
     [Test]
@@ -45,7 +62,6 @@ public class GameLoopConfigTests
     #endregion
 
     #region Default Values Tests
-
 
     [Test]
     public void DefaultValues_RenderStep_ShouldBe33Milliseconds()
@@ -108,7 +124,7 @@ public class GameLoopConfigTests
 
         var config2 = new GameLoopConfig
         {
-            KeepRunning = () => true  // Different function instance
+            KeepRunning = () => true // Different function instance
         };
 
         Assert.That(config1, Is.Not.EqualTo(config2));
@@ -217,7 +233,6 @@ public class GameLoopConfigTests
 
     #region Configuration Scenario Tests
 
-
     [Test]
     public void Configuration_RoguelikeMode_ShouldHaveReasonableRenderStep()
     {
@@ -236,8 +251,8 @@ public class GameLoopConfigTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            RenderStep = TimeSpan.FromMilliseconds(8),       // 120 FPS
-            SleepTime = TimeSpan.FromMilliseconds(1)         // Minimal sleep
+            RenderStep = TimeSpan.FromMilliseconds(8), // 120 FPS
+            SleepTime = TimeSpan.FromMilliseconds(1)   // Minimal sleep
         };
 
         Assert.That(config.RenderStep.TotalMilliseconds, Is.LessThan(10));
@@ -250,8 +265,8 @@ public class GameLoopConfigTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => true,
-            RenderStep = TimeSpan.FromMilliseconds(50),      // 20 FPS
-            SleepTime = TimeSpan.FromMilliseconds(20)        // Longer sleep for battery saving
+            RenderStep = TimeSpan.FromMilliseconds(50), // 20 FPS
+            SleepTime = TimeSpan.FromMilliseconds(20)   // Longer sleep for battery saving
         };
 
         Assert.That(config.RenderStep.TotalMilliseconds, Is.GreaterThan(30));
@@ -307,29 +322,13 @@ public class GameLoopConfigTests
 
     #endregion
 
-    #region ToString Tests
-
-    [Test]
-    public void ToString_ShouldContainTypeName()
-    {
-        var config = new GameLoopConfig
-        {
-            KeepRunning = () => true
-        };
-
-        var toString = config.ToString();
-        Assert.That(toString, Does.Contain("GameLoopConfig"));
-    }
-
-    #endregion
-
     #region Performance Tests
 
     [Test]
     public void Performance_RecordCreation_ShouldBeEfficient()
     {
         var keepRunning = () => true;
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         // Create many instances
         for (var i = 0; i < 10000; i++)
@@ -356,10 +355,10 @@ public class GameLoopConfigTests
             KeepRunning = () => true
         };
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
         // Create many modified instances
-        GameLoopConfig? current = original;
+        var current = original;
         for (var i = 0; i < 1000; i++)
         {
             current = current with { RenderStep = TimeSpan.FromMilliseconds(i) };

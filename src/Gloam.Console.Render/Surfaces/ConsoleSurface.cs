@@ -4,24 +4,21 @@ using Gloam.Core.Types;
 namespace Gloam.Console.Render.Surfaces;
 
 /// <summary>
-/// Console-based render surface that adapts to the current console window size
+///     Console-based render surface that adapts to the current console window size
 /// </summary>
 public sealed class ConsoleSurface : IRenderSurface
 {
-    private int _width;
-    private int _height;
-
     /// <summary>
-    /// Initializes a new console surface with current console dimensions
+    ///     Initializes a new console surface with current console dimensions
     /// </summary>
     public ConsoleSurface()
     {
         UpdateDimensions();
-        
+
         // Monitor console resize events if supported
         try
         {
-            System.Console.CancelKeyPress += (_, _) => { };  // Enable console events
+            System.Console.CancelKeyPress += (_, _) => { }; // Enable console events
         }
         catch
         {
@@ -29,11 +26,21 @@ public sealed class ConsoleSurface : IRenderSurface
         }
     }
 
-    /// <inheritdoc />
-    public int Width => _width;
+    /// <summary>
+    ///     Gets whether the console supports color output
+    /// </summary>
+    public static bool SupportsColor => !System.Console.IsOutputRedirected;
+
+    /// <summary>
+    ///     Gets whether the console supports cursor positioning
+    /// </summary>
+    public static bool SupportsCursorPositioning => !System.Console.IsOutputRedirected;
 
     /// <inheritdoc />
-    public int Height => _height;
+    public int Width { get; private set; }
+
+    /// <inheritdoc />
+    public int Height { get; private set; }
 
     /// <inheritdoc />
     public RenderUnit Unit => RenderUnit.Cells;
@@ -48,38 +55,28 @@ public sealed class ConsoleSurface : IRenderSurface
     public event Action<int, int>? Resized;
 
     /// <summary>
-    /// Updates the surface dimensions from the current console window size
+    ///     Updates the surface dimensions from the current console window size
     /// </summary>
     public void UpdateDimensions()
     {
-        var previousWidth = _width;
-        var previousHeight = _height;
+        var previousWidth = Width;
+        var previousHeight = Height;
 
         try
         {
-            _width = System.Console.WindowWidth;
-            _height = System.Console.WindowHeight;
+            Width = System.Console.WindowWidth;
+            Height = System.Console.WindowHeight;
         }
         catch
         {
             // Fallback to default console dimensions if not available
-            _width = 80;
-            _height = 25;
+            Width = 80;
+            Height = 25;
         }
 
-        if (previousWidth != _width || previousHeight != _height)
+        if (previousWidth != Width || previousHeight != Height)
         {
-            Resized?.Invoke(_width, _height);
+            Resized?.Invoke(Width, Height);
         }
     }
-
-    /// <summary>
-    /// Gets whether the console supports color output
-    /// </summary>
-    public static bool SupportsColor => !System.Console.IsOutputRedirected;
-
-    /// <summary>
-    /// Gets whether the console supports cursor positioning
-    /// </summary>
-    public static bool SupportsCursorPositioning => !System.Console.IsOutputRedirected;
 }

@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AssemblyName>gloam</AssemblyName>
-        
+
         <!-- Global Tool Configuration -->
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>gloam</ToolCommandName>
@@ -20,14 +20,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ConsoleAppFramework" Version="5.5.0" />
-        <PackageReference Include="Spectre.Console" Version="0.50.0" />
+        <PackageReference Include="ConsoleAppFramework" Version="5.5.0"/>
+        <PackageReference Include="Spectre.Console" Version="0.50.0"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Gloam.Core\Gloam.Core.csproj" />
-        <ProjectReference Include="..\..\src\Gloam.Data\Gloam.Data.csproj" />
-        <ProjectReference Include="..\..\src\Gloam.Runtime\Gloam.Runtime.csproj" />
+        <ProjectReference Include="..\..\src\Gloam.Core\Gloam.Core.csproj"/>
+        <ProjectReference Include="..\..\src\Gloam.Data\Gloam.Data.csproj"/>
+        <ProjectReference Include="..\..\src\Gloam.Runtime\Gloam.Runtime.csproj"/>
     </ItemGroup>
 
 </Project>

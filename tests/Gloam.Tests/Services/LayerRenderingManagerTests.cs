@@ -8,11 +8,11 @@ namespace Gloam.Tests.Services;
 
 public class LayerRenderingManagerTests
 {
+    private RenderLayerContext _context = null!;
     private LayerRenderingManager _manager = null!;
     private Mock<ILayerRenderer> _mockRenderer1 = null!;
     private Mock<ILayerRenderer> _mockRenderer2 = null!;
     private Mock<ILayerRenderer> _mockRenderer3 = null!;
-    private RenderLayerContext _context = null!;
 
     [SetUp]
     public void SetUp()
@@ -44,7 +44,11 @@ public class LayerRenderingManagerTests
 
         var frameInfo = new FrameInfo(1, TimeSpan.FromMilliseconds(16.67), TimeSpan.FromSeconds(1), 60f);
         _context = new RenderLayerContext(
-            mockRenderer.Object, mockInputDevice.Object, frameInfo, new Size(800, 600));
+            mockRenderer.Object,
+            mockInputDevice.Object,
+            frameInfo,
+            new Size(800, 600)
+        );
     }
 
     [Test]
@@ -127,7 +131,8 @@ public class LayerRenderingManagerTests
 
         // Should not throw and complete quickly
         Assert.DoesNotThrowAsync(async () =>
-            await _manager.RenderAllLayersAsync(_context));
+            await _manager.RenderAllLayersAsync(_context)
+        );
     }
 
     [Test]
@@ -152,16 +157,16 @@ public class LayerRenderingManagerTests
         var callOrder = new List<string>();
 
         _mockRenderer1.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns(ValueTask.CompletedTask)
-                     .Callback(() => callOrder.Add("Renderer1"));
+            .Returns(ValueTask.CompletedTask)
+            .Callback(() => callOrder.Add("Renderer1"));
 
         _mockRenderer2.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns(ValueTask.CompletedTask)
-                     .Callback(() => callOrder.Add("Renderer2"));
+            .Returns(ValueTask.CompletedTask)
+            .Callback(() => callOrder.Add("Renderer2"));
 
         _mockRenderer3.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns(ValueTask.CompletedTask)
-                     .Callback(() => callOrder.Add("Renderer3"));
+            .Returns(ValueTask.CompletedTask)
+            .Callback(() => callOrder.Add("Renderer3"));
 
         await _manager.RenderAllLayersAsync(_context);
 
@@ -194,14 +199,16 @@ public class LayerRenderingManagerTests
 
         _mockRenderer1.Setup(r => r.IsVisible).Returns(true);
         _mockRenderer1.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns((RenderLayerContext ctx, CancellationToken ct) =>
-                     {
-                         ct.ThrowIfCancellationRequested();
-                         return ValueTask.CompletedTask;
-                     });
+            .Returns((RenderLayerContext ctx, CancellationToken ct) =>
+                {
+                    ct.ThrowIfCancellationRequested();
+                    return ValueTask.CompletedTask;
+                }
+            );
 
         Assert.ThrowsAsync<OperationCanceledException>(async () =>
-            await _manager.RenderAllLayersAsync(_context, cts.Token));
+            await _manager.RenderAllLayersAsync(_context, cts.Token)
+        );
     }
 
     [Test]
@@ -212,10 +219,11 @@ public class LayerRenderingManagerTests
 
         _mockRenderer1.Setup(r => r.IsVisible).Returns(true);
         _mockRenderer1.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .ThrowsAsync(new InvalidOperationException("Renderer error"));
+            .ThrowsAsync(new InvalidOperationException("Renderer error"));
 
         Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await _manager.RenderAllLayersAsync(_context));
+            await _manager.RenderAllLayersAsync(_context)
+        );
     }
 
     [Test]
@@ -228,7 +236,7 @@ public class LayerRenderingManagerTests
         _mockRenderer1.Setup(r => r.IsVisible).Returns(true);
         _mockRenderer2.Setup(r => r.IsVisible).Returns(true);
         _mockRenderer1.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .ThrowsAsync(new InvalidOperationException("First renderer error"));
+            .ThrowsAsync(new InvalidOperationException("First renderer error"));
 
         try
         {
@@ -240,7 +248,10 @@ public class LayerRenderingManagerTests
         }
 
         _mockRenderer1.Verify(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockRenderer2.Verify(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockRenderer2.Verify(
+            r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()),
+            Times.Never
+        );
     }
 
     [Test]
@@ -392,12 +403,12 @@ public class LayerRenderingManagerTests
         var callOrder = new List<string>();
 
         _mockRenderer1.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns(ValueTask.CompletedTask)
-                     .Callback(() => callOrder.Add("Renderer1"));
+            .Returns(ValueTask.CompletedTask)
+            .Callback(() => callOrder.Add("Renderer1"));
 
         _mockRenderer2.Setup(r => r.RenderAsync(It.IsAny<RenderLayerContext>(), It.IsAny<CancellationToken>()))
-                     .Returns(ValueTask.CompletedTask)
-                     .Callback(() => callOrder.Add("Renderer2"));
+            .Returns(ValueTask.CompletedTask)
+            .Callback(() => callOrder.Add("Renderer2"));
 
         // Render all
         await _manager.RenderAllLayersAsync(_context);

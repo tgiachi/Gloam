@@ -1,15 +1,21 @@
+using System.Diagnostics;
 using Gloam.Core.Contexts;
 using Gloam.Core.Interfaces;
 using Gloam.Core.Interfaces.Base;
 using Gloam.Core.Primitives;
 using Moq;
-using Moq.Protected;
 
 namespace Gloam.Tests.Interfaces.Base;
 
 // Test implementation of the abstract BaseLayerRenderer
 public class TestLayerRenderer : BaseLayerRenderer
 {
+    public TestLayerRenderer(int priority, string name)
+    {
+        Priority = priority;
+        Name = name;
+    }
+
     public override int Priority { get; }
     public override string Name { get; }
 
@@ -25,12 +31,6 @@ public class TestLayerRenderer : BaseLayerRenderer
     public TimeSpan PreRenderDelay { get; set; } = TimeSpan.Zero;
     public TimeSpan RenderLayerDelay { get; set; } = TimeSpan.Zero;
     public TimeSpan PostRenderDelay { get; set; } = TimeSpan.Zero;
-
-    public TestLayerRenderer(int priority, string name)
-    {
-        Priority = priority;
-        Name = name;
-    }
 
     public void Reset()
     {
@@ -51,10 +51,14 @@ public class TestLayerRenderer : BaseLayerRenderer
         ct.ThrowIfCancellationRequested();
 
         if (ShouldThrowInRenderLayer)
+        {
             throw new InvalidOperationException("RenderLayer error");
+        }
 
         if (RenderLayerDelay > TimeSpan.Zero)
+        {
             await Task.Delay(RenderLayerDelay, ct);
+        }
 
         RenderLayerCalled = true;
         RenderCallCount++;
@@ -65,10 +69,14 @@ public class TestLayerRenderer : BaseLayerRenderer
         ct.ThrowIfCancellationRequested();
 
         if (ShouldThrowInPreRender)
+        {
             throw new InvalidOperationException("PreRender error");
+        }
 
         if (PreRenderDelay > TimeSpan.Zero)
+        {
             await Task.Delay(PreRenderDelay, ct);
+        }
 
         PreRenderCalled = true;
     }
@@ -78,10 +86,14 @@ public class TestLayerRenderer : BaseLayerRenderer
         ct.ThrowIfCancellationRequested();
 
         if (ShouldThrowInPostRender)
+        {
             throw new InvalidOperationException("PostRender error");
+        }
 
         if (PostRenderDelay > TimeSpan.Zero)
+        {
             await Task.Delay(PostRenderDelay, ct);
+        }
 
         PostRenderCalled = true;
     }
@@ -91,7 +103,7 @@ public class TestMinimalLayerRenderer : BaseLayerRenderer
 {
     public override int Priority => 0;
     public override string Name => "MinimalRenderer";
-    
+
     public bool RenderLayerCalled { get; private set; }
 
     protected override ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
@@ -103,22 +115,22 @@ public class TestMinimalLayerRenderer : BaseLayerRenderer
 
 public class BaseLayerRendererTests
 {
-    private TestLayerRenderer _renderer = null!;
     private RenderLayerContext _context = null!;
+    private Mock<IInputDevice> _mockInputDevice = null!;
     private Mock<IRenderer> _mockRenderer = null!;
     private Mock<IRenderSurface> _mockSurface = null!;
-    private Mock<IInputDevice> _mockInputDevice = null!;
+    private TestLayerRenderer _renderer = null!;
 
     [SetUp]
     public void SetUp()
     {
         _renderer = new TestLayerRenderer(1, "TestRenderer");
-        
+
         // Create real context for testing
         _mockRenderer = new Mock<IRenderer>();
         _mockSurface = new Mock<IRenderSurface>();
         _mockInputDevice = new Mock<IInputDevice>();
-        
+
         _mockRenderer.Setup(r => r.Surface).Returns(_mockSurface.Object);
         _mockSurface.Setup(s => s.Width).Returns(800);
         _mockSurface.Setup(s => s.Height).Returns(600);
@@ -162,7 +174,7 @@ public class BaseLayerRendererTests
     public async Task RenderAsync_WithCancellationToken_ShouldPassToAllPhases()
     {
         using var cts = new CancellationTokenSource();
-        
+
         await _renderer.RenderAsync(_context, cts.Token);
 
         Assert.That(_renderer.PreRenderCalled, Is.True);
@@ -176,8 +188,9 @@ public class BaseLayerRendererTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
-        Assert.ThrowsAsync<OperationCanceledException>(async () => 
-            await _renderer.RenderAsync(_context, cts.Token));
+        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+            await _renderer.RenderAsync(_context, cts.Token)
+        );
     }
 
     [Test]
@@ -185,8 +198,9 @@ public class BaseLayerRendererTests
     {
         _renderer.ShouldThrowInPreRender = true;
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => 
-            await _renderer.RenderAsync(_context));
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _renderer.RenderAsync(_context)
+        );
 
         Assert.That(_renderer.PreRenderCalled, Is.False); // Never set to true due to exception
         Assert.That(_renderer.RenderLayerCalled, Is.False);
@@ -198,8 +212,9 @@ public class BaseLayerRendererTests
     {
         _renderer.ShouldThrowInRenderLayer = true;
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => 
-            await _renderer.RenderAsync(_context));
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _renderer.RenderAsync(_context)
+        );
 
         Assert.That(_renderer.PreRenderCalled, Is.True);
         Assert.That(_renderer.RenderLayerCalled, Is.False); // Never set to true due to exception
@@ -211,8 +226,9 @@ public class BaseLayerRendererTests
     {
         _renderer.ShouldThrowInPostRender = true;
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () => 
-            await _renderer.RenderAsync(_context));
+        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await _renderer.RenderAsync(_context)
+        );
 
         Assert.That(_renderer.PreRenderCalled, Is.True);
         Assert.That(_renderer.RenderLayerCalled, Is.True);
@@ -236,7 +252,7 @@ public class BaseLayerRendererTests
         _renderer.RenderLayerDelay = TimeSpan.FromMilliseconds(10);
         _renderer.PostRenderDelay = TimeSpan.FromMilliseconds(10);
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         await _renderer.RenderAsync(_context);
         stopwatch.Stop();
 
@@ -252,8 +268,9 @@ public class BaseLayerRendererTests
         _renderer.PreRenderDelay = TimeSpan.FromMilliseconds(50);
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10));
 
-        Assert.ThrowsAsync<TaskCanceledException>(async () => 
-            await _renderer.RenderAsync(_context, cts.Token));
+        Assert.ThrowsAsync<TaskCanceledException>(async () =>
+            await _renderer.RenderAsync(_context, cts.Token)
+        );
 
         // May or may not have been called depending on timing
         Assert.That(_renderer.RenderLayerCalled, Is.False);
@@ -266,8 +283,9 @@ public class BaseLayerRendererTests
         _renderer.RenderLayerDelay = TimeSpan.FromMilliseconds(50);
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(10));
 
-        Assert.ThrowsAsync<TaskCanceledException>(async () => 
-            await _renderer.RenderAsync(_context, cts.Token));
+        Assert.ThrowsAsync<TaskCanceledException>(async () =>
+            await _renderer.RenderAsync(_context, cts.Token)
+        );
 
         Assert.That(_renderer.PreRenderCalled, Is.True);
         Assert.That(_renderer.PostRenderCalled, Is.False);
@@ -382,7 +400,7 @@ public class BaseLayerRendererTests
     public async Task ResetBetweenCalls_ShouldWorkCorrectly()
     {
         await _renderer.RenderAsync(_context);
-        
+
         Assert.That(_renderer.RenderCallCount, Is.EqualTo(1));
 
         _renderer.Reset();
@@ -409,7 +427,10 @@ public class TestFirstFrameRenderer : BaseLayerRenderer
         return ValueTask.CompletedTask;
     }
 
-    public static bool TestIsFirstFrame(RenderLayerContext context) => IsFirstFrame(context);
+    public static bool TestIsFirstFrame(RenderLayerContext context)
+    {
+        return IsFirstFrame(context);
+    }
 }
 
 public class TestFPSRenderer : BaseLayerRenderer
@@ -422,20 +443,20 @@ public class TestFPSRenderer : BaseLayerRenderer
         return ValueTask.CompletedTask;
     }
 
-    public static float TestGetFramesPerSecond(RenderLayerContext context) => GetFramesPerSecond(context);
+    public static float TestGetFramesPerSecond(RenderLayerContext context)
+    {
+        return GetFramesPerSecond(context);
+    }
 }
 
 public class TestOrderedLayerRenderer : BaseLayerRenderer
 {
     private readonly List<string> _callOrder;
 
+    public TestOrderedLayerRenderer(List<string> callOrder) => _callOrder = callOrder;
+
     public override int Priority => 0;
     public override string Name => "TestOrderedLayerRenderer";
-
-    public TestOrderedLayerRenderer(List<string> callOrder)
-    {
-        _callOrder = callOrder;
-    }
 
     protected override ValueTask OnPreRenderAsync(RenderLayerContext context, CancellationToken ct = default)
     {

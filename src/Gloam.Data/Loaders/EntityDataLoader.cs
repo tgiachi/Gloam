@@ -8,7 +8,7 @@ using Serilog;
 namespace Gloam.Data.Loaders;
 
 /// <summary>
-/// Implementation of IEntityDataLoader that loads entities from content sources with schema validation
+///     Implementation of IEntityDataLoader that loads entities from content sources with schema validation
 /// </summary>
 public class EntityDataLoader : IEntityDataLoader
 {
@@ -20,7 +20,7 @@ public class EntityDataLoader : IEntityDataLoader
 
 
     /// <summary>
-    /// Initializes a new instance of EntityDataLoader with the specified content loader and schema validator
+    ///     Initializes a new instance of EntityDataLoader with the specified content loader and schema validator
     /// </summary>
     /// <param name="contentLoader">The content loader to use for reading files</param>
     /// <param name="entitySchemaValidator">The schema validator for validating entities</param>
@@ -32,7 +32,7 @@ public class EntityDataLoader : IEntityDataLoader
 
 
     /// <summary>
-    /// Subscribes to entity load events for entities of a specific type
+    ///     Subscribes to entity load events for entities of a specific type
     /// </summary>
     /// <typeparam name="TEntity">The type of entity to subscribe to</typeparam>
     /// <param name="onEntityLoaded">The callback function to invoke when an entity is loaded</param>
@@ -51,7 +51,7 @@ public class EntityDataLoader : IEntityDataLoader
     }
 
     /// <summary>
-    /// Asynchronously loads entities from the specified path with schema validation
+    ///     Asynchronously loads entities from the specified path with schema validation
     /// </summary>
     /// <param name="path">The path to load entities from</param>
     /// <param name="cancellationToken">A token to cancel the operation</param>

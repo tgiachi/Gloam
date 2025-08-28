@@ -5,15 +5,15 @@ using Gloam.Core.Primitives;
 namespace Gloam.Console.Render.Layers;
 
 /// <summary>
-/// Example layer renderer that displays status information
+///     Example layer renderer that displays status information
 /// </summary>
 public sealed class StatusLayerRenderer : BaseLayerRenderer
 {
-    private readonly Color _textColor;
     private readonly Color? _backgroundColor;
+    private readonly Color _textColor;
 
     /// <summary>
-    /// Initializes a new status layer renderer
+    ///     Initializes a new status layer renderer
     /// </summary>
     /// <param name="textColor">Color for status text</param>
     /// <param name="backgroundColor">Optional background color for status text</param>
@@ -40,7 +40,7 @@ public sealed class StatusLayerRenderer : BaseLayerRenderer
         // Draw status line at the top-right corner
         var statusY = 1; // Just below the border
 
-        DrawStatusText(context, fpsText, context.Screen.Width - fpsText.Length - 2, statusY, Colors.Green, Colors.Cyan);
+        DrawStatusText(context, fpsText, context.Screen.Width - fpsText.Length - 2, statusY, Colors.Green);
         DrawStatusText(context, frameText, context.Screen.Width - frameText.Length - 2, statusY + 1, Colors.Yellow);
         DrawStatusText(context, timeText, context.Screen.Width - timeText.Length - 2, statusY + 2, Colors.Cyan);
 
@@ -53,10 +53,14 @@ public sealed class StatusLayerRenderer : BaseLayerRenderer
         return ValueTask.CompletedTask;
     }
 
-    private void DrawStatusText(RenderLayerContext context, string text, int x, int y, Color? foreground = null, Color? background = null)
+    private void DrawStatusText(
+        RenderLayerContext context, string text, int x, int y, Color? foreground = null, Color? background = null
+    )
     {
         if (x < 0 || y < 0 || y >= context.Screen.Height)
+        {
             return;
+        }
 
         var pos = new Position(x, y);
         context.Renderer.DrawText(pos, text, foreground ?? _textColor, background ?? _backgroundColor);

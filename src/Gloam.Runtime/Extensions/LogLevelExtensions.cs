@@ -4,12 +4,12 @@ using Serilog.Events;
 namespace Gloam.Runtime.Extensions;
 
 /// <summary>
-/// Extension methods for converting between Gloam log levels and Serilog log levels
+///     Extension methods for converting between Gloam log levels and Serilog log levels
 /// </summary>
 public static class LogLevelExtensions
 {
     /// <summary>
-    /// Converts a LogLevelType to the corresponding Serilog LogEventLevel
+    ///     Converts a LogLevelType to the corresponding Serilog LogEventLevel
     /// </summary>
     /// <param name="logLevel">The Gloam log level to convert</param>
     /// <returns>The corresponding Serilog LogEventLevel</returns>

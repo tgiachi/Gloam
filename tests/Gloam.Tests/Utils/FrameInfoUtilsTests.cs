@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Gloam.Core.Contexts;
 using Gloam.Core.Utils;
 
 namespace Gloam.Tests.Utils;
@@ -15,7 +14,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo, Is.Not.Null);
         Assert.That(frameInfo.DeltaTime, Is.EqualTo(timeSinceLastRender));
@@ -31,7 +36,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FrameNumber, Is.EqualTo(0));
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(0f)); // First frame has 0 FPS
@@ -46,7 +57,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(0f));
     }
@@ -60,7 +77,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FrameNumber, Is.GreaterThan(0));
     }
@@ -74,7 +97,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         // Should be approximately 60 FPS (allowing for some precision variance)
         Assert.That(frameInfo.FramesPerSecond, Is.InRange(59f, 61f));
@@ -89,7 +118,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(0f));
     }
@@ -103,7 +138,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(0f));
     }
@@ -117,7 +158,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.TotalTime, Is.GreaterThan(TimeSpan.Zero));
         Assert.That(frameInfo.TotalTime.TotalMilliseconds, Is.GreaterThan(0));
@@ -134,8 +181,20 @@ public class FrameInfoUtilsTests
         var renderStep2 = TimeSpan.FromMilliseconds(33.33); // 30 FPS
 
         var startTimestamp = 0L;
-        var frameInfo1 = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep1);
-        var frameInfo2 = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep2);
+        var frameInfo1 = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep1
+        );
+        var frameInfo2 = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep2
+        );
 
         // Same timestamp, different render steps should yield different frame numbers
         Assert.That(frameInfo1.FrameNumber, Is.Not.EqualTo(frameInfo2.FrameNumber));
@@ -151,7 +210,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(1000f));
     }
@@ -165,7 +230,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.FramesPerSecond, Is.EqualTo(10f));
     }
@@ -179,7 +250,13 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.FromMilliseconds(16.67);
 
         var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
+        var frameInfo = FrameInfoUtils.Create(
+            startTimestamp,
+            currentTimestamp,
+            timeSinceLastRender,
+            isFirstFrame,
+            renderStep
+        );
 
         Assert.That(frameInfo.DeltaTime, Is.EqualTo(timeSinceLastRender));
         Assert.That(frameInfo.DeltaTime.TotalMilliseconds, Is.EqualTo(23.456));
@@ -212,12 +289,19 @@ public class FrameInfoUtilsTests
         var renderStep = TimeSpan.Zero;
 
         // Should not throw division by zero
-        Assert.DoesNotThrow(() => 
-        {
-            var startTimestamp = 0L;
-        var frameInfo = FrameInfoUtils.Create(startTimestamp, currentTimestamp, timeSinceLastRender, isFirstFrame, renderStep);
-            Assert.That(frameInfo, Is.Not.Null);
-        });
+        Assert.DoesNotThrow(() =>
+            {
+                var startTimestamp = 0L;
+                var frameInfo = FrameInfoUtils.Create(
+                    startTimestamp,
+                    currentTimestamp,
+                    timeSinceLastRender,
+                    isFirstFrame,
+                    renderStep
+                );
+                Assert.That(frameInfo, Is.Not.Null);
+            }
+        );
     }
 
     [Test]
@@ -226,7 +310,7 @@ public class FrameInfoUtilsTests
         var timestamp1 = Stopwatch.GetTimestamp();
         Thread.Sleep(1); // Ensure different timestamps
         var timestamp2 = Stopwatch.GetTimestamp();
-        
+
         var timeSinceLastRender = TimeSpan.FromMilliseconds(16.67);
         var isFirstFrame = false;
         var renderStep = TimeSpan.FromMilliseconds(16.67);

@@ -3,30 +3,30 @@ using System.Runtime.CompilerServices;
 namespace Gloam.Core.Primitives;
 
 /// <summary>
-/// Represents a rectangle with integer coordinates optimized for roguelike grid-based operations.
-/// Follows KISS principles with minimal overhead and high performance for frequent allocations.
+///     Represents a rectangle with integer coordinates optimized for roguelike grid-based operations.
+///     Follows KISS principles with minimal overhead and high performance for frequent allocations.
 /// </summary>
 public readonly struct Rectangle : IEquatable<Rectangle>
 {
     #region Fields
 
     /// <summary>
-    /// The X coordinate of the rectangle's top-left corner.
+    ///     The X coordinate of the rectangle's top-left corner.
     /// </summary>
     public int X { get; }
 
     /// <summary>
-    /// The Y coordinate of the rectangle's top-left corner.
+    ///     The Y coordinate of the rectangle's top-left corner.
     /// </summary>
     public int Y { get; }
 
     /// <summary>
-    /// The width of the rectangle.
+    ///     The width of the rectangle.
     /// </summary>
     public int Width { get; }
 
     /// <summary>
-    /// The height of the rectangle.
+    ///     The height of the rectangle.
     /// </summary>
     public int Height { get; }
 
@@ -35,42 +35,42 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     #region Properties
 
     /// <summary>
-    /// Gets the X coordinate of the left edge of the rectangle.
+    ///     Gets the X coordinate of the left edge of the rectangle.
     /// </summary>
     public int Left => X;
 
     /// <summary>
-    /// Gets the Y coordinate of the top edge of the rectangle.
+    ///     Gets the Y coordinate of the top edge of the rectangle.
     /// </summary>
     public int Top => Y;
 
     /// <summary>
-    /// Gets the X coordinate of the right edge of the rectangle.
+    ///     Gets the X coordinate of the right edge of the rectangle.
     /// </summary>
     public int Right => X + Width;
 
     /// <summary>
-    /// Gets the Y coordinate of the bottom edge of the rectangle.
+    ///     Gets the Y coordinate of the bottom edge of the rectangle.
     /// </summary>
     public int Bottom => Y + Height;
 
     /// <summary>
-    /// Gets the center point of the rectangle.
+    ///     Gets the center point of the rectangle.
     /// </summary>
     public Position Center => new(X + Width / 2, Y + Height / 2);
 
     /// <summary>
-    /// Gets the area of the rectangle.
+    ///     Gets the area of the rectangle.
     /// </summary>
     public int Area => Width * Height;
 
     /// <summary>
-    /// Gets whether the rectangle is empty (has zero or negative area).
+    ///     Gets whether the rectangle is empty (has zero or negative area).
     /// </summary>
     public bool IsEmpty => Width <= 0 || Height <= 0;
 
     /// <summary>
-    /// Gets an empty rectangle at origin.
+    ///     Gets an empty rectangle at origin.
     /// </summary>
     public static Rectangle Empty => new(0, 0, 0, 0);
 
@@ -79,7 +79,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     #region Constructors
 
     /// <summary>
-    /// Initializes a new rectangle with the specified position and size.
+    ///     Initializes a new rectangle with the specified position and size.
     /// </summary>
     /// <param name="x">The X coordinate of the top-left corner.</param>
     /// <param name="y">The Y coordinate of the top-left corner.</param>
@@ -94,7 +94,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Initializes a new rectangle with the specified position and size.
+    ///     Initializes a new rectangle with the specified position and size.
     /// </summary>
     /// <param name="position">The top-left corner position.</param>
     /// <param name="size">The size of the rectangle.</param>
@@ -103,7 +103,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Initializes a new rectangle from two corner points.
+    ///     Initializes a new rectangle from two corner points.
     /// </summary>
     /// <param name="topLeft">The top-left corner.</param>
     /// <param name="bottomRight">The bottom-right corner.</param>
@@ -122,7 +122,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     #region Methods
 
     /// <summary>
-    /// Determines whether the specified point is contained within this rectangle.
+    ///     Determines whether the specified point is contained within this rectangle.
     /// </summary>
     /// <param name="x">The X coordinate of the point.</param>
     /// <param name="y">The Y coordinate of the point.</param>
@@ -134,7 +134,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Determines whether the specified point is contained within this rectangle.
+    ///     Determines whether the specified point is contained within this rectangle.
     /// </summary>
     /// <param name="point">The point to test.</param>
     /// <returns>True if the point is contained within the rectangle; otherwise, false.</returns>
@@ -145,7 +145,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Determines whether the specified rectangle is entirely contained within this rectangle.
+    ///     Determines whether the specified rectangle is entirely contained within this rectangle.
     /// </summary>
     /// <param name="other">The rectangle to test.</param>
     /// <returns>True if the rectangle is entirely contained; otherwise, false.</returns>
@@ -157,7 +157,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Determines whether this rectangle intersects with another rectangle.
+    ///     Determines whether this rectangle intersects with another rectangle.
     /// </summary>
     /// <param name="other">The rectangle to test for intersection.</param>
     /// <returns>True if the rectangles intersect; otherwise, false.</returns>
@@ -169,40 +169,42 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns the intersection of this rectangle with another rectangle.
+    ///     Returns the intersection of this rectangle with another rectangle.
     /// </summary>
     /// <param name="other">The rectangle to intersect with.</param>
     /// <returns>The intersection rectangle, or Empty if no intersection exists.</returns>
     public Rectangle Intersect(Rectangle other)
     {
-        int x = Math.Max(X, other.X);
-        int y = Math.Max(Y, other.Y);
-        int right = Math.Min(Right, other.Right);
-        int bottom = Math.Min(Bottom, other.Bottom);
+        var x = Math.Max(X, other.X);
+        var y = Math.Max(Y, other.Y);
+        var right = Math.Min(Right, other.Right);
+        var bottom = Math.Min(Bottom, other.Bottom);
 
         if (right <= x || bottom <= y)
+        {
             return Empty;
+        }
 
         return new Rectangle(x, y, right - x, bottom - y);
     }
 
     /// <summary>
-    /// Returns the union of this rectangle with another rectangle.
+    ///     Returns the union of this rectangle with another rectangle.
     /// </summary>
     /// <param name="other">The rectangle to union with.</param>
     /// <returns>The union rectangle.</returns>
     public Rectangle Union(Rectangle other)
     {
-        int x = Math.Min(X, other.X);
-        int y = Math.Min(Y, other.Y);
-        int right = Math.Max(Right, other.Right);
-        int bottom = Math.Max(Bottom, other.Bottom);
+        var x = Math.Min(X, other.X);
+        var y = Math.Min(Y, other.Y);
+        var right = Math.Max(Right, other.Right);
+        var bottom = Math.Max(Bottom, other.Bottom);
 
         return new Rectangle(x, y, right - x, bottom - y);
     }
 
     /// <summary>
-    /// Returns a new rectangle with the specified offset applied.
+    ///     Returns a new rectangle with the specified offset applied.
     /// </summary>
     /// <param name="offsetX">The X offset.</param>
     /// <param name="offsetY">The Y offset.</param>
@@ -214,7 +216,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns a new rectangle with the specified offset applied.
+    ///     Returns a new rectangle with the specified offset applied.
     /// </summary>
     /// <param name="offset">The offset point.</param>
     /// <returns>The offset rectangle.</returns>
@@ -225,7 +227,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns a new rectangle inflated by the specified amount.
+    ///     Returns a new rectangle inflated by the specified amount.
     /// </summary>
     /// <param name="width">The amount to inflate horizontally.</param>
     /// <param name="height">The amount to inflate vertically.</param>
@@ -241,7 +243,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     #region Equality
 
     /// <summary>
-    /// Indicates whether this rectangle is equal to another rectangle.
+    ///     Indicates whether this rectangle is equal to another rectangle.
     /// </summary>
     /// <param name="other">The rectangle to compare with.</param>
     /// <returns>True if the rectangles are equal; otherwise, false.</returns>
@@ -252,7 +254,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Indicates whether this rectangle is equal to the specified object.
+    ///     Indicates whether this rectangle is equal to the specified object.
     /// </summary>
     /// <param name="obj">The object to compare with.</param>
     /// <returns>True if the objects are equal; otherwise, false.</returns>
@@ -262,7 +264,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns the hash code for this rectangle.
+    ///     Returns the hash code for this rectangle.
     /// </summary>
     /// <returns>A hash code for this rectangle.</returns>
     public override int GetHashCode()
@@ -271,7 +273,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Returns a string representation of this rectangle.
+    ///     Returns a string representation of this rectangle.
     /// </summary>
     /// <returns>A string representation of this rectangle.</returns>
     public override string ToString()
@@ -284,7 +286,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     #region Operators
 
     /// <summary>
-    /// Determines whether two rectangles are equal.
+    ///     Determines whether two rectangles are equal.
     /// </summary>
     /// <param name="left">The first rectangle.</param>
     /// <param name="right">The second rectangle.</param>
@@ -296,7 +298,7 @@ public readonly struct Rectangle : IEquatable<Rectangle>
     }
 
     /// <summary>
-    /// Determines whether two rectangles are not equal.
+    ///     Determines whether two rectangles are not equal.
     /// </summary>
     /// <param name="left">The first rectangle.</param>
     /// <param name="right">The second rectangle.</param>

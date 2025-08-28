@@ -1,32 +1,32 @@
 namespace Gloam.Core.Primitives;
 
 /// <summary>
-/// Represents a color with red, green, blue, and alpha components (RGBA format)
+///     Represents a color with red, green, blue, and alpha components (RGBA format)
 /// </summary>
 public readonly struct Color
 {
     /// <summary>
-    /// Gets the red component (0-255)
+    ///     Gets the red component (0-255)
     /// </summary>
     public int R { get; }
 
     /// <summary>
-    /// Gets the green component (0-255)
+    ///     Gets the green component (0-255)
     /// </summary>
     public int G { get; }
 
     /// <summary>
-    /// Gets the blue component (0-255)
+    ///     Gets the blue component (0-255)
     /// </summary>
     public int B { get; }
 
     /// <summary>
-    /// Gets the alpha (opacity) component (0-255, where 255 is fully opaque)
+    ///     Gets the alpha (opacity) component (0-255, where 255 is fully opaque)
     /// </summary>
     public int A { get; }
 
     /// <summary>
-    /// Initializes a new Color with the specified RGBA components
+    ///     Initializes a new Color with the specified RGBA components
     /// </summary>
     /// <param name="r">Red component (0-255, will be clamped)</param>
     /// <param name="g">Green component (0-255, will be clamped)</param>
@@ -41,7 +41,7 @@ public readonly struct Color
     }
 
     /// <summary>
-    /// Creates a Color from a hexadecimal string representation
+    ///     Creates a Color from a hexadecimal string representation
     /// </summary>
     /// <param name="hex">Hexadecimal color string (e.g., "#FF0000" or "FF0000" for red, optionally with alpha)</param>
     /// <returns>A Color representing the hexadecimal value</returns>

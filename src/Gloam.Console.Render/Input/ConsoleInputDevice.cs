@@ -5,16 +5,16 @@ using Serilog;
 namespace Gloam.Console.Render.Input;
 
 /// <summary>
-/// Console-based input device that reads from the standard console input
+///     Console-based input device that reads from the standard console input
 /// </summary>
 public sealed class ConsoleInputDevice : BaseInputDevice
 {
-    private readonly ILogger _log = Log.ForContext<ConsoleInputDevice>();
-    private readonly Queue<ConsoleKeyInfo> _keyBuffer;
     private readonly HashSet<ConsoleKey> _currentlyPressed;
+    private readonly Queue<ConsoleKeyInfo> _keyBuffer;
+    private readonly ILogger _log = Log.ForContext<ConsoleInputDevice>();
 
     /// <summary>
-    /// Initializes a new console input device
+    ///     Initializes a new console input device
     /// </summary>
     public ConsoleInputDevice()
     {
@@ -33,7 +33,7 @@ public sealed class ConsoleInputDevice : BaseInputDevice
         {
             try
             {
-                var keyInfo = System.Console.ReadKey(intercept: true);
+                var keyInfo = System.Console.ReadKey(true);
                 _log.Information(
                     " Key pressed: {Key} (Char: '{Char}', Modifiers: {Modifiers})",
                     keyInfo.Key,
@@ -60,7 +60,7 @@ public sealed class ConsoleInputDevice : BaseInputDevice
     }
 
     /// <summary>
-    /// Gets the next available key press from the input buffer
+    ///     Gets the next available key press from the input buffer
     /// </summary>
     /// <returns>The next key press, or null if no keys are available</returns>
     public ConsoleKeyInfo? GetNextKeyPress()
@@ -69,7 +69,7 @@ public sealed class ConsoleInputDevice : BaseInputDevice
     }
 
     /// <summary>
-    /// Gets all available key presses from the input buffer
+    ///     Gets all available key presses from the input buffer
     /// </summary>
     /// <returns>Collection of all available key presses</returns>
     public IEnumerable<ConsoleKeyInfo> GetAllKeyPresses()
@@ -81,7 +81,7 @@ public sealed class ConsoleInputDevice : BaseInputDevice
     }
 
     /// <summary>
-    /// Clears the input buffer
+    ///     Clears the input buffer
     /// </summary>
     public void ClearBuffer()
     {

@@ -3,7 +3,7 @@ using Gloam.Core.Extensions.Strings;
 namespace Mosaic.Engine.Directories;
 
 /// <summary>
-/// Configuration for managing directory structures with automatic creation and path resolution
+///     Configuration for managing directory structures with automatic creation and path resolution
 /// </summary>
 public class DirectoriesConfig
 {

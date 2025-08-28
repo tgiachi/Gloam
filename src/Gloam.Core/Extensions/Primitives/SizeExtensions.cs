@@ -3,12 +3,12 @@ using Gloam.Core.Primitives;
 namespace Gloam.Core.Extensions.Primitives;
 
 /// <summary>
-/// Extension methods for Size operations
+///     Extension methods for Size operations
 /// </summary>
 public static class SizeExtensions
 {
     /// <summary>
-    /// Checks if a position is within the bounds of a size (assuming origin at 0,0)
+    ///     Checks if a position is within the bounds of a size (assuming origin at 0,0)
     /// </summary>
     public static bool Contains(this Size size, Position position)
     {
@@ -17,7 +17,7 @@ public static class SizeExtensions
     }
 
     /// <summary>
-    /// Checks if a position is within the bounds of a size with a specific origin
+    ///     Checks if a position is within the bounds of a size with a specific origin
     /// </summary>
     public static bool Contains(this Size size, Position position, Position origin)
     {
@@ -26,7 +26,7 @@ public static class SizeExtensions
     }
 
     /// <summary>
-    /// Creates a rectangle from a size with the specified origin
+    ///     Creates a rectangle from a size with the specified origin
     /// </summary>
     public static Rectangle ToRectangle(this Size size, Position origin = default)
     {
@@ -34,7 +34,7 @@ public static class SizeExtensions
     }
 
     /// <summary>
-    /// Gets all positions within the size bounds (for iteration)
+    ///     Gets all positions within the size bounds (for iteration)
     /// </summary>
     public static IEnumerable<Position> GetAllPositions(this Size size)
     {
@@ -48,7 +48,7 @@ public static class SizeExtensions
     }
 
     /// <summary>
-    /// Gets the center position of the size
+    ///     Gets the center position of the size
     /// </summary>
     public static Position GetCenter(this Size size)
     {

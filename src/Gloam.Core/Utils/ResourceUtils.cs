@@ -78,7 +78,7 @@ public static partial class ResourceUtils
     }
 
     /// <summary>
-    /// Converts an embedded resource name to a file path format
+    ///     Converts an embedded resource name to a file path format
     /// </summary>
     /// <param name="resourceName">The full embedded resource name</param>
     /// <param name="assemblyPrefix">The assembly prefix to remove from the resource name</param>

@@ -1,11 +1,8 @@
-using DryIoc;
 using Gloam.Console.Render.Input;
 using Gloam.Console.Render.Layers;
 using Gloam.Console.Render.Rendering;
 using Gloam.Console.Render.Surfaces;
 using Gloam.Core.Input;
-using Gloam.Core.Interfaces;
-using Gloam.Core.Primitives;
 using Gloam.Runtime;
 using Gloam.Runtime.Config;
 using Gloam.Runtime.Types;
@@ -13,7 +10,7 @@ using Gloam.Runtime.Types;
 namespace Gloam.Demo;
 
 /// <summary>
-/// Demo application showcasing Gloam engine with console rendering
+///     Demo application showcasing Gloam engine with console rendering
 /// </summary>
 public class Program
 {
@@ -43,7 +40,7 @@ public class Program
             };
 
             // Create and configure the host
-            using var host = new GloamHost(hostConfig);
+            await using var host = new GloamHost(hostConfig);
 
             // Setup console rendering
             var surface = new ConsoleSurface();
@@ -100,11 +97,10 @@ public class Program
     }
 
     /// <summary>
-    /// Checks if the user wants to exit the demo
+    ///     Checks if the user wants to exit the demo
     /// </summary>
     private static bool ShouldExit(ConsoleInputDevice inputDevice)
     {
-
         // Check for ESC key press
         return inputDevice.WasPressed(Keys.Escape);
     }

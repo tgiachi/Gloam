@@ -6,17 +6,17 @@ using Gloam.Core.Primitives;
 namespace Gloam.Console.Render.Rendering;
 
 /// <summary>
-/// Console-based renderer that outputs to the system console using ANSI escape codes
+///     Console-based renderer that outputs to the system console using ANSI escape codes
 /// </summary>
 public sealed class ConsoleRenderer : IRenderer
 {
-    private readonly ConsoleSurface _surface;
-    private readonly StringBuilder _frameBuffer;
     private readonly Dictionary<Position, (char character, ConsoleColor? fg, ConsoleColor? bg)> _drawBuffer;
+    private readonly StringBuilder _frameBuffer;
+    private readonly ConsoleSurface _surface;
     private bool _isDrawing;
 
     /// <summary>
-    /// Initializes a new console renderer with the specified surface
+    ///     Initializes a new console renderer with the specified surface
     /// </summary>
     /// <param name="surface">The console surface to render to</param>
     public ConsoleRenderer(ConsoleSurface surface)
@@ -33,7 +33,7 @@ public sealed class ConsoleRenderer : IRenderer
     }
 
     /// <summary>
-    /// Creates a new console renderer with a default console surface
+    ///     Creates a new console renderer with a default console surface
     /// </summary>
     public ConsoleRenderer() : this(new ConsoleSurface())
     {
@@ -46,7 +46,9 @@ public sealed class ConsoleRenderer : IRenderer
     public void BeginDraw()
     {
         if (_isDrawing)
+        {
             throw new InvalidOperationException("Already in drawing mode. Call EndDraw() first.");
+        }
 
         _isDrawing = true;
         _drawBuffer.Clear();
@@ -66,24 +68,32 @@ public sealed class ConsoleRenderer : IRenderer
     public void DrawText(Position pos, string text, Color fg, Color? bg = null)
     {
         if (!_isDrawing)
+        {
             throw new InvalidOperationException("Not in drawing mode. Call BeginDraw() first.");
+        }
 
         if (string.IsNullOrEmpty(text))
+        {
             return;
+        }
 
         if (pos.X < 0 || pos.Y < 0 || pos.Y >= _surface.Height)
+        {
             return;
+        }
 
         var fgConsole = ConvertToConsoleColor(fg);
         var bgConsole = bg.HasValue && bg.Value.A > 0 ? ConvertToConsoleColor(bg.Value) : (ConsoleColor?)null;
 
         // Draw each character of the text
-        for (int i = 0; i < text.Length; i++)
+        for (var i = 0; i < text.Length; i++)
         {
             var charPos = new Position(pos.X + i, pos.Y);
-            
+
             if (charPos.X >= _surface.Width)
+            {
                 break;
+            }
 
             _drawBuffer[charPos] = (text[i], fgConsole, bgConsole);
         }
@@ -93,13 +103,19 @@ public sealed class ConsoleRenderer : IRenderer
     public void DrawTile(Position pos, TileVisual v)
     {
         if (!_isDrawing)
+        {
             throw new InvalidOperationException("Not in drawing mode. Call BeginDraw() first.");
+        }
 
         if (pos.X < 0 || pos.Y < 0 || pos.X >= _surface.Width || pos.Y >= _surface.Height)
+        {
             return;
+        }
 
         var fgConsole = ConvertToConsoleColor(v.Foreground);
-        var bgConsole = v.Background.HasValue && v.Background.Value.A > 0 ? ConvertToConsoleColor(v.Background.Value) : (ConsoleColor?)null;
+        var bgConsole = v.Background.HasValue && v.Background.Value.A > 0
+            ? ConvertToConsoleColor(v.Background.Value)
+            : (ConsoleColor?)null;
 
         _drawBuffer[pos] = ((char)v.Glyph.Value, fgConsole, bgConsole);
     }
@@ -108,7 +124,9 @@ public sealed class ConsoleRenderer : IRenderer
     public void EndDraw()
     {
         if (!_isDrawing)
+        {
             throw new InvalidOperationException("Not in drawing mode. Call BeginDraw() first.");
+        }
 
         try
         {
@@ -140,12 +158,18 @@ public sealed class ConsoleRenderer : IRenderer
             if (ConsoleSurface.SupportsColor)
             {
                 if (fg.HasValue)
+                {
                     System.Console.ForegroundColor = fg.Value;
-                
+                }
+
                 if (bg.HasValue)
+                {
                     System.Console.BackgroundColor = bg.Value;
+                }
                 else
+                {
                     System.Console.BackgroundColor = ConsoleColor.Black; // Reset to default background
+                }
             }
 
             System.Console.Write(character);
@@ -157,11 +181,11 @@ public sealed class ConsoleRenderer : IRenderer
     private void RenderToRedirectedOutput()
     {
         // For redirected output, render a complete frame line by line
-        for (int y = 0; y < _surface.Height; y++)
+        for (var y = 0; y < _surface.Height; y++)
         {
             _frameBuffer.Clear();
-            
-            for (int x = 0; x < _surface.Width; x++)
+
+            for (var x = 0; x < _surface.Width; x++)
             {
                 var pos = new Position(x, y);
                 if (_drawBuffer.TryGetValue(pos, out var drawData))
@@ -173,7 +197,7 @@ public sealed class ConsoleRenderer : IRenderer
                     _frameBuffer.Append(' ');
                 }
             }
-            
+
             System.Console.WriteLine(_frameBuffer.ToString());
         }
     }
@@ -186,7 +210,7 @@ public sealed class ConsoleRenderer : IRenderer
 
         return (r, g, b) switch
         {
-            (0, 0, 0) => ConsoleColor.Black,
+            (0, 0, 0)                                    => ConsoleColor.Black,
             (_, _, _) when r > 200 && g < 100 && b < 100 => ConsoleColor.Red,
             (_, _, _) when r < 100 && g > 200 && b < 100 => ConsoleColor.Green,
             (_, _, _) when r > 200 && g > 200 && b < 100 => ConsoleColor.Yellow,
@@ -201,7 +225,7 @@ public sealed class ConsoleRenderer : IRenderer
             (_, _, _) when r < 150 && g < 150 && b > 150 => ConsoleColor.DarkBlue,
             (_, _, _) when r > 150 && g < 150 && b > 150 => ConsoleColor.DarkMagenta,
             (_, _, _) when r < 150 && g > 150 && b > 150 => ConsoleColor.DarkCyan,
-            _ => ConsoleColor.DarkGray
+            _                                            => ConsoleColor.DarkGray
         };
     }
 }

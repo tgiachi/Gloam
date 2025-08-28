@@ -1,7 +1,7 @@
 namespace Gloam.Core.Primitives;
 
 /// <summary>
-/// Provides predefined color constants for common colors
+///     Provides predefined color constants for common colors
 /// </summary>
 public static class Colors
 {
@@ -66,7 +66,7 @@ public static class Colors
     public static readonly Color SkyBlue = new(135, 206, 235);
     public static readonly Color DeepSkyBlue = new(0, 191, 255);
     public static readonly Color Navy = new(0, 0, 128);
-    
+
     // Transparent color
     public static readonly Color Transparent = new(0, 0, 0, 0);
 

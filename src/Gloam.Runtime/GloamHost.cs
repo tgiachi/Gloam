@@ -20,26 +20,19 @@ using Serilog.Formatting.Compact;
 namespace Gloam.Runtime;
 
 /// <summary>
-/// Optimized DryIoc container host for roguelike engines.
-/// Features performance optimizations for high-frequency object creation,
-/// memory management, and game loop scoping.
+///     Optimized DryIoc container host for roguelike engines.
+///     Features performance optimizations for high-frequency object creation,
+///     memory management, and game loop scoping.
 /// </summary>
 public class GloamHost : IGloamHost
 {
-    /// <summary>
-    /// Gets the current state of the host
-    /// </summary>
-    public HostState State { get; private set; }
-
-    public ILayerRenderingManager LayerRenderingManager => Container.Resolve<ILayerRenderingManager>();
-
     private readonly GloamHostConfig _config;
-    private IRenderer? _renderer;
     private IInputDevice? _inputDevice;
+    private IRenderer? _renderer;
 
 
     /// <summary>
-    /// Initializes a new instance of GloamHost with the specified configuration
+    ///     Initializes a new instance of GloamHost with the specified configuration
     /// </summary>
     /// <param name="config">The host configuration</param>
     /// <exception cref="ArgumentNullException">Thrown when config is null</exception>
@@ -53,9 +46,115 @@ public class GloamHost : IGloamHost
     }
 
     /// <summary>
-    /// Gets the dependency injection container
+    ///     Gets the dependency injection container
     /// </summary>
     public IContainer Container { get; }
+
+    /// <summary>
+    ///     Gets the current state of the host
+    /// </summary>
+    public HostState State { get; private set; }
+
+    public ILayerRenderingManager LayerRenderingManager => Container.Resolve<ILayerRenderingManager>();
+
+
+    /// <summary>
+    ///     Disposes the host and releases all resources
+    /// </summary>
+    public void Dispose()
+    {
+        Container.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    ///     Asynchronously disposes the host and releases all resources
+    /// </summary>
+    /// <returns>A ValueTask representing the asynchronous dispose operation</returns>
+    public async ValueTask DisposeAsync()
+    {
+        if (Container is IAsyncDisposable containerAsyncDisposable)
+        {
+            await containerAsyncDisposable.DisposeAsync();
+        }
+        else
+        {
+            Container.Dispose();
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
+
+    /// <summary>
+    ///     Initializes the host asynchronously
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A ValueTask representing the initialization operation</returns>
+    public async ValueTask InitializeAsync(CancellationToken ct = default)
+    {
+        State = HostState.Initialized;
+    }
+
+    /// <summary>
+    ///     Loads content from the specified root directory
+    /// </summary>
+    /// <param name="contentRoot">The root directory for content loading</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A ValueTask representing the content loading operation</returns>
+    public async ValueTask LoadContentAsync(string contentRoot, CancellationToken ct = default)
+    {
+        State = HostState.ContentLoaded;
+    }
+
+    /// <summary>
+    ///     Starts the host and begins the game loop
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the start operation</returns>
+    public async Task StartAsync(CancellationToken ct = default)
+    {
+        await InitializeAsync(ct);
+        State = HostState.Running;
+    }
+
+    /// <summary>
+    ///     Legacy overload for backward compatibility. Runs the roguelike game loop
+    /// </summary>
+    /// <param name="keepRunning">Function that returns true while the game should continue running</param>
+    /// <param name="fixedStep">Ignored in roguelike mode (kept for compatibility)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the game loop execution</returns>
+    public async Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
+    {
+        var config = new GameLoopConfig
+        {
+            KeepRunning = keepRunning
+        };
+
+        await RunAsync(config, ct);
+    }
+
+
+    /// <summary>
+    ///     Stops the host and game loop gracefully
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the stop operation</returns>
+    public async Task StopAsync(CancellationToken ct = default)
+    {
+        State = HostState.Stopped;
+    }
+
+    public void SetRenderer(IRenderer renderer)
+    {
+        _renderer = renderer;
+    }
+
+    public void SetInputDevice(IInputDevice inputDevice)
+    {
+        _inputDevice = inputDevice;
+    }
 
     private static Container CreateContainer()
     {
@@ -137,86 +236,8 @@ public class GloamHost : IGloamHost
         Container.Register<ILayerRenderingManager, LayerRenderingManager>(Reuse.Singleton);
     }
 
-
     /// <summary>
-    /// Disposes the host and releases all resources
-    /// </summary>
-    public void Dispose()
-    {
-        Container.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    /// <summary>
-    /// Asynchronously disposes the host and releases all resources
-    /// </summary>
-    /// <returns>A ValueTask representing the asynchronous dispose operation</returns>
-    public async ValueTask DisposeAsync()
-    {
-        if (Container is IAsyncDisposable containerAsyncDisposable)
-        {
-            await containerAsyncDisposable.DisposeAsync();
-        }
-        else
-        {
-            Container.Dispose();
-        }
-
-        GC.SuppressFinalize(this);
-    }
-
-
-    /// <summary>
-    /// Initializes the host asynchronously
-    /// </summary>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>A ValueTask representing the initialization operation</returns>
-    public async ValueTask InitializeAsync(CancellationToken ct = default)
-    {
-        State = HostState.Initialized;
-    }
-
-    /// <summary>
-    /// Loads content from the specified root directory
-    /// </summary>
-    /// <param name="contentRoot">The root directory for content loading</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>A ValueTask representing the content loading operation</returns>
-    public async ValueTask LoadContentAsync(string contentRoot, CancellationToken ct = default)
-    {
-        State = HostState.ContentLoaded;
-    }
-
-    /// <summary>
-    /// Starts the host and begins the game loop
-    /// </summary>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>A Task representing the start operation</returns>
-    public async Task StartAsync(CancellationToken ct = default)
-    {
-        await InitializeAsync(ct);
-        State = HostState.Running;
-    }
-
-    /// <summary>
-    /// Legacy overload for backward compatibility. Runs the roguelike game loop
-    /// </summary>
-    /// <param name="keepRunning">Function that returns true while the game should continue running</param>
-    /// <param name="fixedStep">Ignored in roguelike mode (kept for compatibility)</param>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>A Task representing the game loop execution</returns>
-    public async Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
-    {
-        var config = new GameLoopConfig
-        {
-            KeepRunning = keepRunning
-        };
-
-        await RunAsync(config, ct);
-    }
-
-    /// <summary>
-    /// Runs the game loop with the specified configuration
+    ///     Runs the game loop with the specified configuration
     /// </summary>
     /// <param name="config">Game loop configuration</param>
     /// <param name="ct">Cancellation token</param>
@@ -282,27 +303,4 @@ public class GloamHost : IGloamHost
 
         State = HostState.Paused;
     }
-
-
-    /// <summary>
-    /// Stops the host and game loop gracefully
-    /// </summary>
-    /// <param name="ct">Cancellation token</param>
-    /// <returns>A Task representing the stop operation</returns>
-    public async Task StopAsync(CancellationToken ct = default)
-    {
-        State = HostState.Stopped;
-    }
-
-    public void SetRenderer(IRenderer renderer)
-    {
-        _renderer = renderer;
-    }
-
-    public void SetInputDevice(IInputDevice inputDevice)
-    {
-        _inputDevice = inputDevice;
-    }
-
-
 }

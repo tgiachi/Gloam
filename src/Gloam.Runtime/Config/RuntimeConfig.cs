@@ -15,7 +15,7 @@ public sealed record RuntimeConfig(
     /// Rendering step interval in milliseconds.
     /// Controls the maximum frame rate (e.g., 33ms = ~30 FPS, 16ms = ~60 FPS).
     /// </summary>
-    double RenderStep = 33,
+    double RenderStep = 15,
     /// <summary>
     /// Whether the game loop should skip rendering frames if simulation is behind.
     /// Helps maintain simulation accuracy in real-time games when rendering is slow.

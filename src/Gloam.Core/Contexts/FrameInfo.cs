@@ -1,7 +1,7 @@
 namespace Gloam.Core.Contexts;
 
 /// <summary>
-/// Represents timing and performance information for a single frame in the game loop
+///     Represents timing and performance information for a single frame in the game loop
 /// </summary>
 /// <param name="FrameNumber">The sequential frame number since the start of the game</param>
 /// <param name="DeltaTime">Time elapsed since the last frame was rendered</param>

@@ -1,12 +1,12 @@
 namespace Gloam.Core.Utils;
 
 /// <summary>
-/// Utility methods for working with directories and file system operations
+///     Utility methods for working with directories and file system operations
 /// </summary>
 public class DirectoriesUtils
 {
     /// <summary>
-    /// Gets files from the specified path recursively with optional extension filtering
+    ///     Gets files from the specified path recursively with optional extension filtering
     /// </summary>
     /// <param name="path">Directory path to search</param>
     /// <param name="extensions">File extensions to filter by (e.g., "*.txt", "*.json")</param>
@@ -17,7 +17,7 @@ public class DirectoriesUtils
     }
 
     /// <summary>
-    /// Gets files from the specified path with configurable recursion and extension filtering
+    ///     Gets files from the specified path with configurable recursion and extension filtering
     /// </summary>
     /// <param name="path">Directory path to search</param>
     /// <param name="recursive">Whether to search subdirectories recursively</param>
