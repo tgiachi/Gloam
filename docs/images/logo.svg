@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="40" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dawnGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+      <stop offset="33%" style="stop-color:#FF8E53;stop-opacity:1" />
+      <stop offset="66%" style="stop-color:#FFAB3D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B659FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4ECDC4;stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:#95E1D3;stop-opacity:0.7" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Dawn sky background -->
+  <rect width="120" height="40" fill="url(#glowGradient)" rx="6" opacity="0.3"/>
+  
+  <!-- Stylized "G" for Gloam -->
+  <circle cx="20" cy="20" r="12" fill="none" stroke="url(#dawnGradient)" stroke-width="3"/>
+  <path d="M 20 12 L 20 20 L 26 20" fill="none" stroke="url(#dawnGradient)" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="26" cy="20" r="2" fill="url(#dawnGradient)"/>
+  
+  <!-- "LOAM" text -->
+  <text x="40" y="16" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="url(#dawnGradient)">GLOAM</text>
+  <text x="40" y="30" font-family="Arial, sans-serif" font-size="8" fill="url(#dawnGradient)" opacity="0.8">ENGINE</text>
+  
+  <!-- Small decorative elements (dawn rays) -->
+  <path d="M 14 8 L 16 10 M 26 8 L 24 10 M 32 14 L 30 16 M 32 26 L 30 24 M 8 14 L 10 16 M 8 26 L 10 24" 
+        stroke="url(#dawnGradient)" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+</svg>

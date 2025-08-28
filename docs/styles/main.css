@@ -1,0 +1,226 @@
+/* Gloam Engine Documentation - Dawn/Alba Theme */
+
+:root {
+  /* Dawn/Alba Color Palette */
+  --gloam-dawn-pink: #FF6B9D;
+  --gloam-dawn-orange: #FF8E53;
+  --gloam-dawn-yellow: #FFAB3D;
+  --gloam-dawn-purple: #B659FF;
+  --gloam-dawn-blue: #4ECDC4;
+  --gloam-dawn-mint: #95E1D3;
+  
+  /* Dark variants for contrast */
+  --gloam-dark-bg: #1a1a2e;
+  --gloam-dark-surface: #16213e;
+  --gloam-dark-accent: #0f3460;
+  
+  /* Light variants */
+  --gloam-light-bg: #faf9f6;
+  --gloam-light-surface: #ffffff;
+  --gloam-light-accent: #f5f2ed;
+}
+
+/* Global theme overrides */
+body {
+  background: linear-gradient(135deg, var(--gloam-light-bg) 0%, var(--gloam-light-accent) 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header styling */
+.navbar-brand {
+  color: var(--gloam-dawn-purple) !important;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.navbar {
+  background: linear-gradient(90deg, var(--gloam-dawn-pink) 0%, var(--gloam-dawn-orange) 50%, var(--gloam-dawn-yellow) 100%) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.navbar .nav-link {
+  color: white !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.navbar .nav-link:hover {
+  color: var(--gloam-light-bg) !important;
+  text-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+
+/* Sidebar styling */
+.toc .nav > li > a {
+  color: var(--gloam-dawn-purple);
+  border-left: 3px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.toc .nav > li > a:hover,
+.toc .nav > li.active > a {
+  border-left-color: var(--gloam-dawn-pink);
+  background: linear-gradient(90deg, var(--gloam-dawn-mint), transparent);
+  color: var(--gloam-dark-accent);
+}
+
+/* Content area */
+.article {
+  background: var(--gloam-light-surface);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  padding: 2rem;
+}
+
+/* Headers with dawn gradients */
+h1, h2, h3, h4, h5, h6 {
+  background: linear-gradient(45deg, var(--gloam-dawn-purple), var(--gloam-dawn-pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 600;
+}
+
+h1 {
+  border-bottom: 3px solid transparent;
+  border-image: linear-gradient(90deg, var(--gloam-dawn-pink), var(--gloam-dawn-orange), var(--gloam-dawn-yellow)) 1;
+  padding-bottom: 0.5rem;
+}
+
+/* Code blocks with dawn accents */
+pre {
+  background: var(--gloam-dark-bg) !important;
+  border: 1px solid var(--gloam-dawn-blue);
+  border-radius: 8px;
+  position: relative;
+}
+
+pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gloam-dawn-pink), var(--gloam-dawn-orange), var(--gloam-dawn-yellow));
+  border-radius: 8px 8px 0 0;
+}
+
+code {
+  background: var(--gloam-light-accent);
+  color: var(--gloam-dawn-purple);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Links with dawn colors */
+a {
+  color: var(--gloam-dawn-purple);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--gloam-dawn-pink);
+  text-shadow: 0 0 8px rgba(255, 107, 157, 0.3);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(45deg, var(--gloam-dawn-purple), var(--gloam-dawn-pink));
+  border: none;
+  box-shadow: 0 4px 15px rgba(182, 89, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(182, 89, 255, 0.4);
+}
+
+/* Tables */
+.table {
+  background: var(--gloam-light-surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.table thead th {
+  background: linear-gradient(90deg, var(--gloam-dawn-blue), var(--gloam-dawn-mint));
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+/* Search box */
+#search-results {
+  background: var(--gloam-light-surface);
+  border: 2px solid var(--gloam-dawn-mint);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Footer */
+footer {
+  background: linear-gradient(90deg, var(--gloam-dark-bg), var(--gloam-dark-surface));
+  color: var(--gloam-dawn-mint);
+  padding: 2rem 0;
+  margin-top: 3rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  background: transparent;
+  padding: 0;
+}
+
+.breadcrumb-item a {
+  color: var(--gloam-dawn-blue);
+}
+
+.breadcrumb-item.active {
+  color: var(--gloam-dawn-purple);
+  font-weight: 500;
+}
+
+/* Custom classes for special elements */
+.gloam-highlight {
+  background: linear-gradient(45deg, var(--gloam-dawn-pink), var(--gloam-dawn-orange));
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+}
+
+.gloam-card {
+  background: var(--gloam-light-surface);
+  border: 1px solid var(--gloam-dawn-mint);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.gloam-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gloam-light-accent);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--gloam-dawn-pink), var(--gloam-dawn-purple));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gloam-dawn-orange), var(--gloam-dawn-pink));
+}

@@ -1,4 +1,5 @@
 using DryIoc;
+using Gloam.Core.Interfaces;
 using Gloam.Data.Content;
 using Gloam.Data.Interfaces.Content;
 using Gloam.Data.Interfaces.Loader;
@@ -28,6 +29,8 @@ public class GloamHost : IGloamHost
     public HostState State { get; private set; }
 
     private readonly GloamHostConfig _config;
+    private IRenderer? _renderer;
+    private IInputDevice? _inputDevice;
 
     /// <summary>
     /// Initializes a new instance of GloamHost with the specified configuration
@@ -185,12 +188,107 @@ public class GloamHost : IGloamHost
     /// Runs the game loop with the specified timing and condition
     /// </summary>
     /// <param name="keepRunning">Function that returns true while the game should continue running</param>
-    /// <param name="fixedStep">Fixed time step for the game loop</param>
+    /// <param name="fixedStep">Fixed time step for the game loop (TimeSpan.Zero for turn-based)</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>A Task representing the game loop execution</returns>
-    public Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
+    public async Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct)
     {
-        return Task.CompletedTask;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = keepRunning,
+            SimulationStep = fixedStep
+        };
+
+        await RunAsync(config, ct);
+    }
+
+    /// <summary>
+    /// Runs the game loop with the specified configuration
+    /// </summary>
+    /// <param name="config">Game loop configuration</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the game loop execution</returns>
+    /// <exception cref="ArgumentNullException">Thrown when config is null</exception>
+    public async Task RunAsync(GameLoopConfig config, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+
+        State = HostState.Running;
+
+        var lastTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+        var simAccumulator = TimeSpan.Zero;
+        var lastRenderTimestamp = lastTimestamp;
+
+        while (config.KeepRunning() && !ct.IsCancellationRequested)
+        {
+            var now = System.Diagnostics.Stopwatch.GetTimestamp();
+            var deltaTime = System.Diagnostics.Stopwatch.GetElapsedTime(lastTimestamp, now);
+            lastTimestamp = now;
+            simAccumulator += deltaTime;
+
+            // Input polling (if available)
+            _inputDevice?.Poll();
+
+            // Simulation update
+            if (config.SimulationStep > TimeSpan.Zero)
+            {
+                // Fixed timestep - consume accumulated time
+                while (simAccumulator >= config.SimulationStep)
+                {
+                    // TODO: Update game simulation with fixed timestep
+                    simAccumulator -= config.SimulationStep;
+                }
+            }
+            else
+            {
+                // Turn-based or variable timestep
+                // Process any pending input actions
+                if (_inputDevice != null)
+                {
+                    // In turn-based mode, we can check for specific key presses
+                    // TODO: Add specific game actions when game logic is implemented
+                    // Example: if (_inputDevice.WasPressed(Keys.Space)) ProcessPlayerAction();
+                }
+            }
+
+            // Rendering (if it's time to render)
+            var timeSinceLastRender = System.Diagnostics.Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
+            if (timeSinceLastRender >= config.RenderStep)
+            {
+                // Render if renderer is available
+                if (_renderer != null)
+                {
+                    _renderer.BeginDraw();
+                    // TODO: Render game content when game logic is implemented
+                    // Example: _game.Render(_renderer);
+                    _renderer.EndDraw();
+                }
+                lastRenderTimestamp = now;
+            }
+
+            // End frame cleanup for input
+            _inputDevice?.EndFrame();
+
+            // Calculate sleep time
+            var sleepMs = CalculateSleepTime(config.SimulationStep, simAccumulator, timeSinceLastRender, config.RenderStep);
+            if (sleepMs > 0)
+            {
+                await Task.Delay(sleepMs, ct);
+            }
+        }
+
+        State = HostState.Paused;
+    }
+
+    private static int CalculateSleepTime(TimeSpan fixedStep, TimeSpan simAccumulator, TimeSpan timeSinceLastRender, TimeSpan renderStep)
+    {
+        var renderSleep = Math.Max(0, (int)(renderStep - timeSinceLastRender).TotalMilliseconds);
+
+        var simSleep = fixedStep > TimeSpan.Zero
+            ? Math.Max(0, (int)(fixedStep - simAccumulator).TotalMilliseconds)
+            : 5; // Default 5ms for turn-based
+
+        return Math.Min(renderSleep, simSleep);
     }
 
     /// <summary>
@@ -201,5 +299,15 @@ public class GloamHost : IGloamHost
     public async Task StopAsync(CancellationToken ct = default)
     {
         State = HostState.Stopped;
+    }
+
+    public void SetRenderer(IRenderer renderer)
+    {
+        _renderer = renderer;
+    }
+
+    public void SetInputDevice(IInputDevice inputDevice)
+    {
+        _inputDevice = inputDevice;
     }
 }

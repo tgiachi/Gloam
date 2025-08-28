@@ -569,3 +569,11 @@ crashlytics-build.properties
 **/**/.DS_Store
 *.world
 coverage/*
+
+# DocFX generated documentation
+docs/_site/
+docs/obj/
+docs/api/
+docs/log.txt
+.docfx/
+**/.manifest

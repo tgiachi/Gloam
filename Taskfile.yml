@@ -5,6 +5,8 @@ vars:
   TEST_PROJECT: tests/Gloam.Tests/Gloam.Tests.csproj
   COVERAGE_DIR: coverage
   COVERAGE_FILE: '{{.COVERAGE_DIR}}/coverage.xml'
+  DOCS_DIR: docs
+  DOCS_SITE: '{{.DOCS_DIR}}/_site'
 
 tasks:
   default:
@@ -79,13 +81,40 @@ tasks:
     cmds:
       - dotnet format {{.SOLUTION}}
 
+  docs-clean:
+    desc: Clean documentation artifacts
+    cmds:
+      - rm -rf {{.DOCS_SITE}}
+      - rm -rf {{.DOCS_DIR}}/obj
+
+  docs-build:
+    desc: Generate documentation with DocFX
+    deps: [build]
+    cmds:
+      - dotnet tool install -g docfx || true
+      - docfx {{.DOCS_DIR}}/docfx.json
+
+  docs-serve:
+    desc: Serve documentation locally
+    deps: [docs-build]
+    cmds:
+      - docfx serve {{.DOCS_SITE}}
+
+  docs-open:
+    desc: Open documentation in browser
+    deps: [docs-serve]
+    cmds:
+      - sleep 2
+      - open http://localhost:8080
+
   ci:
-    desc: Run CI pipeline (clean, build, test, coverage)
+    desc: Run CI pipeline (clean, build, test, coverage, docs)
     cmds:
       - task: clean
       - task: build
       - task: test
       - task: coverage
+      - task: docs-build
 
   dev:
     desc: Development setup (restore, build, test)

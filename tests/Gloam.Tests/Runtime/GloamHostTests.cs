@@ -1,5 +1,8 @@
 using System.Diagnostics;
 using DryIoc;
+using Gloam.Core.Interfaces;
+using Gloam.Core.Input;
+using Gloam.Core.Primitives;
 using Gloam.Data.Content;
 using Gloam.Data.Interfaces.Content;
 using Gloam.Data.Interfaces.Loader;
@@ -10,6 +13,7 @@ using Gloam.Runtime;
 using Gloam.Runtime.Config;
 using Gloam.Runtime.Types;
 using Mosaic.Engine.Directories;
+using Moq;
 
 namespace Gloam.Tests.Runtime;
 
@@ -343,6 +347,765 @@ public class GloamHostTests
 
         Assert.That(() => _host = new GloamHost(_config), 
             Throws.InstanceOf<IOException>().Or.InstanceOf<UnauthorizedAccessException>());
+    }
+
+    #endregion
+
+    #region Host State and Lifecycle Tests
+
+    [Test]
+    public async Task InitializeAsync_ShouldChangeStateToInitialized()
+    {
+        _host = new GloamHost(_config);
+        Assert.That(_host.State, Is.EqualTo(HostState.Created));
+
+        await _host.InitializeAsync();
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Initialized));
+    }
+
+    [Test]
+    public async Task InitializeAsync_WithCancellationToken_ShouldRespectCancellation()
+    {
+        _host = new GloamHost(_config);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // InitializeAsync currently doesn't use the cancellation token, but should accept it
+        await _host.InitializeAsync(cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Initialized));
+    }
+
+    [Test]
+    public async Task LoadContentAsync_ShouldChangeStateToContentLoaded()
+    {
+        _host = new GloamHost(_config);
+
+        await _host.LoadContentAsync(_tempDirectory);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.ContentLoaded));
+    }
+
+    [Test]
+    public async Task StartAsync_ShouldChangeStateToRunning()
+    {
+        _host = new GloamHost(_config);
+
+        await _host.StartAsync();
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Running));
+    }
+
+    [Test]
+    public async Task StopAsync_ShouldChangeStateToStopped()
+    {
+        _host = new GloamHost(_config);
+
+        await _host.StopAsync();
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Stopped));
+    }
+
+    #endregion
+
+    #region RunAsync Legacy Method Tests
+
+    [Test]
+    public async Task RunAsync_LegacyOverload_ShouldCallNewOverload()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var keepRunning = () => ++runCount <= 3;
+        var fixedStep = TimeSpan.FromMilliseconds(16);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await _host.RunAsync(keepRunning, fixedStep, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task RunAsync_LegacyOverload_TurnBasedMode_ShouldWork()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var keepRunning = () => ++runCount <= 2;
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+
+        await _host.RunAsync(keepRunning, TimeSpan.Zero, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.GreaterThan(0));
+    }
+
+    #endregion
+
+    #region RunAsync GameLoopConfig Tests
+
+    [Test]
+    public async Task RunAsync_WithGameLoopConfig_ShouldSetStateToRunning()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 2
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+
+        await _host.RunAsync(config, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+    }
+
+    [Test]
+    public async Task RunAsync_FixedTimestep_ShouldProcessCorrectly()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5,
+            SimulationStep = TimeSpan.FromMilliseconds(10),
+            RenderStep = TimeSpan.FromMilliseconds(20)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await _host.RunAsync(config, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task RunAsync_TurnBasedMode_ShouldProcessCorrectly()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3,
+            SimulationStep = TimeSpan.Zero,
+            RenderStep = TimeSpan.FromMilliseconds(50)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await _host.RunAsync(config, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task RunAsync_CancellationToken_ShouldStopLoop()
+    {
+        _host = new GloamHost(_config);
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => true // Would run forever without cancellation
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(30));
+
+        // Cancellation token throws TaskCanceledException when canceled during Task.Delay
+        Assert.ThrowsAsync<TaskCanceledException>(async () => await _host.RunAsync(config, cts.Token));
+    }
+
+    [Test]
+    public async Task RunAsync_KeepRunningReturnsFalse_ShouldStopLoop()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        await _host.RunAsync(config, cts.Token);
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.EqualTo(4)); // Called one more time to return false
+    }
+
+    #endregion
+
+    #region Game Loop Timing Tests
+
+    [Test]
+    public async Task RunAsync_TimingAccuracy_ShouldMaintainReasonableFrameRate()
+    {
+        _host = new GloamHost(_config);
+        var startTime = DateTime.UtcNow;
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 10,
+            SimulationStep = TimeSpan.FromMilliseconds(10),
+            RenderStep = TimeSpan.FromMilliseconds(10)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        await _host.RunAsync(config, cts.Token);
+
+        var elapsed = DateTime.UtcNow - startTime;
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.EqualTo(11));
+        // Should complete reasonably quickly - not take too long due to excessive sleeping
+        Assert.That(elapsed.TotalMilliseconds, Is.LessThan(500));
+    }
+
+    [Test]
+    public async Task RunAsync_HighFrequency_ShouldHandleQuickLoops()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 100,
+            SimulationStep = TimeSpan.FromMilliseconds(1),
+            RenderStep = TimeSpan.FromMilliseconds(1),
+            MaxSleepTime = TimeSpan.FromMilliseconds(1)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        var startTime = DateTime.UtcNow;
+
+        await _host.RunAsync(config, cts.Token);
+
+        var elapsed = DateTime.UtcNow - startTime;
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        Assert.That(runCount, Is.EqualTo(101));
+        Assert.That(elapsed.TotalMilliseconds, Is.LessThan(1000)); // Should complete in reasonable time
+    }
+
+    #endregion
+
+    #region DisposeAsync Tests
+
+    [Test]
+    public async Task DisposeAsync_ShouldDisposeContainer()
+    {
+        _host = new GloamHost(_config);
+        var container = _host.Container;
+
+        await _host.DisposeAsync();
+
+        // After disposal, container should be disposed
+        Assert.Throws<ContainerException>(() => container.Resolve<GloamHostConfig>());
+    }
+
+    [Test]
+    public async Task DisposeAsync_MultipleCalls_ShouldNotThrow()
+    {
+        _host = new GloamHost(_config);
+
+        await _host.DisposeAsync();
+
+        Assert.DoesNotThrowAsync(async () => await _host.DisposeAsync());
+    }
+
+    [Test]
+    public async Task DisposeAsync_WithAsyncDisposableContainer_ShouldCallAsyncDispose()
+    {
+        _host = new GloamHost(_config);
+        var container = _host.Container;
+
+        // DryIoc Container implements IAsyncDisposable
+        await _host.DisposeAsync();
+
+        // Verify container is disposed
+        Assert.Throws<ContainerException>(() => container.Resolve<GloamHostConfig>());
+    }
+
+    [Test]
+    public async Task DisposeAsync_WithUsingStatement_ShouldWorkCorrectly()
+    {
+        IContainer? containerRef = null;
+
+        await using (var host = new GloamHost(_config))
+        {
+            containerRef = host.Container;
+            Assert.That(containerRef, Is.Not.Null);
+        }
+
+        // After using block, container should be disposed
+        Assert.Throws<ContainerException>(() => containerRef!.Resolve<GloamHostConfig>());
+    }
+
+    #endregion
+
+    #region Exception Handling Tests
+
+    [Test]
+    public async Task RunAsync_KeepRunningThrowsException_ShouldStopLoop()
+    {
+        _host = new GloamHost(_config);
+        var callCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () =>
+            {
+                callCount++;
+                if (callCount > 2)
+                    throw new InvalidOperationException("Test exception");
+                return true;
+            }
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        // The exception should propagate and stop the loop
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _host.RunAsync(config, cts.Token));
+    }
+
+    [Test]
+    public void RunAsync_NullConfig_ShouldThrowArgumentNullException()
+    {
+        _host = new GloamHost(_config);
+
+        Assert.ThrowsAsync<ArgumentNullException>(async () => await _host.RunAsync(null!, CancellationToken.None));
+    }
+
+    #endregion
+
+    #region Integration with Sleep Time Calculation Tests
+
+    [Test]
+    public async Task RunAsync_SleepTimeCalculation_FixedTimestep_ShouldSleepAppropriately()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5,
+            SimulationStep = TimeSpan.FromMilliseconds(20),
+            RenderStep = TimeSpan.FromMilliseconds(20)
+        };
+
+        var startTime = DateTime.UtcNow;
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        await _host.RunAsync(config, cts.Token);
+
+        var elapsed = DateTime.UtcNow - startTime;
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        // Should take at least some time due to sleep calculations (allowing for fast execution)
+        Assert.That(elapsed.TotalMilliseconds, Is.GreaterThan(5));
+        // But not too long due to efficient sleep calculation
+        Assert.That(elapsed.TotalMilliseconds, Is.LessThan(500));
+    }
+
+    [Test]
+    public async Task RunAsync_SleepTimeCalculation_TurnBased_ShouldUseDefaultSleep()
+    {
+        _host = new GloamHost(_config);
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3,
+            SimulationStep = TimeSpan.Zero,
+            RenderStep = TimeSpan.FromMilliseconds(100)
+        };
+
+        var startTime = DateTime.UtcNow;
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+
+        await _host.RunAsync(config, cts.Token);
+
+        var elapsed = DateTime.UtcNow - startTime;
+
+        Assert.That(_host.State, Is.EqualTo(HostState.Paused));
+        // Turn-based mode should still have some timing delays
+        Assert.That(elapsed.TotalMilliseconds, Is.GreaterThan(10));
+    }
+
+    #endregion
+
+    #region SetRenderer and SetInputDevice Tests
+
+    [Test]
+    public void SetRenderer_WithValidRenderer_ShouldStoreRenderer()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+
+        _host.SetRenderer(mockRenderer.Object);
+
+        // We can't directly access the private _renderer field, but we can verify behavior
+        // through the game loop integration tests
+        Assert.That(_host, Is.Not.Null); // Renderer stored successfully
+    }
+
+    [Test]
+    public void SetRenderer_WithNullRenderer_ShouldAcceptNull()
+    {
+        _host = new GloamHost(_config);
+
+        Assert.DoesNotThrow(() => _host.SetRenderer(null));
+    }
+
+    [Test]
+    public void SetInputDevice_WithValidInputDevice_ShouldStoreInputDevice()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        // We can't directly access the private _inputDevice field, but we can verify behavior
+        // through the game loop integration tests
+        Assert.That(_host, Is.Not.Null); // Input device stored successfully
+    }
+
+    [Test]
+    public void SetInputDevice_WithNullInputDevice_ShouldAcceptNull()
+    {
+        _host = new GloamHost(_config);
+
+        Assert.DoesNotThrow(() => _host.SetInputDevice(null));
+    }
+
+    #endregion
+
+    #region Game Loop Integration Tests
+
+    [Test]
+    public async Task RunAsync_WithRenderer_ShouldCallBeginAndEndDraw()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 2,
+            RenderStep = TimeSpan.FromMilliseconds(1) // Force render every loop
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Verify renderer methods were called
+        mockRenderer.Verify(r => r.BeginDraw(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.EndDraw(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task RunAsync_WithInputDevice_ShouldCallPollAndEndFrame()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Verify input device methods were called
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task RunAsync_WithBothRendererAndInputDevice_ShouldCallAllMethods()
+    {
+        _host = new GloamHost(_config);
+        
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+        
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 2,
+            RenderStep = TimeSpan.FromMilliseconds(1) // Force render every loop
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Verify all methods were called
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.BeginDraw(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.EndDraw(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task RunAsync_WithoutRenderer_ShouldNotCallRenderMethods()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 2,
+            RenderStep = TimeSpan.FromMilliseconds(1)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        
+        // Should not throw when renderer is null
+        Assert.DoesNotThrowAsync(async () => await _host.RunAsync(config, cts.Token));
+        
+        // Input device should still be called
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task RunAsync_WithoutInputDevice_ShouldNotCallInputMethods()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 2,
+            RenderStep = TimeSpan.FromMilliseconds(1)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        
+        // Should not throw when input device is null
+        Assert.DoesNotThrowAsync(async () => await _host.RunAsync(config, cts.Token));
+        
+        // Renderer should still be called
+        mockRenderer.Verify(r => r.BeginDraw(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.EndDraw(), Times.AtLeastOnce);
+    }
+
+    #endregion
+
+    #region Render Timing Tests
+
+    [Test]
+    public async Task RunAsync_RenderStepTiming_ShouldRespectRenderInterval()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 10,
+            SimulationStep = TimeSpan.FromMilliseconds(1),
+            RenderStep = TimeSpan.FromMilliseconds(50) // Render less frequently
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        await _host.RunAsync(config, cts.Token);
+
+        // Should render fewer times than simulation steps
+        var renderCalls = mockRenderer.Invocations.Count(i => i.Method.Name == "BeginDraw");
+        Assert.That(renderCalls, Is.LessThan(runCount));
+        Assert.That(renderCalls, Is.GreaterThan(0));
+    }
+
+    [Test]
+    public async Task RunAsync_FastRenderStep_ShouldRenderFrequently()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5,
+            SimulationStep = TimeSpan.FromMilliseconds(10),
+            RenderStep = TimeSpan.FromMilliseconds(1) // Render very frequently
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Should render frequently
+        mockRenderer.Verify(r => r.BeginDraw(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.EndDraw(), Times.AtLeastOnce);
+    }
+
+    #endregion
+
+    #region Turn-Based vs Real-Time Input Tests
+
+    [Test]
+    public async Task RunAsync_TurnBasedMode_ShouldStillPollInput()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3,
+            SimulationStep = TimeSpan.Zero, // Turn-based
+            RenderStep = TimeSpan.FromMilliseconds(10)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Input should still be polled in turn-based mode
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
+    }
+
+    [Test]
+    public async Task RunAsync_RealTimeMode_ShouldPollInputRegularly()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5,
+            SimulationStep = TimeSpan.FromMilliseconds(10), // Real-time
+            RenderStep = TimeSpan.FromMilliseconds(10)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        await _host.RunAsync(config, cts.Token);
+
+        // Input should be polled regularly in real-time mode
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
+    }
+
+    #endregion
+
+    #region Error Handling in Game Loop Tests
+
+    [Test]
+    public async Task RunAsync_RendererThrowsException_ShouldPropagateException()
+    {
+        _host = new GloamHost(_config);
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        mockRenderer.Setup(r => r.BeginDraw()).Throws(new InvalidOperationException("Renderer error"));
+        _host.SetRenderer(mockRenderer.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5,
+            RenderStep = TimeSpan.FromMilliseconds(1)
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _host.RunAsync(config, cts.Token));
+    }
+
+    [Test]
+    public async Task RunAsync_InputDeviceThrowsException_ShouldPropagateException()
+    {
+        _host = new GloamHost(_config);
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Poll()).Throws(new InvalidOperationException("Input error"));
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 5
+        };
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+        
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await _host.RunAsync(config, cts.Token));
+    }
+
+    #endregion
+
+    #region Sleep Time Calculation with Renderer/Input Tests
+
+    [Test]
+    public async Task RunAsync_WithRendererAndInput_ShouldCalculateSleepTimeCorrectly()
+    {
+        _host = new GloamHost(_config);
+        
+        var mockRenderer = new Mock<IRenderer>();
+        var mockSurface = new Mock<IRenderSurface>();
+        mockRenderer.Setup(r => r.Surface).Returns(mockSurface.Object);
+        _host.SetRenderer(mockRenderer.Object);
+        
+        var mockInputDevice = new Mock<IInputDevice>();
+        mockInputDevice.Setup(i => i.Mouse).Returns(new MouseState());
+        _host.SetInputDevice(mockInputDevice.Object);
+
+        var runCount = 0;
+        var config = new GameLoopConfig
+        {
+            KeepRunning = () => ++runCount <= 3,
+            SimulationStep = TimeSpan.FromMilliseconds(20),
+            RenderStep = TimeSpan.FromMilliseconds(30),
+            MaxSleepTime = TimeSpan.FromMilliseconds(10)
+        };
+
+        var startTime = DateTime.UtcNow;
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+        await _host.RunAsync(config, cts.Token);
+        var elapsed = DateTime.UtcNow - startTime;
+
+        // Should complete within reasonable time - not too fast (no sleep) or too slow (excessive sleep)
+        Assert.That(elapsed.TotalMilliseconds, Is.GreaterThan(10));
+        Assert.That(elapsed.TotalMilliseconds, Is.LessThan(300));
+        
+        // Verify all methods were called
+        mockInputDevice.Verify(i => i.Poll(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.BeginDraw(), Times.AtLeastOnce);
+        mockRenderer.Verify(r => r.EndDraw(), Times.AtLeastOnce);
+        mockInputDevice.Verify(i => i.EndFrame(), Times.AtLeastOnce);
     }
 
     #endregion

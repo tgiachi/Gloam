@@ -113,6 +113,9 @@ Cross-platform input abstraction supporting Console, MonoGame, etc:
 - **`test_check`**: When the user writes "test_check", automatically analyze the codebase for missing tests and implement them to maintain 100% coverage target
 - **`fix_comments`**: When the user writes "fix_comments", search for classes/structs/records that don't have XML documentation comments and add /// English comments to them
 
+### Development Best Practices
+- **Always build after modifications**: After making any code changes, **ALWAYS** run `dotnet build Gloam.sln` as the final step to check for compilation errors. This prevents accumulating build errors and catches issues early.
+
 ## Project Structure Notes
 
 - Solution uses `.slnx` format (modern solution format)

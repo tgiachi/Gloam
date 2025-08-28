@@ -1,3 +1,4 @@
+using Gloam.Core.Interfaces;
 using Gloam.Runtime.Types;
 
 namespace Gloam.Runtime.Interfaces;
@@ -11,14 +12,14 @@ public interface IGloamHost : IAsyncDisposable, IDisposable
     /// Gets the current state of the host
     /// </summary>
     HostState State { get; }
-    
+
     /// <summary>
     /// Initializes the host asynchronously
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns>A ValueTask representing the initialization operation</returns>
     ValueTask InitializeAsync(CancellationToken ct = default);
-    
+
     /// <summary>
     /// Loads content from the specified root directory
     /// </summary>
@@ -42,11 +43,15 @@ public interface IGloamHost : IAsyncDisposable, IDisposable
     /// <param name="ct">Cancellation token</param>
     /// <returns>A Task representing the game loop execution</returns>
     Task RunAsync(Func<bool> keepRunning, TimeSpan fixedStep, CancellationToken ct);
-    
+
     /// <summary>
     /// Stops the host and game loop gracefully
     /// </summary>
     /// <param name="ct">Cancellation token</param>
     /// <returns>A Task representing the stop operation</returns>
     Task StopAsync(CancellationToken ct = default);
+
+    void SetRenderer(IRenderer renderer);
+
+    void SetInputDevice(IInputDevice inputDevice);
 }

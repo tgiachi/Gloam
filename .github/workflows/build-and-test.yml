@@ -86,8 +86,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
           
+    - name: Restore dependencies
+      run: dotnet restore Gloam.sln
+      
     - name: Build CLI tool
-      run: dotnet build tools/Gloam.Cli/Gloam.Cli.csproj --configuration Release
+      run: dotnet build tools/Gloam.Cli/Gloam.Cli.csproj --no-restore --configuration Release
       
     - name: Test CLI tool help
       run: dotnet run --project tools/Gloam.Cli --configuration Release -- --help
