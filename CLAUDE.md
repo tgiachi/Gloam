@@ -30,11 +30,17 @@ task coverage              # Generate coverage data
 task coverage-report       # Generate HTML report
 task coverage-open         # Open report in browser
 
+# Documentation generation
+task docs-build            # Generate DocFX documentation
+task docs-serve            # Serve documentation locally
+task docs-open             # Open documentation in browser
+task docs-clean            # Clean documentation artifacts
+
 # Schema generation
 task schema                # Generate JSON schemas from entities
 
 # CI pipeline
-task ci                    # clean, build, test, coverage
+task ci                    # clean, build, test, coverage, docs
 ```
 
 ### Alternative .NET Commands
@@ -113,8 +119,26 @@ Cross-platform input abstraction supporting Console, MonoGame, etc:
 - **`test_check`**: When the user writes "test_check", automatically analyze the codebase for missing tests and implement them to maintain 100% coverage target
 - **`fix_comments`**: When the user writes "fix_comments", search for classes/structs/records that don't have XML documentation comments and add /// English comments to them
 
+### Game Loop Architecture
+The engine implements a flexible game loop with precise timing:
+- Uses `Stopwatch.GetTimestamp()` for high-precision timing (not `Stopwatch` instances)
+- Supports both real-time and turn-based gameplay modes
+- Input polling integrated with `IInputDevice.Poll()` and `EndFrame()`
+- Rendering managed through `IRenderer.BeginDraw()` / `EndDraw()` pattern
+- Configuration via `GameLoopConfig` record in `Gloam.Runtime.Config` namespace
+- KISS principle preferred over complex SOLID architectures for maintainability
+
+### Documentation System
+- **DocFX Integration**: Custom documentation generation with alba/gloam dawn theme
+- **Theme Colors**: Dawn gradient palette (pink, orange, yellow, purple, blue, mint)
+- **Auto-generated API docs**: XML comments automatically extracted to documentation
+- **Custom styling**: Located in `docs/styles/main.css` with CSS variables for theme consistency
+- **Logo integration**: SVG logo with dawn gradient colors in `docs/images/logo.svg`
+
 ### Development Best Practices
-- **Always build after modifications**: After making any code changes, **ALWAYS** run `dotnet build Gloam.sln` as the final step to check for compilation errors. This prevents accumulating build errors and catches issues early.
+- **Always build after modifications**: After making any code changes, **ALWAYS** run `dotnet build Gloam.slnx` as the final step to check for compilation errors. This prevents accumulating build errors and catches issues early.
+- **KISS over SOLID**: Prefer simple, direct implementations over complex interface hierarchies
+- **XML Documentation**: All public types must have /// English comments explaining their purpose
 
 ## Project Structure Notes
 
