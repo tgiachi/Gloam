@@ -16,11 +16,14 @@ public sealed class GameScene : BaseScene
 {
     private ISceneManager? _sceneManager;
     private Position _playerPosition;
+    private DateTime _lastMoveTime;
+    private readonly TimeSpan _movementCooldown = TimeSpan.FromMilliseconds(150); // Limit to ~6.7 moves per second
 
     public GameScene() : base("Game")
     {
         // Initialize player at center
         _playerPosition = new Position(40, 12); // Default center position
+        _lastMoveTime = DateTime.MinValue; // Allow immediate first move
         
         // Add game-specific layers in priority order
         AddLayer(new WorldLayer());
@@ -82,30 +85,37 @@ public sealed class GameScene : BaseScene
     }
 
     /// <summary>
-    /// Handles player movement input
+    /// Handles player movement input with throttling
     /// </summary>
     /// <param name="inputDevice">Input device to check for movement keys</param>
     /// <param name="screenWidth">Screen width for bounds checking</param>
     /// <param name="screenHeight">Screen height for bounds checking</param>
     public void HandlePlayerInput(IInputDevice inputDevice, int screenWidth, int screenHeight)
     {
+        // Check if enough time has passed since last movement
+        var now = DateTime.Now;
+        if (now - _lastMoveTime < _movementCooldown)
+        {
+            return; // Still in cooldown, ignore input
+        }
+
         var currentPos = _playerPosition;
         Position newPos = currentPos;
 
-        // Check WASD movement
-        if (inputDevice.WasPressed(Keys.W) || inputDevice.WasPressed(Keys.Up))
+        // Check WASD movement using IsDown for responsive input detection
+        if (inputDevice.IsDown(Keys.W) || inputDevice.IsDown(Keys.Up))
         {
             newPos = new Position(currentPos.X, currentPos.Y - 1); // Move up
         }
-        else if (inputDevice.WasPressed(Keys.S) || inputDevice.WasPressed(Keys.Down))
+        else if (inputDevice.IsDown(Keys.S) || inputDevice.IsDown(Keys.Down))
         {
             newPos = new Position(currentPos.X, currentPos.Y + 1); // Move down
         }
-        else if (inputDevice.WasPressed(Keys.A) || inputDevice.WasPressed(Keys.Left))
+        else if (inputDevice.IsDown(Keys.A) || inputDevice.IsDown(Keys.Left))
         {
             newPos = new Position(currentPos.X - 1, currentPos.Y); // Move left
         }
-        else if (inputDevice.WasPressed(Keys.D) || inputDevice.WasPressed(Keys.Right))
+        else if (inputDevice.IsDown(Keys.D) || inputDevice.IsDown(Keys.Right))
         {
             newPos = new Position(currentPos.X + 1, currentPos.Y); // Move right
         }
@@ -114,6 +124,7 @@ public sealed class GameScene : BaseScene
         if (newPos != currentPos)
         {
             MovePlayer(newPos, screenWidth, screenHeight);
+            _lastMoveTime = now; // Update last move time
         }
     }
 }
