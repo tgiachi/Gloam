@@ -240,7 +240,7 @@ internal sealed class FlameUILayer : BaseLayerRenderer
         );
 
         // Instructions
-        var instructions = "Press M to return to menu";
+        var instructions = "Press ESC/M to return to menu";
         var instrX = (context.Screen.Width - instructions.Length) / 2;
         var instrY = context.Screen.Height - 2;
         context.Renderer.DrawText(
@@ -251,7 +251,7 @@ internal sealed class FlameUILayer : BaseLayerRenderer
         );
 
         // Handle input
-        if (context.InputDevice.WasPressed(Keys.M))
+        if (context.InputDevice.WasPressed(Keys.M) || context.InputDevice.WasPressed(Keys.Escape))
         {
             await _scene.ReturnToMenuAsync(ct);
         }

@@ -189,8 +189,15 @@ internal sealed class EntityLayer : BaseLayerRenderer
     public override int Priority => 20; // Entities render after world
     public override string Name => "Entities";
 
+    private Position otherEntityPos = new Position(0, 0);
+
     protected override ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
     {
+        if (otherEntityPos.X == 0)
+        {
+
+            otherEntityPos = _scene.PlayerPosition;
+        }
         // Draw player character at current position
         var playerPos = _scene.PlayerPosition;
 
@@ -203,14 +210,14 @@ internal sealed class EntityLayer : BaseLayerRenderer
 
         // Draw some example items/enemies with vibrant colors
         context.Renderer.DrawText(
-            new Position(playerPos.X - 5, playerPos.Y - 3),
+            new Position(otherEntityPos.X - 5, otherEntityPos.Y - 3),
             "E",
             Colors.DeepPink, // Vibrant pink enemy
             Colors.Transparent
         );
 
         context.Renderer.DrawText(
-            new Position(playerPos.X + 7, playerPos.Y + 2),
+            new Position(otherEntityPos.X + 7, otherEntityPos.Y + 2),
             "$",
             Colors.Yellow, // Bright gold item
             Colors.Transparent
@@ -279,7 +286,7 @@ internal sealed class GameUILayer : BaseLayerRenderer
             ". = Floor",
             "",
             "WASD to move",
-            "Press M for Menu"
+            "ESC/M for Menu"
         };
 
         for (int i = 0; i < legend.Length; i++)
@@ -296,8 +303,9 @@ internal sealed class GameUILayer : BaseLayerRenderer
         _scene.HandlePlayerInput(context.InputDevice, context.Screen.Width, context.Screen.Height);
 
 
+
         // Handle menu input
-        if (context.InputDevice.WasPressed(Keys.M))
+        if (context.InputDevice.WasPressed(Keys.M) || context.InputDevice.WasPressed(Keys.Escape))
         {
             await _scene.ReturnToMenuAsync(ct);
         }
