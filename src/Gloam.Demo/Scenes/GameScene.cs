@@ -1,4 +1,5 @@
 using Gloam.Console.Render.Layers;
+using Gloam.Console.Render.Input;
 using Gloam.Runtime.Transitions;
 using Gloam.Runtime.Types;
 using Gloam.Core.Contexts;
@@ -6,6 +7,7 @@ using Gloam.Core.Input;
 using Gloam.Core.Interfaces;
 using Gloam.Core.Interfaces.Base;
 using Gloam.Core.Primitives;
+using Gloam.Core.Types;
 
 namespace Gloam.Demo.Scenes;
 
@@ -24,7 +26,7 @@ public sealed class GameScene : BaseScene
         // Initialize player at center
         _playerPosition = new Position(40, 12); // Default center position
         _lastMoveTime = DateTime.MinValue; // Allow immediate first move
-        
+
         // Add game-specific layers in priority order
         AddLayer(new WorldLayer());
         AddLayer(new EntityLayer(this));
@@ -80,7 +82,7 @@ public sealed class GameScene : BaseScene
         // Bounds checking - keep player within the game area (accounting for walls)
         var clampedX = Math.Clamp(newPosition.X, 3, screenWidth - 4);
         var clampedY = Math.Clamp(newPosition.Y, 3, screenHeight - 4);
-        
+
         _playerPosition = new Position(clampedX, clampedY);
     }
 
@@ -271,7 +273,7 @@ internal sealed class GameUILayer : BaseLayerRenderer
         var legend = new[]
         {
             "@ = Player",
-            "E = Enemy", 
+            "E = Enemy",
             "$ = Item",
             "# = Wall",
             ". = Floor",
@@ -292,6 +294,7 @@ internal sealed class GameUILayer : BaseLayerRenderer
 
         // Handle player movement input
         _scene.HandlePlayerInput(context.InputDevice, context.Screen.Width, context.Screen.Height);
+
 
         // Handle menu input
         if (context.InputDevice.WasPressed(Keys.M))

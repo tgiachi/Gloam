@@ -36,7 +36,7 @@ public sealed class StatusLayerRenderer : BaseLayerRenderer
         var fpsText = $"FPS: {context.FrameInfo.FramesPerSecond:F1}";
         var frameText = $"Frame: {context.FrameNumber}";
         var timeText = $"Time: {context.TotalTime.TotalSeconds:F1}s";
-        var mousePosition = $"Mouse pos: X: {context.InputDevice.Mouse.X:F1}, Y: {context.InputDevice.Mouse.Y:F1} ";
+        var mousePosition = $"Mouse: ({context.InputDevice.Mouse.X},{context.InputDevice.Mouse.Y}) {context.InputDevice.Mouse.Button} {(context.InputDevice.Mouse.Pressed ? "DOWN" : "UP")}";
 
         // Draw status line at the top-right corner
         var statusY = 1; // Just below the border
