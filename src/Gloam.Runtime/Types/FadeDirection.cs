@@ -1,4 +1,4 @@
-namespace Gloam.Console.Render.Types;
+namespace Gloam.Runtime.Types;
 
 /// <summary>
 /// Fade direction enumeration for scene transitions

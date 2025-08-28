@@ -1,9 +1,9 @@
-using Gloam.Console.Render.Types;
 using Gloam.Core.Contexts;
 using Gloam.Core.Primitives;
 using Gloam.Core.Transitions;
+using Gloam.Runtime.Types;
 
-namespace Gloam.Console.Render.Transitions;
+namespace Gloam.Runtime.Transitions;
 
 /// <summary>
 /// Fade transition that fades to a specific color and back
@@ -74,4 +74,3 @@ public sealed class FadeTransition : BaseTransition
         await ValueTask.CompletedTask;
     }
 }
-

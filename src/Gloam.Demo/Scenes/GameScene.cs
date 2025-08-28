@@ -1,6 +1,6 @@
 using Gloam.Console.Render.Layers;
-using Gloam.Console.Render.Transitions;
-using Gloam.Console.Render.Types;
+using Gloam.Runtime.Transitions;
+using Gloam.Runtime.Types;
 using Gloam.Core.Contexts;
 using Gloam.Core.Input;
 using Gloam.Core.Interfaces;
@@ -42,8 +42,9 @@ public sealed class GameScene : BaseScene
     {
         if (_sceneManager != null)
         {
-            var fadeTransition = new FadeTransition(TimeSpan.FromMilliseconds(600), Colors.Black, FadeDirection.FadeOut);
-            await _sceneManager.SwitchToSceneAsync("MainMenu", fadeTransition, ct);
+            var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight,
+                _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
+            await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
         }
     }
 
