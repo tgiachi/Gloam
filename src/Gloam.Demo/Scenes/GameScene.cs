@@ -195,22 +195,22 @@ internal sealed class EntityLayer : BaseLayerRenderer
         context.Renderer.DrawText(
             playerPos,
             "@",
-            Colors.PlayerColor,
+            Colors.Orange, // Bright orange player for 24-bit test
             Colors.Transparent
         );
 
-        // Draw some example items/enemies
+        // Draw some example items/enemies with vibrant colors
         context.Renderer.DrawText(
             new Position(playerPos.X - 5, playerPos.Y - 3),
             "E",
-            Colors.EnemyColor,
+            Colors.DeepPink, // Vibrant pink enemy
             Colors.Transparent
         );
 
         context.Renderer.DrawText(
             new Position(playerPos.X + 7, playerPos.Y + 2),
             "$",
-            Colors.ItemColor,
+            Colors.Yellow, // Bright gold item
             Colors.Transparent
         );
 
@@ -244,14 +244,28 @@ internal sealed class GameUILayer : BaseLayerRenderer
             Colors.Transparent
         );
 
-        // Draw simple HUD
-        var hud = "HP: 100/100 | MP: 50/50 | Gold: 250";
-        context.Renderer.DrawText(
-            new Position(2, context.Screen.Height - 1),
-            hud,
-            Colors.Green,
-            Colors.Transparent
-        );
+        // Draw simple HUD with vibrant colors for 24-bit test
+        var hudParts = new[]
+        {
+            ("HP: 100/100", Colors.LightRed),
+            (" | ", Colors.Gray),
+            ("MP: 50/50", Colors.LightBlue),
+            (" | ", Colors.Gray),
+            ("Gold: 250", Colors.Orange)
+        };
+
+        int hudX = 2;
+        for (int i = 0; i < hudParts.Length; i++)
+        {
+            var (text, color) = hudParts[i];
+            context.Renderer.DrawText(
+                new Position(hudX, context.Screen.Height - 1),
+                text,
+                color,
+                Colors.Transparent
+            );
+            hudX += text.Length;
+        }
 
         // Draw legend
         var legend = new[]

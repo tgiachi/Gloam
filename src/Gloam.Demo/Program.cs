@@ -22,6 +22,19 @@ public class Program
         System.Console.WriteLine("Press ESC to exit");
         System.Console.WriteLine("Press any key to start...");
         System.Console.WriteLine("Current size is " + System.Console.WindowWidth + "x" + System.Console.WindowHeight);
+        
+        // Check VT100/24-bit color support
+        var supportsVT100 = DetectTrueColorSupport();
+        System.Console.WriteLine($"VT100/24-bit colors: {(supportsVT100 ? "✓ Supported" : "✗ Not supported")}");
+        if (supportsVT100)
+        {
+            System.Console.WriteLine("  → Enhanced color rendering enabled");
+        }
+        else
+        {
+            System.Console.WriteLine("  → Using legacy ConsoleColor fallback");
+        }
+        
         System.Console.ReadKey();
 
         try
@@ -70,6 +83,10 @@ public class Program
             var gameScene = new GameScene();
             gameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(gameScene);
+
+            var flameScene = new FlameScene();
+            flameScene.SetSceneManager(sceneManager);
+            sceneManager.RegisterScene(flameScene);
             
             // Start with main menu
             await sceneManager.SwitchToSceneAsync("MainMenu");
@@ -118,5 +135,46 @@ public class Program
     {
         // Check for ESC key press
         return inputDevice.WasPressed(Keys.Escape);
+    }
+
+    /// <summary>
+    /// Detects if the current terminal supports 24-bit True Color
+    /// </summary>
+    /// <returns>True if 24-bit color is supported</returns>
+    private static bool DetectTrueColorSupport()
+    {
+        // Check common environment variables that indicate 24-bit color support
+        var colorTerm = Environment.GetEnvironmentVariable("COLORTERM");
+        if (!string.IsNullOrEmpty(colorTerm))
+        {
+            var colorTermLower = colorTerm.ToLowerInvariant();
+            if (colorTermLower.Contains("truecolor") || colorTermLower.Contains("24bit"))
+            {
+                return true;
+            }
+        }
+
+        // Check TERM variable for terminals known to support 24-bit color
+        var term = Environment.GetEnvironmentVariable("TERM");
+        if (!string.IsNullOrEmpty(term))
+        {
+            var termLower = term.ToLowerInvariant();
+            return termLower.Contains("256color") || 
+                   termLower.Contains("truecolor") ||
+                   termLower.StartsWith("xterm-") ||
+                   termLower.StartsWith("screen-") ||
+                   termLower == "tmux" ||
+                   termLower == "alacritty" ||
+                   termLower == "kitty";
+        }
+
+        // On Windows, modern Windows Terminal and Windows 10+ console support 24-bit
+        if (OperatingSystem.IsWindows())
+        {
+            return Environment.OSVersion.Version.Major >= 10;
+        }
+
+        // Default to false for unknown terminals
+        return false;
     }
 }

@@ -10,12 +10,13 @@ namespace Gloam.Console.Render.Rendering;
 /// </summary>
 public sealed class ConsoleRenderer : IRenderer
 {
-    private readonly Dictionary<Position, (char character, ConsoleColor? fg, ConsoleColor? bg)> _drawBuffer;
-    private readonly Dictionary<Position, (char character, ConsoleColor? fg, ConsoleColor? bg)> _previousBuffer;
+    private readonly Dictionary<Position, (char character, Color? fg, Color? bg)> _drawBuffer;
+    private readonly Dictionary<Position, (char character, Color? fg, Color? bg)> _previousBuffer;
     private readonly StringBuilder _frameBuffer;
     private readonly ConsoleSurface _surface;
     private bool _isDrawing;
     private bool _isFirstFrame;
+    private static readonly bool _supports24BitColor = DetectTrueColorSupport();
 
     /// <summary>
     ///     Initializes a new console renderer with the specified surface
@@ -25,8 +26,8 @@ public sealed class ConsoleRenderer : IRenderer
     {
         _surface = surface ?? throw new ArgumentNullException(nameof(surface));
         _frameBuffer = new StringBuilder();
-        _drawBuffer = new Dictionary<Position, (char, ConsoleColor?, ConsoleColor?)>();
-        _previousBuffer = new Dictionary<Position, (char, ConsoleColor?, ConsoleColor?)>();
+        _drawBuffer = new Dictionary<Position, (char, Color?, Color?)>();
+        _previousBuffer = new Dictionary<Position, (char, Color?, Color?)>();
         _isFirstFrame = true;
 
         // Initialize console settings
@@ -87,8 +88,9 @@ public sealed class ConsoleRenderer : IRenderer
             return;
         }
 
-        var fgConsole = ConvertToConsoleColor(fg);
-        var bgConsole = bg.HasValue && bg.Value.A > 0 ? ConvertToConsoleColor(bg.Value) : (ConsoleColor?)null;
+        // Store original colors - conversion happens at render time
+        var fgColor = fg;
+        var bgColor = bg.HasValue && bg.Value.A > 0 ? bg.Value : (Color?)null;
 
         // Draw each character of the text
         for (var i = 0; i < text.Length; i++)
@@ -100,7 +102,7 @@ public sealed class ConsoleRenderer : IRenderer
                 break;
             }
 
-            _drawBuffer[charPos] = (text[i], fgConsole, bgConsole);
+            _drawBuffer[charPos] = (text[i], fgColor, bgColor);
         }
     }
 
@@ -117,12 +119,11 @@ public sealed class ConsoleRenderer : IRenderer
             return;
         }
 
-        var fgConsole = ConvertToConsoleColor(v.Foreground);
-        var bgConsole = v.Background.HasValue && v.Background.Value.A > 0
-            ? ConvertToConsoleColor(v.Background.Value)
-            : (ConsoleColor?)null;
+        // Store original colors - conversion happens at render time
+        var fgColor = v.Foreground;
+        var bgColor = v.Background.HasValue && v.Background.Value.A > 0 ? v.Background.Value : (Color?)null;
 
-        _drawBuffer[pos] = ((char)v.Glyph.Value, fgConsole, bgConsole);
+        _drawBuffer[pos] = ((char)v.Glyph.Value, fgColor, bgColor);
     }
 
     /// <inheritdoc />
@@ -153,7 +154,7 @@ public sealed class ConsoleRenderer : IRenderer
         }
 
         // Double buffering: only update changed positions
-        var positionsToUpdate = new List<(Position pos, (char character, ConsoleColor? fg, ConsoleColor? bg) data)>();
+        var positionsToUpdate = new List<(Position pos, (char character, Color? fg, Color? bg) data)>();
 
         // Find positions that changed
         foreach (var kvp in _drawBuffer)
@@ -174,12 +175,12 @@ public sealed class ConsoleRenderer : IRenderer
             if (!_drawBuffer.ContainsKey(pos))
             {
                 // Clear this position with a space
-                positionsToUpdate.Add((pos, (' ', ConsoleColor.Gray, ConsoleColor.Black)));
+                positionsToUpdate.Add((pos, (' ', Colors.Gray, Colors.Black)));
             }
         }
 
         // Sort by position for optimal cursor movement
-        positionsToUpdate.Sort((a, b) => 
+        positionsToUpdate.Sort((a, b) =>
         {
             var yCompare = a.pos.Y.CompareTo(b.pos.Y);
             return yCompare != 0 ? yCompare : a.pos.X.CompareTo(b.pos.X);
@@ -192,25 +193,60 @@ public sealed class ConsoleRenderer : IRenderer
 
             if (ConsoleSurface.SupportsColor)
             {
-                if (fg.HasValue)
+                if (_supports24BitColor)
                 {
-                    System.Console.ForegroundColor = fg.Value;
-                }
+                    // Use 24-bit ANSI escape sequences
+                    var colorSequence = new StringBuilder();
 
-                if (bg.HasValue)
-                {
-                    System.Console.BackgroundColor = bg.Value;
+                    if (fg.HasValue)
+                    {
+                        colorSequence.Append(GetAnsi24BitForeground(fg.Value));
+                    }
+
+                    if (bg.HasValue)
+                    {
+                        colorSequence.Append(GetAnsi24BitBackground(bg.Value));
+                    }
+                    else
+                    {
+                        colorSequence.Append(GetAnsi24BitBackground(Colors.Black));
+                    }
+
+                    // Write the ANSI sequence + character + reset
+                    System.Console.Write(colorSequence.ToString() + character + AnsiReset);
                 }
                 else
                 {
-                    System.Console.BackgroundColor = ConsoleColor.Black;
+                    // Fallback to legacy ConsoleColor
+                    if (fg.HasValue)
+                    {
+                        System.Console.ForegroundColor = ConvertToConsoleColor(fg.Value);
+                    }
+
+                    if (bg.HasValue)
+                    {
+                        System.Console.BackgroundColor = ConvertToConsoleColor(bg.Value);
+                    }
+                    else
+                    {
+                        System.Console.BackgroundColor = ConsoleColor.Black;
+                    }
+
+                    System.Console.Write(character);
                 }
             }
-
-            System.Console.Write(character);
+            else
+            {
+                // No color support
+                System.Console.Write(character);
+            }
         }
 
-        System.Console.ResetColor();
+        // Reset color only for legacy mode (24-bit mode uses ANSI reset in each character)
+        if (!_supports24BitColor && ConsoleSurface.SupportsColor)
+        {
+            System.Console.ResetColor();
+        }
 
         // Copy current buffer to previous buffer for next frame
         _previousBuffer.Clear();
@@ -244,9 +280,75 @@ public sealed class ConsoleRenderer : IRenderer
         }
     }
 
+    /// <summary>
+    /// Detects if the current terminal supports 24-bit True Color
+    /// </summary>
+    /// <returns>True if 24-bit color is supported</returns>
+    private static bool DetectTrueColorSupport()
+    {
+        // Check common environment variables that indicate 24-bit color support
+        var colorTerm = Environment.GetEnvironmentVariable("COLORTERM");
+        if (!string.IsNullOrEmpty(colorTerm))
+        {
+            var colorTermLower = colorTerm.ToLowerInvariant();
+            if (colorTermLower.Contains("truecolor") || colorTermLower.Contains("24bit"))
+            {
+                return true;
+            }
+        }
+
+        // Check TERM variable for terminals known to support 24-bit color
+        var term = Environment.GetEnvironmentVariable("TERM");
+        if (!string.IsNullOrEmpty(term))
+        {
+            var termLower = term.ToLowerInvariant();
+            return termLower.Contains("256color") ||
+                   termLower.Contains("truecolor") ||
+                   termLower.StartsWith("xterm-") ||
+                   termLower.StartsWith("screen-") ||
+                   termLower == "tmux" ||
+                   termLower == "alacritty" ||
+                   termLower == "kitty";
+        }
+
+        // On Windows, modern Windows Terminal and Windows 10+ console support 24-bit
+        if (OperatingSystem.IsWindows())
+        {
+            return Environment.OSVersion.Version.Major >= 10;
+        }
+
+        // Default to false for unknown terminals
+        return false;
+    }
+
+    /// <summary>
+    /// Generates ANSI escape sequence for 24-bit foreground color
+    /// </summary>
+    /// <param name="color">Color to convert</param>
+    /// <returns>ANSI escape sequence</returns>
+    private static string GetAnsi24BitForeground(Color color)
+    {
+        return $"\u001b[38;2;{color.R};{color.G};{color.B}m";
+    }
+
+    /// <summary>
+    /// Generates ANSI escape sequence for 24-bit background color
+    /// </summary>
+    /// <param name="color">Color to convert</param>
+    /// <returns>ANSI escape sequence</returns>
+    private static string GetAnsi24BitBackground(Color color)
+    {
+        return $"\u001b[48;2;{color.R};{color.G};{color.B}m";
+    }
+
+    /// <summary>
+    /// ANSI reset sequence to clear all formatting
+    /// </summary>
+    private const string AnsiReset = "\u001b[0m";
+
     private static ConsoleColor ConvertToConsoleColor(Color color)
     {
-        // Simple RGB to ConsoleColor mapping
+        // Simple RGB to ConsoleColor mappingr
         // This is a basic implementation - could be enhanced with better color matching
         var (r, g, b) = (color.R, color.G, color.B);
 

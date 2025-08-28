@@ -36,6 +36,7 @@ public sealed class StatusLayerRenderer : BaseLayerRenderer
         var fpsText = $"FPS: {context.FrameInfo.FramesPerSecond:F1}";
         var frameText = $"Frame: {context.FrameNumber}";
         var timeText = $"Time: {context.TotalTime.TotalSeconds:F1}s";
+        var mousePosition = $"Mouse pos: X: {context.InputDevice.Mouse.X:F1}, Y: {context.InputDevice.Mouse.Y:F1} ";
 
         // Draw status line at the top-right corner
         var statusY = 1; // Just below the border
@@ -43,6 +44,7 @@ public sealed class StatusLayerRenderer : BaseLayerRenderer
         DrawStatusText(context, fpsText, context.Screen.Width - fpsText.Length - 2, statusY, Colors.Green);
         DrawStatusText(context, frameText, context.Screen.Width - frameText.Length - 2, statusY + 1, Colors.Yellow);
         DrawStatusText(context, timeText, context.Screen.Width - timeText.Length - 2, statusY + 2, Colors.Cyan);
+        DrawStatusText(context, mousePosition, context.Screen.Width - mousePosition.Length - 2, statusY + 3, Colors.Magenta);
 
         // Display input instructions at the bottom
         var instructionsY = context.Screen.Height - 2; // Just above the border

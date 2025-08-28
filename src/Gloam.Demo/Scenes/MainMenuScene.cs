@@ -42,7 +42,12 @@ public sealed class MainMenuScene : BaseScene
             case 2: // Settings (not implemented yet)
                 // Could switch to a SettingsScene when implemented
                 break;
-            case 3: // Exit
+            case 3: // Flame Demo
+                var pushTransitionFlame = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromTop, 
+                    _sceneManager.CurrentScene, _sceneManager.Scenes["Flame"]);
+                await _sceneManager.SwitchToSceneAsync("Flame", pushTransitionFlame, ct);
+                break;
+            case 4: // Exit
                 Environment.Exit(0);
                 break;
         }
@@ -117,7 +122,8 @@ internal sealed class MenuUILayer : BaseLayerRenderer
         {
             "1. Start Game",
             "2. Settings", 
-            "3. Exit"
+            "3. Flame Demo",
+            "4. Exit"
         };
 
         for (int i = 0; i < menuItems.Length; i++)
@@ -135,7 +141,7 @@ internal sealed class MenuUILayer : BaseLayerRenderer
         }
 
         // Instructions
-        var instructions = "Press ESC to exit, 1-3 to select";
+        var instructions = "Press ESC to exit, 1-4 to select";
         var instrX = centerX - instructions.Length / 2;
         var instrY = context.Screen.Height - 3;
 
@@ -158,6 +164,10 @@ internal sealed class MenuUILayer : BaseLayerRenderer
         else if (context.InputDevice.WasPressed(Keys.D3) || context.InputDevice.WasPressed(Keys.NumPad3))
         {
             await _scene.HandleMenuSelectionAsync(3, ct);
+        }
+        else if (context.InputDevice.WasPressed(Keys.D4) || context.InputDevice.WasPressed(Keys.NumPad4))
+        {
+            await _scene.HandleMenuSelectionAsync(4, ct);
         }
     }
 }
