@@ -11,7 +11,7 @@
         <PackAsTool>true</PackAsTool>
         <ToolCommandName>gloam</ToolCommandName>
         <PackageId>Gloam.Cli</PackageId>
-        <Version>0.5.0</Version>
+        <Version>0.6.0</Version>
         <Authors>Gloam Team</Authors>
         <Description>Command-line tools for Gloam roguelike game engine</Description>
         <PackageProjectUrl>https://github.com/yourusername/gloam</PackageProjectUrl>
