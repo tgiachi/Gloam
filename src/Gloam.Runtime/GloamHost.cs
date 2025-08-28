@@ -218,6 +218,7 @@ public class GloamHost : IGloamHost
         var lastTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
         var simAccumulator = TimeSpan.Zero;
         var lastRenderTimestamp = lastTimestamp;
+        var isFirstFrame = true;
 
         while (config.KeepRunning() && !ct.IsCancellationRequested)
         {
@@ -253,18 +254,16 @@ public class GloamHost : IGloamHost
 
             // Rendering (if it's time to render)
             var timeSinceLastRender = System.Diagnostics.Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
-            if (timeSinceLastRender >= config.RenderStep)
+            if ((isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
             {
-                // Render if renderer is available
-                if (_renderer != null)
-                {
-                    _renderer.BeginDraw();
-                    // TODO: Render game content when game logic is implemented
-                    // Example: _game.Render(_renderer);
-                    _renderer.EndDraw();
-                }
+                _renderer.BeginDraw();
+                // TODO: Render game content when game logic is implemented
+                // Example: _game.Render(_renderer);
+                _renderer.EndDraw();
                 lastRenderTimestamp = now;
             }
+
+            isFirstFrame = false;
 
             // End frame cleanup for input
             _inputDevice?.EndFrame();
