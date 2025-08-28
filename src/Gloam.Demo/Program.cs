@@ -62,8 +62,13 @@ public class Program
             sceneManager.AddGlobalLayer(new StatusLayerRenderer());
             
             // Register scenes
-            sceneManager.RegisterScene(new MainMenuScene());
-            sceneManager.RegisterScene(new GameScene());
+            var mainMenuScene = new MainMenuScene();
+            mainMenuScene.SetSceneManager(sceneManager);
+            sceneManager.RegisterScene(mainMenuScene);
+            
+            var gameScene = new GameScene();
+            gameScene.SetSceneManager(sceneManager);
+            sceneManager.RegisterScene(gameScene);
             
             // Start with main menu
             await sceneManager.SwitchToSceneAsync("MainMenu");

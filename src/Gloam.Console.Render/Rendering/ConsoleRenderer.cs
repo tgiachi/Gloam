@@ -11,9 +11,11 @@ namespace Gloam.Console.Render.Rendering;
 public sealed class ConsoleRenderer : IRenderer
 {
     private readonly Dictionary<Position, (char character, ConsoleColor? fg, ConsoleColor? bg)> _drawBuffer;
+    private readonly Dictionary<Position, (char character, ConsoleColor? fg, ConsoleColor? bg)> _previousBuffer;
     private readonly StringBuilder _frameBuffer;
     private readonly ConsoleSurface _surface;
     private bool _isDrawing;
+    private bool _isFirstFrame;
 
     /// <summary>
     ///     Initializes a new console renderer with the specified surface
@@ -24,6 +26,8 @@ public sealed class ConsoleRenderer : IRenderer
         _surface = surface ?? throw new ArgumentNullException(nameof(surface));
         _frameBuffer = new StringBuilder();
         _drawBuffer = new Dictionary<Position, (char, ConsoleColor?, ConsoleColor?)>();
+        _previousBuffer = new Dictionary<Position, (char, ConsoleColor?, ConsoleColor?)>();
+        _isFirstFrame = true;
 
         // Initialize console settings
         if (ConsoleSurface.SupportsColor)
@@ -57,10 +61,11 @@ public sealed class ConsoleRenderer : IRenderer
         // Update surface dimensions in case console was resized
         _surface.UpdateDimensions();
 
-        // Clear screen and position cursor at top-left
-        if (ConsoleSurface.SupportsCursorPositioning)
+        // Clear screen only on first frame or if console was resized
+        if (ConsoleSurface.SupportsCursorPositioning && _isFirstFrame)
         {
             System.Console.Clear();
+            _isFirstFrame = false;
         }
     }
 
@@ -147,12 +152,42 @@ public sealed class ConsoleRenderer : IRenderer
             return;
         }
 
-        // Render optimized for console with cursor positioning
-        foreach (var kvp in _drawBuffer.OrderBy(x => x.Key.Y).ThenBy(x => x.Key.X))
+        // Double buffering: only update changed positions
+        var positionsToUpdate = new List<(Position pos, (char character, ConsoleColor? fg, ConsoleColor? bg) data)>();
+
+        // Find positions that changed
+        foreach (var kvp in _drawBuffer)
         {
             var pos = kvp.Key;
-            var (character, fg, bg) = kvp.Value;
+            var newData = kvp.Value;
 
+            if (!_previousBuffer.TryGetValue(pos, out var oldData) || !oldData.Equals(newData))
+            {
+                positionsToUpdate.Add((pos, newData));
+            }
+        }
+
+        // Find positions that were cleared (existed in previous but not in current)
+        foreach (var kvp in _previousBuffer)
+        {
+            var pos = kvp.Key;
+            if (!_drawBuffer.ContainsKey(pos))
+            {
+                // Clear this position with a space
+                positionsToUpdate.Add((pos, (' ', ConsoleColor.Gray, ConsoleColor.Black)));
+            }
+        }
+
+        // Sort by position for optimal cursor movement
+        positionsToUpdate.Sort((a, b) => 
+        {
+            var yCompare = a.pos.Y.CompareTo(b.pos.Y);
+            return yCompare != 0 ? yCompare : a.pos.X.CompareTo(b.pos.X);
+        });
+
+        // Update only changed positions
+        foreach (var (pos, (character, fg, bg)) in positionsToUpdate)
+        {
             System.Console.SetCursorPosition(pos.X, pos.Y);
 
             if (ConsoleSurface.SupportsColor)
@@ -168,7 +203,7 @@ public sealed class ConsoleRenderer : IRenderer
                 }
                 else
                 {
-                    System.Console.BackgroundColor = ConsoleColor.Black; // Reset to default background
+                    System.Console.BackgroundColor = ConsoleColor.Black;
                 }
             }
 
@@ -176,6 +211,13 @@ public sealed class ConsoleRenderer : IRenderer
         }
 
         System.Console.ResetColor();
+
+        // Copy current buffer to previous buffer for next frame
+        _previousBuffer.Clear();
+        foreach (var kvp in _drawBuffer)
+        {
+            _previousBuffer[kvp.Key] = kvp.Value;
+        }
     }
 
     private void RenderToRedirectedOutput()

@@ -1,5 +1,7 @@
 using Gloam.Console.Render.Layers;
 using Gloam.Core.Contexts;
+using Gloam.Core.Input;
+using Gloam.Core.Interfaces;
 using Gloam.Core.Interfaces.Base;
 using Gloam.Core.Primitives;
 
@@ -10,12 +12,27 @@ namespace Gloam.Console.Render.Scenes;
 /// </summary>
 public sealed class GameScene : BaseScene
 {
+    private ISceneManager? _sceneManager;
+
     public GameScene() : base("Game")
     {
         // Add game-specific layers in priority order
         AddLayer(new WorldLayer());
         AddLayer(new EntityLayer());
-        AddLayer(new GameUILayer());
+        AddLayer(new GameUILayer(this));
+    }
+
+    public void SetSceneManager(ISceneManager sceneManager)
+    {
+        _sceneManager = sceneManager;
+    }
+
+    public async ValueTask ReturnToMenuAsync(CancellationToken ct = default)
+    {
+        if (_sceneManager != null)
+        {
+            await _sceneManager.SwitchToSceneAsync("MainMenu", ct);
+        }
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)
@@ -125,10 +142,17 @@ internal sealed class EntityLayer : BaseLayerRenderer
 /// </summary>
 internal sealed class GameUILayer : BaseLayerRenderer
 {
+    private readonly GameScene _scene;
+
+    public GameUILayer(GameScene scene)
+    {
+        _scene = scene;
+    }
+
     public override int Priority => 30; // UI renders on top
     public override string Name => "GameUI";
 
-    protected override ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
+    protected override async ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
     {
         // Draw game title
         var title = "GLOAM DEMO - GAME SCENE";
@@ -155,19 +179,25 @@ internal sealed class GameUILayer : BaseLayerRenderer
             "E = Enemy", 
             "$ = Item",
             "# = Wall",
-            ". = Floor"
+            ". = Floor",
+            "",
+            "Press M for Menu"
         };
 
         for (int i = 0; i < legend.Length; i++)
         {
             context.Renderer.DrawText(
-                new Position(context.Screen.Width - 15, 2 + i),
+                new Position(context.Screen.Width - 17, 2 + i),
                 legend[i],
                 Colors.LightGray,
                 Colors.Transparent
             );
         }
 
-        return ValueTask.CompletedTask;
+        // Handle input
+        if (context.InputDevice.WasPressed(Keys.M))
+        {
+            await _scene.ReturnToMenuAsync(ct);
+        }
     }
 }

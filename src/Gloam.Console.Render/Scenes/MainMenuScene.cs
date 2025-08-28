@@ -1,5 +1,7 @@
 using Gloam.Console.Render.Layers;
 using Gloam.Core.Contexts;
+using Gloam.Core.Input;
+using Gloam.Core.Interfaces;
 using Gloam.Core.Interfaces.Base;
 using Gloam.Core.Primitives;
 
@@ -10,11 +12,36 @@ namespace Gloam.Console.Render.Scenes;
 /// </summary>
 public sealed class MainMenuScene : BaseScene
 {
+    private ISceneManager? _sceneManager;
+
     public MainMenuScene() : base("MainMenu")
     {
         // Add menu-specific layers
         AddLayer(new MenuBackgroundLayer());
-        AddLayer(new MenuUILayer());
+        AddLayer(new MenuUILayer(this));
+    }
+
+    public void SetSceneManager(ISceneManager sceneManager)
+    {
+        _sceneManager = sceneManager;
+    }
+
+    public async ValueTask HandleMenuSelectionAsync(int selection, CancellationToken ct = default)
+    {
+        if (_sceneManager == null) return;
+
+        switch (selection)
+        {
+            case 1: // Start Game
+                await _sceneManager.SwitchToSceneAsync("Game", ct);
+                break;
+            case 2: // Settings (not implemented yet)
+                // Could switch to a SettingsScene when implemented
+                break;
+            case 3: // Exit
+                Environment.Exit(0);
+                break;
+        }
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)
@@ -67,10 +94,17 @@ internal sealed class MenuBackgroundLayer : BaseLayerRenderer
 /// </summary>
 internal sealed class MenuUILayer : BaseLayerRenderer
 {
+    private readonly MainMenuScene _scene;
+
+    public MenuUILayer(MainMenuScene scene)
+    {
+        _scene = scene;
+    }
+
     public override int Priority => 20; // UI renders after background
     public override string Name => "MenuUI";
 
-    protected override ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
+    protected override async ValueTask RenderLayerAsync(RenderLayerContext context, CancellationToken ct = default)
     {
         var centerY = context.Screen.Height / 2;
         var centerX = context.Screen.Width / 2;
@@ -108,6 +142,18 @@ internal sealed class MenuUILayer : BaseLayerRenderer
             Colors.Transparent
         );
 
-        return ValueTask.CompletedTask;
+        // Handle input
+        if (context.InputDevice.WasPressed(Keys.D1) || context.InputDevice.WasPressed(Keys.NumPad1))
+        {
+            await _scene.HandleMenuSelectionAsync(1, ct);
+        }
+        else if (context.InputDevice.WasPressed(Keys.D2) || context.InputDevice.WasPressed(Keys.NumPad2))
+        {
+            await _scene.HandleMenuSelectionAsync(2, ct);
+        }
+        else if (context.InputDevice.WasPressed(Keys.D3) || context.InputDevice.WasPressed(Keys.NumPad3))
+        {
+            await _scene.HandleMenuSelectionAsync(3, ct);
+        }
     }
 }
