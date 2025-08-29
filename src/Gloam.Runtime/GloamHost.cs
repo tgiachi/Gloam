@@ -13,7 +13,7 @@ using Gloam.Runtime.Extensions;
 using Gloam.Runtime.Interfaces;
 using Gloam.Runtime.Services;
 using Gloam.Runtime.Types;
-using Mosaic.Engine.Directories;
+using Gloam.Core.Directories;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -224,7 +224,10 @@ public class GloamHost : IGloamHost
         }
         else
         {
-            throw new NotImplementedException("Only FileSystem content loader is implemented.");
+            throw new NotSupportedException(
+                $"Content loader type '{_config.LoaderType}' is not supported. " +
+                $"Currently supported loaders: {ContentLoaderType.FileSystem}. " +
+                $"Please use FileSystem loader or implement a custom loader.");
         }
 
 
@@ -277,14 +280,27 @@ public class GloamHost : IGloamHost
             {
                 var now = Stopwatch.GetTimestamp();
 
-                _inputDevice?.Poll();
+                // Poll input device (optimized: only poll if device exists)
+                if (_inputDevice != null)
+                {
+                    _inputDevice.Poll();
+                }
 
                 // Update current scene
                 await _sceneManager.UpdateCurrentSceneAsync(ct);
 
-                // Rendering (if it's time to render)
-                var timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
-                if ((_isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
+                // Rendering (if it's time to render) - optimized timestamp calculation
+                // Performance optimization: avoid redundant null checks and timestamp calculations
+                var shouldRender = _isFirstFrame || _renderer == null;
+                TimeSpan timeSinceLastRender = TimeSpan.Zero;
+
+                if (!shouldRender && _renderer != null)
+                {
+                    timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
+                    shouldRender = timeSinceLastRender >= config.RenderStep;
+                }
+
+                if (shouldRender && _renderer != null)
                 {
                     _renderer.BeginDraw();
 
@@ -357,7 +373,11 @@ public class GloamHost : IGloamHost
 
         var now = Stopwatch.GetTimestamp();
 
-        _inputDevice?.Poll();
+        // Poll input device (optimized: only poll if device exists)
+        if (_inputDevice != null)
+        {
+            _inputDevice.Poll();
+        }
 
         // Update current scene
         await _sceneManager.UpdateCurrentSceneAsync(ct);

@@ -3,7 +3,15 @@
     {
       "src": [
         {
-          "files": ["src/**/*.csproj"],
+          "files": [
+            "src/Gloam.Core/Gloam.Core.csproj",
+            "src/Gloam.Core.Ui/Gloam.Core.Ui.csproj",
+            "src/Gloam.Data/Gloam.Data.csproj",
+            "src/Gloam.Runtime/Gloam.Runtime.csproj",
+            "src/Gloam.Console.Render/Gloam.Console.Render.csproj",
+            "src/Gloam.Demo/Gloam.Demo.csproj",
+            "tools/Gloam.Cli/Gloam.Cli.csproj"
+          ],
           "src": "../"
         }
       ],
@@ -57,15 +65,23 @@
     "globalMetadata": {
       "_appTitle": "Gloam Engine Documentation",
       "_appName": "Gloam",
-      "_appLogoPath": "images/logo.svg",
+      "_appLogoPath": "images/logo.png",
       "_enableSearch": true,
       "_enableNewTab": true,
       "_disableContribution": false,
       "_gitContribute": {
-        "repo": "https://github.com/yourusername/gloam",
+        "repo": "https://github.com/tgiachi/gloam",
         "branch": "main"
       },
-      "_gitUrlPattern": "github"
+      "_gitUrlPattern": "github",
+      "_appFooter": "© 2025 Gloam Contributors. Built with DocFX.",
+      "_enablePrint": true,
+      "_disableBreadcrumb": false,
+      "_disableToc": false,
+      "_disableNavbar": false,
+      "_disableAffix": false,
+      "_hideEmptyNamespace": true,
+      "_disableLangKeyword": true
     }
   }
 }

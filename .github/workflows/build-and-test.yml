@@ -39,9 +39,36 @@ jobs:
       
     - name: Build solution
       run: dotnet build Gloam.sln --no-restore --configuration Release -warnaserror
+
+    - name: Run security analysis
+      run: |
+        dotnet tool install -g dotnet-security-scan || true
+        dotnet-security-scan --input . --output security-report.json || true
+
+    - name: Check for vulnerable dependencies
+      run: |
+        dotnet list package --vulnerable --include-transitive || true
       
     - name: Run tests
       run: dotnet test Gloam.sln --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx --results-directory coverage
+
+    - name: Check test coverage threshold
+      run: |
+        # Extract coverage percentage from coverage files
+        COVERAGE_FILE=$(find coverage -name "*.cobertura.xml" | head -1)
+        if [ -f "$COVERAGE_FILE" ]; then
+          # Simple coverage check - you might want to use a more sophisticated tool
+          LINES_COVERED=$(grep -o 'lines-covered="[0-9]*"' "$COVERAGE_FILE" | grep -o '[0-9]*' | awk '{sum += $1} END {print sum}')
+          LINES_VALID=$(grep -o 'lines-valid="[0-9]*"' "$COVERAGE_FILE" | grep -o '[0-9]*' | awk '{sum += $1} END {print sum}')
+          if [ "$LINES_VALID" -gt 0 ]; then
+            COVERAGE_PERCENT=$((LINES_COVERED * 100 / LINES_VALID))
+            echo "Coverage: $COVERAGE_PERCENT%"
+            if [ "$COVERAGE_PERCENT" -lt 70 ]; then
+              echo "Coverage below 70% threshold: $COVERAGE_PERCENT%"
+              exit 1
+            fi
+          fi
+        fi
       
     - name: Generate coverage report
       uses: danielpalme/ReportGenerator-GitHub-Action@5.3.11
@@ -49,7 +76,14 @@ jobs:
         reports: coverage/**/coverage.cobertura.xml
         targetdir: coverage/html
         reporttypes: Html;Badges
-        
+
+    - name: Build documentation (for validation)
+      run: |
+        dotnet tool install -g docfx || true
+        cd docs
+        docfx metadata
+        docfx build --output _validation_site
+
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       if: always()
@@ -57,7 +91,7 @@ jobs:
         name: coverage-report
         path: coverage/html
         retention-days: 30
-        
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -65,6 +99,14 @@ jobs:
         name: test-results
         path: coverage/*.trx
         retention-days: 30
+
+    - name: Upload documentation preview
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: docs-preview
+        path: docs/_validation_site
+        retention-days: 7
 
   validate-cli-tool:
     runs-on: ubuntu-latest

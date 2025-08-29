@@ -1,0 +1,99 @@
+name: Deploy Documentation (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (e.g., v1.0.0, latest)'
+        required: true
+        default: 'latest'
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'development'
+        type: choice
+        options:
+        - development
+        - staging
+        - production
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages-manual"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Build solution
+      run: dotnet build Gloam.slnx --configuration Release
+
+    - name: Generate API documentation
+      run: |
+        cd docs
+        docfx metadata
+
+    - name: Build documentation site
+      run: |
+        cd docs
+        docfx build --output _site
+
+    - name: Add deployment info
+      run: |
+        cd docs/_site
+        echo "<!-- Deployed: $(date) | Version: ${{ inputs.version }} | Environment: ${{ inputs.environment }} -->" > .deployment-info.html
+
+    - name: Add .nojekyll file
+      run: touch docs/_site/.nojekyll
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs/_site
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+    - name: Create deployment summary
+      run: |
+        echo "## 📚 Documentation Deployment Summary" >> deployment-summary.md
+        echo "" >> deployment-summary.md
+        echo "**Version:** ${{ inputs.version }}" >> deployment-summary.md
+        echo "**Environment:** ${{ inputs.environment }}" >> deployment-summary.md
+        echo "**Deployed at:** $(date)" >> deployment-summary.md
+        echo "**URL:** ${{ steps.deployment.outputs.page_url }}" >> deployment-summary.md
+        echo "" >> deployment-summary.md
+        echo "### Recent Changes" >> deployment-summary.md
+        echo "" >> deployment-summary.md
+        git log --oneline -10 >> deployment-summary.md
+
+    - name: Upload deployment summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-summary
+        path: deployment-summary.md
+        retention-days: 30

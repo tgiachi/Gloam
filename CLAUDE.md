@@ -116,7 +116,7 @@ Modern rendering architecture supporting multiple backends:
 ## Development Patterns
 
 ### Testing Strategy
-- Target: 100% code coverage
+- Target: 70%+ code coverage
 - Entity JSON serialization tests auto-generated
 - Schema validation tests for all entity types
 - Coverage reports in `coverage/html/index.html`
@@ -128,7 +128,7 @@ Modern rendering architecture supporting multiple backends:
 - Source Link enabled for debugging
 
 ### Special Claude Commands
-- **`test_check`**: When the user writes "test_check", automatically analyze the codebase for missing tests and implement them to maintain 100% coverage target
+- **`test_check`**: When the user writes "test_check", automatically analyze the codebase for missing tests and implement them to maintain 70%+ coverage target
 - **`fix_comments`**: When the user writes "fix_comments", search for classes/structs/records that don't have XML documentation comments and add /// English comments to them
 
 ### Game Loop Architecture

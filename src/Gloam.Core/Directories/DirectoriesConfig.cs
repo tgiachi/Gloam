@@ -1,6 +1,6 @@
 using Gloam.Core.Extensions.Strings;
 
-namespace Mosaic.Engine.Directories;
+namespace Gloam.Core.Directories;
 
 /// <summary>
 ///     Configuration for managing directory structures with automatic creation and path resolution

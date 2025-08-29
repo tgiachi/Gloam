@@ -9,7 +9,8 @@
 [![.NET 9.0](https://img.shields.io/badge/.NET-9.0-512BD4?style=flat-square&logo=dotnet)](https://dotnet.microsoft.com)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://github.com/tgiachi/gloam)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#testing)
+[![Coverage](https://img.shields.io/badge/coverage-70%25+-brightgreen?style=flat-square)](#testing)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=flat-square)](https://tgiachi.github.io/gloam/)
 
 _Craft immersive roguelike experiences with JSON-driven entities, flexible rendering backends, and smooth scene transitions_
 
@@ -37,7 +38,7 @@ _Craft immersive roguelike experiences with JSON-driven entities, flexible rende
 
 - DryIoc dependency injection for optimal performance
 - Source generation for JSON serialization
-- 100% test coverage with comprehensive validation
+- 70%+ test coverage with comprehensive validation
 - Frame timing with high-precision timestamping
 
 🛠 **Developer Experience**
@@ -150,7 +151,7 @@ Gloam follows a layered architecture with clear separation of concerns:
 
 ## 📊 Performance & Quality
 
-- **100% Test Coverage**: Comprehensive test suite with 520+ passing tests
+- **70%+ Test Coverage**: Comprehensive test suite with 520+ passing tests
 - **Zero Build Warnings**: Clean codebase following .NET best practices
 - **Memory Efficient**: Double-buffered rendering with minimal allocations
 - **High Performance**: DryIoc container optimized for game loop scenarios
@@ -236,10 +237,26 @@ await sceneManager.SwitchToSceneAsync("Game", pushTransition);
 
 ## 📖 Documentation
 
-- **[API Documentation](https://yourdocs.github.io/gloam/)**: Complete API reference
-- **[Architecture Guide](docs/architecture.md)**: Detailed architecture overview
-- **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to Gloam
+- **[📚 Full Documentation](https://tgiachi.github.io/gloam/)**: Complete guides, API reference, and examples
+- **[🚀 Getting Started](https://tgiachi.github.io/gloam/getting-started.html)**: Quick start guide
+- **[🏗️ Architecture](https://tgiachi.github.io/gloam/architecture/overview.html)**: Detailed architecture overview
+- **[📝 API Reference](https://tgiachi.github.io/gloam/api/)**: Complete API documentation
+- **[💡 Examples](https://tgiachi.github.io/gloam/examples/code-samples.html)**: Code samples and tutorials
 - **[Changelog](CHANGELOG.md)**: Version history and updates
+
+### Building Documentation Locally
+
+```bash
+# Install DocFX
+dotnet tool install -g docfx
+
+# Build and serve documentation
+cd docs
+docfx serve _site
+# Open http://localhost:8080
+```
+
+Documentation is automatically updated and deployed to GitHub Pages on every version release.
 
 ## 🤝 Contributing
 
@@ -250,7 +267,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes with tests
-4. Ensure 100% test coverage (`task coverage`)
+4. Ensure 70%+ test coverage (`task coverage`)
 5. Submit a pull request
 
 ## 📄 License

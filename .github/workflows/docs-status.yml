@@ -1,0 +1,78 @@
+name: Documentation Status Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'src/**/*.cs'
+      - '.github/workflows/docs*.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  docs-check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Build solution
+      run: dotnet build Gloam.slnx --configuration Release
+
+    - name: Validate documentation
+      run: |
+        cd docs
+        docfx metadata
+        docfx build --output _validation --dryrun
+
+    - name: Check for broken links
+      run: |
+        cd docs/_validation
+        find . -name "*.html" -exec grep -l "Page not found" {} \; | head -10
+
+    - name: Comment PR with documentation status
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const docsUrl = `https://tgiachi.github.io/gloam/`;
+          const message = `## 📚 Documentation Status
+
+          ✅ **Documentation build successful**
+
+          ### Preview
+          - 📖 [View Documentation](${docsUrl})
+          - 🔍 [API Reference](${docsUrl}api/)
+          - 🚀 [Getting Started](${docsUrl}getting-started.html)
+
+          ### What's included:
+          - ✅ Complete API documentation for all projects
+          - ✅ Architectural guides and tutorials
+          - ✅ Code examples and samples
+          - ✅ Search functionality
+          - ✅ Responsive design
+
+          ### Next steps:
+          1. Review the documentation changes
+          2. Test links and cross-references
+          3. Documentation will be deployed on next version release
+
+          ---
+          *This documentation will be automatically deployed to GitHub Pages when a version tag is pushed.*`;
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: message
+          });

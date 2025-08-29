@@ -14,8 +14,8 @@
         <Version>0.6.0</Version>
         <Authors>Gloam Team</Authors>
         <Description>Command-line tools for Gloam roguelike game engine</Description>
-        <PackageProjectUrl>https://github.com/yourusername/gloam</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/yourusername/gloam</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/tgiachi/gloam</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/tgiachi/gloam</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
@@ -25,9 +25,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Gloam.Core\Gloam.Core.csproj"/>
-        <ProjectReference Include="..\..\src\Gloam.Data\Gloam.Data.csproj"/>
-        <ProjectReference Include="..\..\src\Gloam.Runtime\Gloam.Runtime.csproj"/>
+        <ProjectReference Include="..\..\src/Gloam.Core/Gloam.Core.csproj"/>
+        <ProjectReference Include="..\..\src/Gloam.Data/Gloam.Data.csproj"/>
+        <ProjectReference Include="..\..\src/Gloam.Runtime/Gloam.Runtime.csproj"/>
     </ItemGroup>
 
 </Project>

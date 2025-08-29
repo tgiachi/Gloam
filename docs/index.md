@@ -40,10 +40,10 @@ await host.RunAsync(() => game.IsRunning, TimeSpan.FromMilliseconds(16), ct);
 
 ### Core Components
 
-- **[Gloam.Core](xref:Gloam.Core)**: Core functionality including input, rendering interfaces, and utilities
-- **[Gloam.Data](xref:Gloam.Data)**: Entity management, content loading, and JSON serialization
-- **[Gloam.Runtime](xref:Gloam.Runtime)**: Game loop, dependency injection, and host services
-- **[Gloam.Cli](xref:Gloam.Cli)**: Command-line tools for validation and development
+- **[Gloam.Core](api/Gloam.Core.html)**: Core functionality including input, rendering interfaces, and utilities
+- **[Gloam.Data](api/Gloam.Data.html)**: Entity management, content loading, and JSON serialization
+- **[Gloam.Runtime](api/Gloam.Runtime.html)**: Game loop, dependency injection, and host services
+- **[Gloam.Cli](api/Gloam.Cli.html)**: Command-line tools for validation and development
 
 ### Game Loop
 
@@ -56,7 +56,7 @@ The engine features a flexible game loop that supports both:
 ### Building from Source
 
 ```bash
-git clone https://github.com/yourusername/gloam.git
+git clone https://github.com/tgiachi/gloam.git
 cd gloam
 task build
 ```
@@ -70,4 +70,4 @@ task coverage-report
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](https://github.com/yourusername/gloam/blob/main/LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/tgiachi/gloam/blob/main/LICENSE) file for details.

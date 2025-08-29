@@ -12,7 +12,7 @@ using Gloam.Runtime;
 using Gloam.Runtime.Config;
 using Gloam.Runtime.Types;
 using Moq;
-using Mosaic.Engine.Directories;
+using Gloam.Core.Directories;
 
 namespace Gloam.Tests.Runtime;
 
