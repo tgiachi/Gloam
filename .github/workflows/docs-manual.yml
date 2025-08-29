@@ -58,6 +58,17 @@ jobs:
         cd docs
         docfx build --output _site
 
+    - name: Verify documentation build
+      run: |
+        cd docs/_site
+        if [ ! -f "index.html" ]; then
+          echo "❌ Error: index.html not found in _site/"
+          exit 1
+        fi
+        echo "✅ Found index.html and $(ls *.html | wc -l) HTML files"
+        echo "📁 Site structure:"
+        ls -la | head -10
+
     - name: Add deployment info
       run: |
         cd docs/_site
@@ -72,10 +83,21 @@ jobs:
     - name: Setup Pages
       uses: actions/configure-pages@v4
 
+    - name: Show deployment summary
+      run: |
+        echo "📊 Deployment Summary:"
+        echo "- Version: ${{ inputs.version }}"
+        echo "- Environment: ${{ inputs.environment }}"
+        echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
+        echo "- Site size: $(du -sh docs/_site | cut -f1)"
+        echo "- Main files:"
+        ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: docs/_site
+        path: docs/_site/
+        retention-days: 1
 
     - name: Deploy to GitHub Pages
       id: deployment

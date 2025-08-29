@@ -58,11 +58,33 @@ jobs:
         cd docs
         docfx build --output _site
 
+    - name: Verify documentation build
+      run: |
+        cd docs/_site
+        if [ ! -f "index.html" ]; then
+          echo "❌ Error: index.html not found in _site/"
+          exit 1
+        fi
+        echo "✅ Found index.html and $(ls *.html | wc -l) HTML files"
+
     - name: Add .nojekyll file
       run: touch docs/_site/.nojekyll
 
     - name: Create CNAME file for GitHub Pages
       run: echo "tgiachi.github.io" > docs/_site/CNAME
+
+    - name: Show deployment summary
+      run: |
+        echo "📊 Deployment Summary:"
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "- Type: Release (${GITHUB_REF#refs/tags/})"
+        else
+          echo "- Type: Development (main branch)"
+        fi
+        echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
+        echo "- Site size: $(du -sh docs/_site | cut -f1)"
+        echo "- Main files:"
+        ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -70,7 +92,8 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: docs/_site
+        path: docs/_site/
+        retention-days: 1
 
     - name: Deploy to GitHub Pages
       id: deployment
