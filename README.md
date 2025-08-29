@@ -256,7 +256,7 @@ docfx serve _site
 # Open http://localhost:8080
 ```
 
-Documentation is automatically updated and deployed to GitHub Pages on every version release.
+Documentation is automatically updated and deployed to GitHub Pages on every push to main branch and version release.
 
 ## 🤝 Contributing
 

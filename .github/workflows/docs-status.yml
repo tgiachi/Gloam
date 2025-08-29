@@ -65,10 +65,10 @@ jobs:
           ### Next steps:
           1. Review the documentation changes
           2. Test links and cross-references
-          3. Documentation will be deployed on next version release
+          3. Documentation will be deployed automatically on next push to main
 
           ---
-          *This documentation will be automatically deployed to GitHub Pages when a version tag is pushed.*`;
+          *Documentation is automatically deployed to GitHub Pages on every push to main branch and version tags.*`;
 
           github.rest.issues.createComment({
             issue_number: context.issue.number,
