@@ -74,7 +74,7 @@ jobs:
           echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
           echo "- Site size: $(du -sh docs/_site | cut -f1)"
           echo "- Main files:"
-          ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
+          ls -la _site/ | grep -E '\.(html|css|js)$' | head -5
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -84,32 +84,13 @@ jobs:
           # Create temp directory for artifact
           mkdir -p temp-artifact
 
-          # Check if _site has content before copying
-          if [ ! -d "docs/_site" ] || [ ! "$(ls -A docs/_site)" ]; then
-            echo "❌ Error: docs/_site is empty or does not exist"
-            exit 1
-          fi
 
           # Copy all content from _site to temp directory
-          cp -r docs/_site/* temp-artifact/ 2>/dev/null || true
+          cp -r _site/* temp-artifact/ 2>/dev/null || true
 
           # Verify the copy was successful
           if [ ! "$(ls -A temp-artifact)" ]; then
             echo "❌ Error: Failed to copy content to temp-artifact"
-            exit 1
-          fi
-
-          # Verify the copy
-          echo "📁 Artifact structure:"
-          ls -la temp-artifact/ | head -10
-          echo ""
-          echo "📄 Index file in artifact:"
-          if [ -f "temp-artifact/index.html" ]; then
-            echo "✅ index.html found in artifact"
-            head -3 temp-artifact/index.html
-          else
-            echo "❌ index.html NOT found in artifact"
-            ls -la temp-artifact/
             exit 1
           fi
 
