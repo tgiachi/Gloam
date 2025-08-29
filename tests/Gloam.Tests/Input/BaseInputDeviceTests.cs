@@ -5,23 +5,26 @@ namespace Gloam.Tests.Input;
 
 public class TestInputDevice : BaseInputDevice
 {
-    private readonly HashSet<InputKeyData> _currentlyPressed = new();
+    private readonly Dictionary<InputKeyData, bool> _keyStates = new();
 
     public void SetKeyPressed(InputKeyData key, bool pressed)
     {
-        if (pressed)
+        _keyStates[key] = pressed;
+    }
+
+    protected override void PopulatePolledKeyStates(Dictionary<InputKeyData, bool> keyStates)
+    {
+        // Populate with all tracked key states
+        foreach (var kvp in _keyStates)
         {
-            _currentlyPressed.Add(key);
-        }
-        else
-        {
-            _currentlyPressed.Remove(key);
+            keyStates[kvp.Key] = kvp.Value;
         }
     }
 
+    [Obsolete("Legacy method - use PopulatePolledKeyStates instead")]
     protected override bool GetCurrentKeyState(InputKeyData key)
     {
-        return _currentlyPressed.Contains(key);
+        return _keyStates.GetValueOrDefault(key, false);
     }
 }
 
@@ -39,6 +42,7 @@ public class BaseInputDeviceTests
     public void IsDown_WithPressedKey_ShouldReturnTrue()
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.IsDown(Keys.A), Is.True);
     }
@@ -47,6 +51,7 @@ public class BaseInputDeviceTests
     public void IsDown_WithReleasedKey_ShouldReturnFalse()
     {
         _inputDevice.SetKeyPressed(Keys.A, false);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.IsDown(Keys.A), Is.False);
     }
@@ -55,6 +60,7 @@ public class BaseInputDeviceTests
     public void WasPressed_OnFirstFrame_ShouldReturnTrue()
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.True);
     }
@@ -63,6 +69,7 @@ public class BaseInputDeviceTests
     public void WasPressed_OnSecondFrame_ShouldReturnFalse()
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
         _inputDevice.WasPressed(Keys.A); // First check
         _inputDevice.EndFrame();
 
@@ -73,6 +80,7 @@ public class BaseInputDeviceTests
     public void WasPressed_WithUnpressedKey_ShouldReturnFalse()
     {
         _inputDevice.SetKeyPressed(Keys.A, false);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
     }
@@ -81,10 +89,12 @@ public class BaseInputDeviceTests
     public void WasReleased_WhenKeyReleased_ShouldReturnTrue()
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
         _inputDevice.IsDown(Keys.A); // Register as pressed
         _inputDevice.EndFrame();
 
         _inputDevice.SetKeyPressed(Keys.A, false);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.True);
     }
@@ -93,6 +103,7 @@ public class BaseInputDeviceTests
     public void WasReleased_WhenKeyStillPressed_ShouldReturnFalse()
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
         _inputDevice.IsDown(Keys.A);
         _inputDevice.EndFrame();
 
@@ -103,6 +114,7 @@ public class BaseInputDeviceTests
     public void WasReleased_WhenKeyNeverPressed_ShouldReturnFalse()
     {
         _inputDevice.SetKeyPressed(Keys.A, false);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.False);
     }
@@ -111,6 +123,7 @@ public class BaseInputDeviceTests
     public void EdgeDetection_FullCycle_ShouldWorkCorrectly()
     {
         // Frame 1: Key not pressed
+        _inputDevice.Poll(); // Initial poll
         Assert.That(_inputDevice.IsDown(Keys.A), Is.False);
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.False);
@@ -118,12 +131,14 @@ public class BaseInputDeviceTests
 
         // Frame 2: Key pressed
         _inputDevice.SetKeyPressed(Keys.A, true);
+        _inputDevice.Poll();
         Assert.That(_inputDevice.IsDown(Keys.A), Is.True);
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.True);
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.False);
         _inputDevice.EndFrame();
 
         // Frame 3: Key held
+        _inputDevice.Poll(); // Re-poll to maintain state
         Assert.That(_inputDevice.IsDown(Keys.A), Is.True);
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.False);
@@ -131,9 +146,17 @@ public class BaseInputDeviceTests
 
         // Frame 4: Key released
         _inputDevice.SetKeyPressed(Keys.A, false);
+        _inputDevice.Poll();
         Assert.That(_inputDevice.IsDown(Keys.A), Is.False);
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
         Assert.That(_inputDevice.WasReleased(Keys.A), Is.True);
+        _inputDevice.EndFrame();
+
+        // Frame 5: Key still not pressed
+        _inputDevice.Poll();
+        Assert.That(_inputDevice.IsDown(Keys.A), Is.False);
+        Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
+        Assert.That(_inputDevice.WasReleased(Keys.A), Is.False);
     }
 
     [Test]
@@ -141,6 +164,7 @@ public class BaseInputDeviceTests
     {
         _inputDevice.SetKeyPressed(Keys.A, true);
         _inputDevice.SetKeyPressed(Keys.B, false);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.IsDown(Keys.A), Is.True);
         Assert.That(_inputDevice.IsDown(Keys.B), Is.False);
@@ -150,6 +174,7 @@ public class BaseInputDeviceTests
         _inputDevice.EndFrame();
 
         _inputDevice.SetKeyPressed(Keys.B, true);
+        _inputDevice.Poll();
 
         Assert.That(_inputDevice.WasPressed(Keys.A), Is.False);
         Assert.That(_inputDevice.WasPressed(Keys.B), Is.True);

@@ -10,8 +10,10 @@ namespace Gloam.Console.Render.Rendering;
 /// </summary>
 public sealed class ConsoleRenderer : IRenderer
 {
-    private readonly Dictionary<Position, (char character, Color? fg, Color? bg)> _drawBuffer;
-    private readonly Dictionary<Position, (char character, Color? fg, Color? bg)> _previousBuffer;
+    private CellData[] _drawBuffer;
+    private CellData[] _previousBuffer;
+    private int _bufferWidth;
+    private int _bufferHeight;
     private readonly StringBuilder _frameBuffer;
     private readonly ConsoleSurface _surface;
     private bool _isDrawing;
@@ -26,8 +28,18 @@ public sealed class ConsoleRenderer : IRenderer
     {
         _surface = surface ?? throw new ArgumentNullException(nameof(surface));
         _frameBuffer = new StringBuilder();
-        _drawBuffer = new Dictionary<Position, (char, Color?, Color?)>();
-        _previousBuffer = new Dictionary<Position, (char, Color?, Color?)>();
+        _bufferWidth = _surface.Width;
+        _bufferHeight = _surface.Height;
+        var bufferSize = _bufferWidth * _bufferHeight;
+        _drawBuffer = new CellData[bufferSize];
+        _previousBuffer = new CellData[bufferSize];
+        
+        // Initialize with empty cells
+        for (var i = 0; i < bufferSize; i++)
+        {
+            _drawBuffer[i] = CellData.Empty;
+            _previousBuffer[i] = CellData.Empty;
+        }
         _isFirstFrame = true;
 
         // Initialize console settings
@@ -56,11 +68,21 @@ public sealed class ConsoleRenderer : IRenderer
         }
 
         _isDrawing = true;
-        _drawBuffer.Clear();
+        // Clear draw buffer by setting all cells to empty
+        for (var i = 0; i < _drawBuffer.Length; i++)
+        {
+            _drawBuffer[i] = CellData.Empty;
+        }
         _frameBuffer.Clear();
 
         // Update surface dimensions in case console was resized
         _surface.UpdateDimensions();
+        
+        // Resize buffers if needed
+        if (_bufferWidth != _surface.Width || _bufferHeight != _surface.Height)
+        {
+            ResizeBuffers(_surface.Width, _surface.Height);
+        }
 
         // Clear screen only on first frame or if console was resized
         if (ConsoleSurface.SupportsCursorPositioning && _isFirstFrame)
@@ -102,7 +124,8 @@ public sealed class ConsoleRenderer : IRenderer
                 break;
             }
 
-            _drawBuffer[charPos] = (text[i], fgColor, bgColor);
+            var index = charPos.Y * _bufferWidth + charPos.X;
+            _drawBuffer[index] = new CellData(text[i], fgColor, bgColor);
         }
     }
 
@@ -123,7 +146,8 @@ public sealed class ConsoleRenderer : IRenderer
         var fgColor = v.Foreground;
         var bgColor = v.Background.HasValue && v.Background.Value.A > 0 ? v.Background.Value : (Color?)null;
 
-        _drawBuffer[pos] = ((char)v.Glyph.Value, fgColor, bgColor);
+        var index = pos.Y * _bufferWidth + pos.X;
+        _drawBuffer[index] = new CellData((char)v.Glyph.Value, fgColor, bgColor);
     }
 
     /// <inheritdoc />
@@ -144,6 +168,23 @@ public sealed class ConsoleRenderer : IRenderer
         }
     }
 
+    private void ResizeBuffers(int newWidth, int newHeight)
+    {
+        _bufferWidth = newWidth;
+        _bufferHeight = newHeight;
+        var newSize = newWidth * newHeight;
+        
+        _drawBuffer = new CellData[newSize];
+        _previousBuffer = new CellData[newSize];
+        
+        // Initialize with empty cells
+        for (var i = 0; i < newSize; i++)
+        {
+            _drawBuffer[i] = CellData.Empty;
+            _previousBuffer[i] = CellData.Empty;
+        }
+    }
+
     private void RenderFrame()
     {
         if (!ConsoleSurface.SupportsCursorPositioning)
@@ -154,28 +195,22 @@ public sealed class ConsoleRenderer : IRenderer
         }
 
         // Double buffering: only update changed positions
-        var positionsToUpdate = new List<(Position pos, (char character, Color? fg, Color? bg) data)>();
+        var positionsToUpdate = new List<(Position pos, CellData data)>();
 
-        // Find positions that changed
-        foreach (var kvp in _drawBuffer)
+        // Check all positions for changes
+        for (var y = 0; y < _bufferHeight; y++)
         {
-            var pos = kvp.Key;
-            var newData = kvp.Value;
-
-            if (!_previousBuffer.TryGetValue(pos, out var oldData) || !oldData.Equals(newData))
+            for (var x = 0; x < _bufferWidth; x++)
             {
-                positionsToUpdate.Add((pos, newData));
-            }
-        }
-
-        // Find positions that were cleared (existed in previous but not in current)
-        foreach (var kvp in _previousBuffer)
-        {
-            var pos = kvp.Key;
-            if (!_drawBuffer.ContainsKey(pos))
-            {
-                // Clear this position with a space
-                positionsToUpdate.Add((pos, (' ', Colors.Gray, Colors.Black)));
+                var index = y * _bufferWidth + x;
+                var newData = _drawBuffer[index];
+                var oldData = _previousBuffer[index];
+                
+                if (newData != oldData)
+                {
+                    var pos = new Position(x, y);
+                    positionsToUpdate.Add((pos, newData));
+                }
             }
         }
 
@@ -187,8 +222,37 @@ public sealed class ConsoleRenderer : IRenderer
         });
 
         // Update only changed positions
-        foreach (var (pos, (character, fg, bg)) in positionsToUpdate)
+        foreach (var (pos, cellData) in positionsToUpdate)
         {
+            // Handle empty cells - clear them completely
+            if (cellData.IsEmpty)
+            {
+                System.Console.SetCursorPosition(pos.X, pos.Y);
+                
+                if (ConsoleSurface.SupportsColor)
+                {
+                    if (_supports24BitColor)
+                    {
+                        // Reset to default colors and write space
+                        System.Console.Write(AnsiReset + " ");
+                    }
+                    else
+                    {
+                        System.Console.ForegroundColor = ConsoleColor.Gray;
+                        System.Console.BackgroundColor = ConsoleColor.Black;
+                        System.Console.Write(' ');
+                    }
+                }
+                else
+                {
+                    System.Console.Write(' ');
+                }
+                continue;
+            }
+            
+            var character = cellData.Character;
+            var fg = cellData.Foreground;
+            var bg = cellData.Background;
             System.Console.SetCursorPosition(pos.X, pos.Y);
 
             if (ConsoleSurface.SupportsColor)
@@ -249,11 +313,7 @@ public sealed class ConsoleRenderer : IRenderer
         }
 
         // Copy current buffer to previous buffer for next frame
-        _previousBuffer.Clear();
-        foreach (var kvp in _drawBuffer)
-        {
-            _previousBuffer[kvp.Key] = kvp.Value;
-        }
+        Array.Copy(_drawBuffer, _previousBuffer, _drawBuffer.Length);
     }
 
     private void RenderToRedirectedOutput()
@@ -265,10 +325,12 @@ public sealed class ConsoleRenderer : IRenderer
 
             for (var x = 0; x < _surface.Width; x++)
             {
-                var pos = new Position(x, y);
-                if (_drawBuffer.TryGetValue(pos, out var drawData))
+                var index = y * _bufferWidth + x;
+                var cellData = _drawBuffer[index];
+                
+                if (!cellData.IsEmpty)
                 {
-                    _frameBuffer.Append(drawData.character);
+                    _frameBuffer.Append(cellData.Character);
                 }
                 else
                 {

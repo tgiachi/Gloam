@@ -10,12 +10,27 @@ public abstract class BaseInputDevice : IInputDevice
 {
     private readonly Dictionary<InputKeyData, bool> _currentKeyStates = new();
     private readonly Dictionary<InputKeyData, bool> _previousKeyStates = new();
+    
+    /// <summary>
+    /// Cached key states from the last polling operation
+    /// </summary>
+    private readonly Dictionary<InputKeyData, bool> _polledKeyStates = new();
 
     public MouseState Mouse { get; protected set; }
 
     public virtual void Poll()
     {
-        // This can be overridden by concrete implementations for additional polling logic
+        // Clear and repopulate the polled key states
+        _polledKeyStates.Clear();
+        
+        // Let concrete implementations populate the polled states
+        PopulatePolledKeyStates(_polledKeyStates);
+        
+        // Update current states from polled states
+        foreach (var kvp in _polledKeyStates)
+        {
+            _currentKeyStates[kvp.Key] = kvp.Value;
+        }
     }
 
     public virtual void EndFrame()
@@ -30,14 +45,13 @@ public abstract class BaseInputDevice : IInputDevice
 
     public bool IsDown(InputKeyData key)
     {
-        var isCurrentlyDown = GetCurrentKeyState(key);
-        _currentKeyStates[key] = isCurrentlyDown;
-        return isCurrentlyDown;
+        // Use cached state from last polling operation, not live checking
+        return _currentKeyStates.GetValueOrDefault(key, false);
     }
 
     public bool WasPressed(InputKeyData key)
     {
-        var isCurrentlyDown = IsDown(key); // This also updates _currentKeyStates
+        var isCurrentlyDown = IsDown(key);
         var wasPreviouslyDown = _previousKeyStates.GetValueOrDefault(key, false);
 
         return isCurrentlyDown && !wasPreviouslyDown;
@@ -45,16 +59,27 @@ public abstract class BaseInputDevice : IInputDevice
 
     public bool WasReleased(InputKeyData key)
     {
-        var isCurrentlyDown = IsDown(key); // This also updates _currentKeyStates
+        var isCurrentlyDown = IsDown(key);
         var wasPreviouslyDown = _previousKeyStates.GetValueOrDefault(key, false);
 
         return !isCurrentlyDown && wasPreviouslyDown;
     }
 
     /// <summary>
-    ///     Abstract method that concrete implementations must override to provide current key state
+    /// Concrete implementations should populate the provided dictionary with current key states
+    /// This is called once per frame during Poll()
+    /// </summary>
+    /// <param name="keyStates">Dictionary to populate with current key states</param>
+    protected abstract void PopulatePolledKeyStates(Dictionary<InputKeyData, bool> keyStates);
+
+    /// <summary>
+    /// Legacy method for backward compatibility - now uses cached states
     /// </summary>
     /// <param name="key">The key to check</param>
     /// <returns>True if the key is currently pressed</returns>
-    protected abstract bool GetCurrentKeyState(InputKeyData key);
+    [Obsolete("Use IsDown instead - this method is for internal use only")]
+    protected virtual bool GetCurrentKeyState(InputKeyData key)
+    {
+        return _currentKeyStates.GetValueOrDefault(key, false);
+    }
 }

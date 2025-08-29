@@ -1,7 +1,5 @@
-using System.Globalization;
 using Gloam.Core.Contexts;
 using Gloam.Core.Interfaces;
-using Gloam.Core.Primitives;
 using Gloam.Core.Transitions;
 using Gloam.Runtime.Types;
 
@@ -36,12 +34,36 @@ public sealed class PushTransition : BaseTransition
     {
         if (Progress <= 0.0f)
         {
+            // Render source scene layers at their normal position
+            if (_sourceScene != null)
+            {
+                foreach (var layer in _sourceScene.Layers)
+                {
+                    if (layer.IsVisible)
+                    {
+                        await layer.RenderAsync(context, ct);
+                    }
+                }
+            }
+            return;
+        }
+
+        if (Progress >= 1.0f)
+        {
+            // Render target scene layers at their normal position
+            foreach (var layer in _targetScene.Layers)
+            {
+                if (layer.IsVisible)
+                {
+                    await layer.RenderAsync(context, ct);
+                }
+            }
             return;
         }
 
         var screenWidth = context.Screen.Width;
         var screenHeight = context.Screen.Height;
-        
+
         // Get eased progress for smooth animation
         var easedProgress = GetEasedProgress(EaseInOutQuad);
 
@@ -75,112 +97,32 @@ public sealed class PushTransition : BaseTransition
             _ => (0, 0, 0, 0)
         };
 
-        // Clear screen with a transition indicator
-        var transitionChar = _direction switch
-        {
-            PushDirection.FromLeft => '◄',
-            PushDirection.FromRight => '►',
-            PushDirection.FromTop => '▲',
-            PushDirection.FromBottom => '▼',
-            _ => '■'
-        };
+        // For now, create a temporary wrapper renderer that applies offsets
+        var sourceRenderer = new OffsetRenderer(context.Renderer, sourceOffsetX, sourceOffsetY);
+        var targetRenderer = new OffsetRenderer(context.Renderer, targetOffsetX, targetOffsetY);
+        
+        var sourceContext = context with { Renderer = sourceRenderer };
+        var targetContext = context with { Renderer = targetRenderer };
 
-        // Draw transition effect with visible characters showing the push direction
-        for (int y = 0; y < screenHeight; y++)
+        // Render source scene layers with offset (being pushed out)
+        if (_sourceScene != null)
         {
-            for (int x = 0; x < screenWidth; x++)
+            foreach (var layer in _sourceScene.Layers)
             {
-                var pos = new Position(x, y);
-
-                // Create a visual representation of the push
-                var color = Colors.Gray;
-                var bgColor = Colors.Black;
-                
-                // Show progress with different characters/colors
-                if (_direction == PushDirection.FromLeft)
+                if (layer.IsVisible)
                 {
-                    if (x < (int)(easedProgress * screenWidth))
-                    {
-                        // Area where new scene should be
-                        color = Colors.Green;
-                        bgColor = Colors.DarkGreen;
-                        context.Renderer.DrawText(pos, "→", color, bgColor);
-                    }
-                    else
-                    {
-                        // Area where old scene is being pushed out
-                        color = Colors.Red;
-                        bgColor = Colors.DarkRed;
-                        context.Renderer.DrawText(pos, "←", color, bgColor);
-                    }
-                }
-                else if (_direction == PushDirection.FromRight)
-                {
-                    if (x > screenWidth - (int)(easedProgress * screenWidth))
-                    {
-                        // Area where new scene should be
-                        color = Colors.Green;
-                        bgColor = Colors.DarkGreen;
-                        context.Renderer.DrawText(pos, "←", color, bgColor);
-                    }
-                    else
-                    {
-                        // Area where old scene is being pushed out
-                        color = Colors.Red;
-                        bgColor = Colors.DarkRed;
-                        context.Renderer.DrawText(pos, "→", color, bgColor);
-                    }
-                }
-                else if (_direction == PushDirection.FromTop)
-                {
-                    if (y < (int)(easedProgress * screenHeight))
-                    {
-                        // Area where new scene should be
-                        color = Colors.Green;
-                        bgColor = Colors.DarkGreen;
-                        context.Renderer.DrawText(pos, "↓", color, bgColor);
-                    }
-                    else
-                    {
-                        // Area where old scene is being pushed out
-                        color = Colors.Red;
-                        bgColor = Colors.DarkRed;
-                        context.Renderer.DrawText(pos, "↑", color, bgColor);
-                    }
-                }
-                else if (_direction == PushDirection.FromBottom)
-                {
-                    if (y > screenHeight - (int)(easedProgress * screenHeight))
-                    {
-                        // Area where new scene should be
-                        color = Colors.Green;
-                        bgColor = Colors.DarkGreen;
-                        context.Renderer.DrawText(pos, "↑", color, bgColor);
-                    }
-                    else
-                    {
-                        // Area where old scene is being pushed out
-                        color = Colors.Red;
-                        bgColor = Colors.DarkRed;
-                        context.Renderer.DrawText(pos, "↓", color, bgColor);
-                    }
+                    await layer.RenderAsync(sourceContext, ct);
                 }
             }
         }
 
-        // Add a progress indicator in the center
-        var centerX = screenWidth / 2;
-        var centerY = screenHeight / 2;
-        var progressText = $"PUSH {_direction.ToString().ToUpper(CultureInfo.InvariantCulture)} {(int)(Progress * 100)}%";
-        var textX = Math.Max(0, centerX - progressText.Length / 2);
-        
-        context.Renderer.DrawText(
-            new Position(textX, centerY), 
-            progressText,
-            Colors.Yellow,
-            Colors.Black
-        );
-
-        await ValueTask.CompletedTask;
+        // Render target scene layers with offset (pushing in)
+        foreach (var layer in _targetScene.Layers)
+        {
+            if (layer.IsVisible)
+            {
+                await layer.RenderAsync(targetContext, ct);
+            }
+        }
     }
 }

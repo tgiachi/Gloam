@@ -73,9 +73,7 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
     /// <inheritdoc />
     public override void Poll()
     {
-        // Clear previous frame's pressed state
-        _currentlyPressed.Clear();
-
+        // Read new input without clearing existing pressed states yet
         if (!_initialized)
         {
             // Fallback to basic console input if curses failed to initialize
@@ -97,7 +95,7 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
                 if (key == -1)
                     break;
 
-                // Process the key
+                // Process the key - add to buffer and mark as currently pressed
                 _keyBuffer.Enqueue(key);
                 _currentlyPressed.Add(key);
 
@@ -109,6 +107,9 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
                 break;
             }
         }
+        
+        // Call base polling to update cached states
+        base.Poll();
     }
 
     /// <summary>
@@ -142,6 +143,20 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
                 break;
             }
         }
+        
+        // Call base polling to update cached states
+        base.Poll();
+    }
+
+    /// <inheritdoc />
+    public override void EndFrame()
+    {
+        // Clear the currently pressed keys at the end of the frame
+        // This ensures they're available during the entire frame for checking
+        _currentlyPressed.Clear();
+        
+        // Call base EndFrame to handle edge detection
+        base.EndFrame();
     }
 
     /// <summary>
@@ -174,6 +189,33 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
 
 
     /// <inheritdoc />
+    protected override void PopulatePolledKeyStates(Dictionary<InputKeyData, bool> keyStates)
+    {
+        // Populate keyStates with current pressed keys
+        // Check common keys that might be pressed
+        var commonKeys = new[]
+        {
+            Keys.A, Keys.B, Keys.C, Keys.D, Keys.E, Keys.F, Keys.G, Keys.H, Keys.I, Keys.J, Keys.K, Keys.L, Keys.M,
+            Keys.N, Keys.O, Keys.P, Keys.Q, Keys.R, Keys.S, Keys.T, Keys.U, Keys.V, Keys.W, Keys.X, Keys.Y, Keys.Z,
+            Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0,
+            Keys.NumPad1, Keys.NumPad2, Keys.NumPad3, Keys.NumPad4, Keys.NumPad5,
+            Keys.Up, Keys.Down, Keys.Left, Keys.Right,
+            Keys.Enter, Keys.Escape, Keys.Space, Keys.Tab, Keys.Backspace, Keys.Delete,
+            Keys.F1, Keys.F2, Keys.F3, Keys.F4, Keys.F5, Keys.F6, Keys.F7, Keys.F8, Keys.F9, Keys.F10, Keys.F11, Keys.F12
+        };
+        
+        foreach (var key in commonKeys)
+        {
+            var cursesKey = MapToCursesKey(key);
+            if (cursesKey.HasValue)
+            {
+                keyStates[key] = _currentlyPressed.Contains(cursesKey.Value);
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    [Obsolete("Legacy method - use IsDown instead")]
     protected override bool GetCurrentKeyState(InputKeyData key)
     {
         // Map Gloam key to curses key code and check if it's currently pressed

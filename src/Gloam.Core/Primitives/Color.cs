@@ -3,7 +3,7 @@ namespace Gloam.Core.Primitives;
 /// <summary>
 ///     Represents a color with red, green, blue, and alpha components (RGBA format)
 /// </summary>
-public readonly struct Color
+public readonly record struct Color
 {
     /// <summary>
     ///     Gets the red component (0-255)
