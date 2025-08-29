@@ -99,6 +99,19 @@ jobs:
         path: docs/_site/
         retention-days: 1
 
+    - name: Debug: Verify deployment content
+      run: |
+        echo "🔍 Deployment Content Check:"
+        echo "- Total files: $(find docs/_site/ -type f | wc -l)"
+        echo "- HTML files: $(find docs/_site/ -name "*.html" | wc -l)"
+        echo "- Index exists: $([ -f docs/_site/index.html ] && echo '✅ YES' || echo '❌ NO')"
+
+        if [ -f "docs/_site/index.html" ]; then
+          echo "- Index size: $(stat -f%z docs/_site/index.html) bytes"
+          echo "- First few lines:"
+          head -3 docs/_site/index.html
+        fi
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4

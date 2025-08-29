@@ -95,6 +95,20 @@ jobs:
         path: docs/_site/
         retention-days: 1
 
+    - name: Debug: Check published content
+      run: |
+        echo "📁 Published content structure:"
+        find docs/_site/ -type f -name "*.html" | head -10
+        echo ""
+        echo "📄 Index file exists:"
+        if [ -f "docs/_site/index.html" ]; then
+          echo "✅ index.html found"
+          head -5 docs/_site/index.html
+        else
+          echo "❌ index.html NOT found"
+          exit 1
+        fi
+
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
