@@ -30,6 +30,13 @@ public class GloamHost : IGloamHost
     private IInputDevice? _inputDevice;
     private IRenderer? _renderer;
 
+    // Loop state for external mode
+    private long _startTimestamp;
+    private long _lastRenderTimestamp;
+    private bool _isFirstFrame = true;
+    private ILayerRenderingManager? _layerRenderingManager;
+    private ISceneManager? _sceneManager;
+
 
     /// <summary>
     ///     Initializes a new instance of GloamHost with the specified configuration
@@ -254,62 +261,172 @@ public class GloamHost : IGloamHost
 
         State = HostState.Running;
 
-        // Resolve managers lazily
-        var layerRenderingManager = Container.Resolve<ILayerRenderingManager>();
-        var sceneManager = Container.Resolve<ISceneManager>();
+        // Initialize managers for both modes
+        _layerRenderingManager = Container.Resolve<ILayerRenderingManager>();
+        _sceneManager = Container.Resolve<ISceneManager>();
 
-        var startTimestamp = Stopwatch.GetTimestamp();
-        var lastRenderTimestamp = startTimestamp;
-        var isFirstFrame = true;
-
-        while (config.KeepRunning() && !ct.IsCancellationRequested)
+        if (config.LoopMode == Types.LoopMode.Internal)
         {
-            var now = Stopwatch.GetTimestamp();
+            // Initialize timestamps for internal loop
+            _startTimestamp = Stopwatch.GetTimestamp();
+            _lastRenderTimestamp = _startTimestamp;
+            _isFirstFrame = true;
 
-            _inputDevice?.Poll();
-
-            // Update current scene
-            await sceneManager.UpdateCurrentSceneAsync(ct);
-
-            // Rendering (if it's time to render)
-            var timeSinceLastRender = Stopwatch.GetElapsedTime(lastRenderTimestamp, now);
-            if ((isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
+            // Run internal loop
+            while (config.KeepRunning() && !ct.IsCancellationRequested)
             {
-                _renderer.BeginDraw();
+                var now = Stopwatch.GetTimestamp();
 
-                // Render all layers using the layer rendering manager
-                if (layerRenderingManager != null && _inputDevice != null)
+                _inputDevice?.Poll();
+
+                // Update current scene
+                await _sceneManager.UpdateCurrentSceneAsync(ct);
+
+                // Rendering (if it's time to render)
+                var timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
+                if ((_isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
                 {
-                    var renderContext = RenderLayerContext.Create(
-                        _renderer,
-                        _inputDevice,
-                        startTimestamp,
-                        now,
-                        timeSinceLastRender,
-                        isFirstFrame,
-                        config.RenderStep
-                    );
+                    _renderer.BeginDraw();
 
-                    await layerRenderingManager.RenderAllLayersAsync(renderContext, ct);
+                    // Render all layers using the layer rendering manager
+                    if (_layerRenderingManager != null && _inputDevice != null)
+                    {
+                        var renderContext = RenderLayerContext.Create(
+                            _renderer,
+                            _inputDevice,
+                            _startTimestamp,
+                            now,
+                            timeSinceLastRender,
+                            _isFirstFrame,
+                            config.RenderStep
+                        );
+
+                        await _layerRenderingManager.RenderAllLayersAsync(renderContext, ct);
+                    }
+
+                    _renderer.EndDraw();
+                    _lastRenderTimestamp = now;
                 }
 
-                _renderer.EndDraw();
-                lastRenderTimestamp = now;
-            }
+                _isFirstFrame = false;
 
-            isFirstFrame = false;
+                // End frame cleanup for input
+                _inputDevice?.EndFrame();
 
-            // End frame cleanup for input
-            _inputDevice?.EndFrame();
-
-            // Sleep to avoid consuming too much CPU
-            var sleepMs = (int)config.SleepTime.TotalMilliseconds;
-            if (sleepMs > 0)
-            {
-                await Task.Delay(sleepMs, ct);
+                // Sleep to avoid consuming too much CPU
+                var sleepMs = (int)config.SleepTime.TotalMilliseconds;
+                if (sleepMs > 0)
+                {
+                    await Task.Delay(sleepMs, ct);
+                }
             }
         }
 
         State = HostState.Paused;
+    }
+
+    /// <summary>
+    ///     Executes a single game loop iteration. Can be called externally when LoopMode is External.
+    /// </summary>
+    /// <param name="config">Game loop configuration</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>A Task representing the loop iteration</returns>
+    /// <exception cref="InvalidOperationException">Thrown when called in Internal mode or when host is not running</exception>
+    public async Task LoopAsync(GameLoopConfig config, CancellationToken ct = default)
+    {
+        if (config.LoopMode == Types.LoopMode.Internal)
+        {
+            throw new InvalidOperationException("LoopAsync cannot be called when LoopMode is Internal. Use RunAsync instead.");
+        }
+
+        if (State != HostState.Running)
+        {
+            throw new InvalidOperationException("Host must be in Running state to execute loop iterations.");
+        }
+
+        // Initialize managers on first call
+        _layerRenderingManager ??= Container.Resolve<ILayerRenderingManager>();
+        _sceneManager ??= Container.Resolve<ISceneManager>();
+
+        // Initialize timestamps on first call
+        if (_isFirstFrame)
+        {
+            _startTimestamp = Stopwatch.GetTimestamp();
+            _lastRenderTimestamp = _startTimestamp;
+        }
+
+        var now = Stopwatch.GetTimestamp();
+
+        _inputDevice?.Poll();
+
+        // Update current scene
+        await _sceneManager.UpdateCurrentSceneAsync(ct);
+
+        // Rendering (if it's time to render)
+        var timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
+        if ((_isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
+        {
+            _renderer.BeginDraw();
+
+            // Render all layers using the layer rendering manager
+            if (_layerRenderingManager != null && _inputDevice != null)
+            {
+                var renderContext = RenderLayerContext.Create(
+                    _renderer,
+                    _inputDevice,
+                    _startTimestamp,
+                    now,
+                    timeSinceLastRender,
+                    _isFirstFrame,
+                    config.RenderStep
+                );
+
+                await _layerRenderingManager.RenderAllLayersAsync(renderContext, ct);
+            }
+
+            _renderer.EndDraw();
+            _lastRenderTimestamp = now;
+        }
+
+        _isFirstFrame = false;
+
+        // End frame cleanup for input
+        _inputDevice?.EndFrame();
+
+        // Handle timing in external mode if requested
+        if (config.HandleTimingInExternalMode && config.SleepTime.TotalMilliseconds > 0)
+        {
+            await Task.Delay((int)config.SleepTime.TotalMilliseconds, ct);
+        }
+    }
+
+    /// <summary>
+    ///     Resets the internal loop state. Useful when switching between loop modes or restarting.
+    /// </summary>
+    public void ResetLoopState()
+    {
+        _startTimestamp = 0;
+        _lastRenderTimestamp = 0;
+        _isFirstFrame = true;
+        _layerRenderingManager = null;
+        _sceneManager = null;
+    }
+
+    /// <summary>
+    ///     Gets the current loop state information for debugging purposes
+    /// </summary>
+    /// <returns>A tuple containing loop state information</returns>
+    public (bool IsFirstFrame, TimeSpan TimeSinceStart, TimeSpan TimeSinceLastRender) GetLoopState()
+    {
+        if (_startTimestamp == 0)
+        {
+            return (true, TimeSpan.Zero, TimeSpan.Zero);
+        }
+
+        var now = Stopwatch.GetTimestamp();
+        var timeSinceStart = Stopwatch.GetElapsedTime(_startTimestamp, now);
+        var timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
+
+        return (_isFirstFrame, timeSinceStart, timeSinceLastRender);
     }
 }

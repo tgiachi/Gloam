@@ -1,3 +1,5 @@
+using Gloam.Runtime.Types;
+
 namespace Gloam.Runtime.Config;
 
 /// <summary>
@@ -19,4 +21,15 @@ public sealed record GameLoopConfig
     ///     Sleep time between loop iterations when no rendering is needed (default: 5ms)
     /// </summary>
     public TimeSpan SleepTime { get; init; } = TimeSpan.FromMilliseconds(5);
+
+    /// <summary>
+    ///     Defines how the game loop should be managed (default: Internal)
+    /// </summary>
+    public LoopMode LoopMode { get; init; } = LoopMode.Internal;
+
+    /// <summary>
+    ///     When LoopMode is External, this defines whether the loop should handle timing internally
+    ///     If false, external timing management is expected (default: true)
+    /// </summary>
+    public bool HandleTimingInExternalMode { get; init; } = true;
 }
