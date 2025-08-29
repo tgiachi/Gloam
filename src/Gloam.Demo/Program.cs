@@ -81,9 +81,6 @@ public class Program
             var renderer = new ConsoleRenderer(surface);
             var inputDevice = new ConsoleInputDevice();
 
-            // Enable mouse tracking for enhanced interaction
-            inputDevice.EnableMouseTracking(ConsoleInputDevice.MouseTrackingMode.ButtonEvents);
-
             host.SetRenderer(renderer);
             host.SetInputDevice(inputDevice);
 

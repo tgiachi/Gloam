@@ -43,14 +43,18 @@ public sealed class GameScene : BaseScene
         _sceneManager = sceneManager;
     }
 
-    public async ValueTask ReturnToMenuAsync(CancellationToken ct = default)
+    public ValueTask ReturnToMenuAsync(CancellationToken ct = default)
     {
         if (_sceneManager != null)
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+            
+            // Start transition without blocking
+            _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
         }
+        
+        return ValueTask.CompletedTask;
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)

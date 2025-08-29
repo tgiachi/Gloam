@@ -28,34 +28,36 @@ public sealed class MainMenuScene : BaseScene
         _sceneManager = sceneManager;
     }
 
-    public async ValueTask HandleMenuSelectionAsync(int selection, CancellationToken ct = default)
+    public ValueTask HandleMenuSelectionAsync(int selection, CancellationToken ct = default)
     {
-        if (_sceneManager == null) return;
+        if (_sceneManager == null) return ValueTask.CompletedTask;
 
         switch (selection)
         {
             case 1: // Start Game
                 var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(1000), PushDirection.FromLeft, 
                     _sceneManager.CurrentScene, _sceneManager.Scenes["Game"]);
-                await _sceneManager.SwitchToSceneAsync("Game", pushTransition, ct);
+                _ = _sceneManager.SwitchToSceneAsync("Game", pushTransition, ct);
                 break;
             case 2: // Settings (not implemented yet)
                 // Could switch to a SettingsScene when implemented
                 break;
             case 3: // Flame Demo
-                var pushTransitionFlame = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromTop, 
+                var fadeTransition = new FadeTransition(TimeSpan.FromMilliseconds(1200), FadeDirection.FadeInOut, 
                     _sceneManager.CurrentScene, _sceneManager.Scenes["Flame"]);
-                await _sceneManager.SwitchToSceneAsync("Flame", pushTransitionFlame, ct);
+                _ = _sceneManager.SwitchToSceneAsync("Flame", fadeTransition, ct);
                 break;
             case 4: // GUI Demo
                 var pushTransitionGui = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight, 
                     _sceneManager.CurrentScene, _sceneManager.Scenes["GuiDemo"]);
-                await _sceneManager.SwitchToSceneAsync("GuiDemo", pushTransitionGui, ct);
+                _ = _sceneManager.SwitchToSceneAsync("GuiDemo", pushTransitionGui, ct);
                 break;
             case 5: // Exit
                 Environment.Exit(0);
                 break;
         }
+        
+        return ValueTask.CompletedTask;
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)

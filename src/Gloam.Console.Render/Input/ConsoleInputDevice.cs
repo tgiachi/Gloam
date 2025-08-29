@@ -14,28 +14,7 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
     private readonly Queue<int> _keyBuffer;
     private IntPtr _window;
     private bool _initialized;
-    private bool _mouseTrackingEnabled;
 
-    /// <summary>
-    ///     Mouse tracking modes for curses mouse support
-    /// </summary>
-    public enum MouseTrackingMode
-    {
-        /// <summary>
-        ///     Normal mouse tracking - reports only button presses and releases
-        /// </summary>
-        Normal,
-
-        /// <summary>
-        ///     Button event mouse tracking - reports button presses, releases, and dragging
-        /// </summary>
-        ButtonEvents,
-
-        /// <summary>
-        ///     All motion mouse tracking - reports all mouse movements
-        /// </summary>
-        AllMotion
-    }
 
     /// <summary>
     ///     Initializes a new curses-based console input device
@@ -45,7 +24,6 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
         _keyBuffer = new Queue<int>();
         _currentlyPressed = new HashSet<int>();
         _initialized = false;
-        _mouseTrackingEnabled = false;
 
         InitializeCurses();
     }
@@ -253,65 +231,9 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
         _currentlyPressed.Clear();
     }
 
-    /// <summary>
-    ///     Enables curses mouse tracking in the console
-    /// </summary>
-    /// <param name="trackingMode">The mouse tracking mode to enable</param>
-    public void EnableMouseTracking(MouseTrackingMode trackingMode = MouseTrackingMode.Normal)
-    {
-        if (_mouseTrackingEnabled || !_initialized)
-            return;
 
-        try
-        {
-            // Enable mouse tracking through curses (simplified)
-            // Full mouse support would require specific curses mouse handling
-            _mouseTrackingEnabled = true;
-        }
-        catch
-        {
-            // Ignore if mouse tracking cannot be enabled
-        }
-    }
 
-    /// <summary>
-    ///     Disables curses mouse tracking in the console
-    /// </summary>
-    public void DisableMouseTracking()
-    {
-        if (!_mouseTrackingEnabled || !_initialized)
-            return;
 
-        try
-        {
-            // Disable mouse tracking through curses (simplified)
-            _mouseTrackingEnabled = false;
-        }
-        catch
-        {
-            // Ignore if mouse tracking cannot be disabled
-        }
-    }
-
-    /// <summary>
-    ///     Gets whether mouse tracking is currently enabled
-    /// </summary>
-    public bool IsMouseTrackingEnabled => _mouseTrackingEnabled;
-
-    /// <summary>
-    ///     Gets information about mouse support and current state
-    /// </summary>
-    /// <returns>A string describing mouse support status</returns>
-    public string GetMouseSupportInfo()
-    {
-        var info = $"Mouse tracking: {(_mouseTrackingEnabled ? "Enabled" : "Disabled")}";
-        info += $"\nMouse position: ({Mouse.X}, {Mouse.Y})";
-        info += $"\nMouse button: {Mouse.Button}";
-        info += $"\nMouse pressed: {Mouse.Pressed}";
-        info += $"\nModifiers: Shift={Mouse.Shift}, Alt={Mouse.Alt}, Ctrl={Mouse.Ctrl}";
-        info += $"\nIs move: {Mouse.Move}";
-        return info;
-    }
 
     /// <summary>
     ///     Gets debug information about input state
@@ -325,7 +247,6 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
         {
             info += $"\nPressed keys: {string.Join(", ", _currentlyPressed)}";
         }
-        info += $"\nMouse tracking: {_mouseTrackingEnabled}";
         info += $"\nCurses initialized: {_initialized}";
         info += $"\nInteractive console: {IsInteractiveConsole()}";
         return info;
@@ -352,25 +273,6 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
     }
 
 
-    /// <summary>
-    ///     Processes curses mouse events and updates mouse state
-    /// </summary>
-    private void ProcessMouseEvents()
-    {
-        if (!_initialized || !_mouseTrackingEnabled)
-            return;
-
-        try
-        {
-            // Check for mouse events using curses
-            // This is a simplified implementation - full mouse support would require more work
-            // For now, we'll maintain basic mouse state
-        }
-        catch
-        {
-            // Ignore mouse processing errors
-        }
-    }
 
     /// <summary>
     ///     Maps Gloam InputKeyData to curses key codes
@@ -430,9 +332,6 @@ public sealed partial class ConsoleInputDevice : BaseInputDevice, IDisposable
         {
             try
             {
-                // Disable mouse tracking if enabled
-                DisableMouseTracking();
-
                 // Cleanup curses
                 NCurses.EndWin();
             }

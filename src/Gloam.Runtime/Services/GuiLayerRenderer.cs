@@ -146,9 +146,29 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
     /// <param name="control">The control to focus, or null to clear focus</param>
     public void SetFocus(IGuiControl? control)
     {
+        // Clear all focus first (including nested controls)
         foreach (var c in _controls)
         {
-            c.IsFocused = c == control;
+            ClearFocusRecursive(c);
+        }
+        
+        // Set focus on the target control
+        if (control != null)
+        {
+            control.IsFocused = true;
+        }
+    }
+    
+    /// <summary>
+    ///     Recursively clears focus from a control and all its children
+    /// </summary>
+    /// <param name="control">The control to clear focus from</param>
+    private static void ClearFocusRecursive(IGuiControl control)
+    {
+        control.IsFocused = false;
+        foreach (var child in control.Children)
+        {
+            ClearFocusRecursive(child);
         }
     }
 
@@ -216,7 +236,13 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
                 : (currentIndex == focusableControls.Count - 1 ? 0 : currentIndex + 1);
         }
 
-        SetFocus(focusableControls[nextIndex]);
+        var targetControl = focusableControls[nextIndex];
+        SetFocus(targetControl);
+        
+        // Debug: Verify the focus was actually set
+        #if DEBUG
+        System.Diagnostics.Debug.WriteLine($"TAB Focus set to: {targetControl.GetType().Name} at ({targetControl.Position.X}, {targetControl.Position.Y}), IsFocused: {targetControl.IsFocused}");
+        #endif
     }
 
     /// <summary>
@@ -250,10 +276,11 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
     /// <returns>True if the control can be focused</returns>
     private static bool IsFocusableControl(IGuiControl control)
     {
-        // Consider EditBox and ProgressBar as focusable, but not TextBox or WindowControl
-        // You can extend this logic based on your needs
+        // Only interactive controls should be focusable
+        // Container controls (WindowControl, ContainerControl) should NOT be focusable
+        // because they are just layout containers - focus should go to their children
         return control is EditBox || 
-               control is ProgressBar ||
-               control is ContainerControl;
+               control is ProgressBar;
+        // Note: TextBox is not focusable as it's read-only text display
     }
 }

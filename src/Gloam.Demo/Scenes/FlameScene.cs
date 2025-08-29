@@ -29,14 +29,18 @@ public sealed class FlameScene : BaseScene
         _sceneManager = sceneManager;
     }
 
-    public async ValueTask ReturnToMenuAsync(CancellationToken ct = default)
+    public ValueTask ReturnToMenuAsync(CancellationToken ct = default)
     {
         if (_sceneManager != null)
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(600), PushDirection.FromBottom,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+            
+            // Start transition without blocking - let it run in background
+            _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
         }
+        
+        return ValueTask.CompletedTask;
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)
@@ -253,7 +257,7 @@ internal sealed class FlameUILayer : BaseLayerRenderer
         // Handle input
         if (context.InputDevice.WasPressed(Keys.M) || context.InputDevice.WasPressed(Keys.Escape))
         {
-            await _scene.ReturnToMenuAsync(ct);
+            _ = _scene.ReturnToMenuAsync(ct);
         }
     }
 }

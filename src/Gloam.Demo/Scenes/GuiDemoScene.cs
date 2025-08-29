@@ -33,14 +33,18 @@ public sealed class GuiDemoScene : BaseScene
         _sceneManager = sceneManager;
     }
 
-    public async ValueTask ReturnToMenuAsync(CancellationToken ct = default)
+    public ValueTask ReturnToMenuAsync(CancellationToken ct = default)
     {
         if (_sceneManager != null)
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromLeft,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+            
+            // Start transition without blocking
+            _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
         }
+        
+        return ValueTask.CompletedTask;
     }
 
     protected override ValueTask ActivateSceneAsync(CancellationToken ct = default)
@@ -107,7 +111,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         // Handle menu return input
         if (context.InputDevice.WasPressed(Keys.Escape))
         {
-            await _scene.ReturnToMenuAsync(ct);
+            _ = _scene.ReturnToMenuAsync(ct);
         }
     }
 
@@ -120,37 +124,54 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         _guiRenderer = new GuiLayerRenderer(consoleGuiRenderer, priority: 100, name: "GUI Demo Layer");
         _scene.SetGuiLayer(_guiRenderer);
 
-        // Create a simple layout with direct controls
-        
-        // Info text box
-        var infoText = new TextBox(new Position(2, 2), new Size(40, 8))
+        // Create main window
+        var mainWindow = new WindowControl(new Position(5, 2), new Size(70, 20), "GUI Controls Demo")
         {
-            Text = "Welcome to the Gloam GUI Demo!\n\n" +
-                   "Controls:\n" +
-                   "• TAB - Navigate between controls\n" +
-                   "• Type in the EditBox below\n" +
-                   "• Watch the ProgressBar animate\n" +
-                   "• ESC - Return to menu",
-            Alignment = TextAlignment.Left,
-            WordWrap = true,
             Background = Colors.DarkBlue,
-            Foreground = Colors.White
+            Foreground = Colors.White,
+            BorderColor = Colors.Cyan,
+            TitleColor = Colors.Yellow,
+            ShowTitle = true
         };
-        _guiRenderer.AddControl(infoText);
 
-        // EditBox for text input
-        var editBox = new EditBox(new Position(2, 12), new Size(40, 3))
+        // First label and edit box
+        var label1 = new TextBox(new Position(2, 2), new Size(25, 1))
+        {
+            Text = "Name:",
+            Background = Colors.Transparent,
+            Foreground = Colors.White,
+            Alignment = TextAlignment.Left
+        };
+
+        var editBox1 = new EditBox(new Position(2, 3), new Size(30, 3))
         {
             Text = "",
-            PlaceholderText = "Type something here...",
+            PlaceholderText = "Enter your name...",
             Background = Colors.DarkGray,
             Foreground = Colors.White,
-            MaxLength = 50
+            MaxLength = 25
         };
-        _guiRenderer.AddControl(editBox);
 
-        // ProgressBar
-        var progressBar = new ProgressBar(new Position(2, 17), new Size(40, 3))
+        // Second label and edit box  
+        var label2 = new TextBox(new Position(2, 7), new Size(25, 1))
+        {
+            Text = "Email:",
+            Background = Colors.Transparent,
+            Foreground = Colors.White,
+            Alignment = TextAlignment.Left
+        };
+
+        var editBox2 = new EditBox(new Position(2, 8), new Size(30, 3))
+        {
+            Text = "",
+            PlaceholderText = "Enter your email...",
+            Background = Colors.DarkGray,
+            Foreground = Colors.White,
+            MaxLength = 40
+        };
+
+        // Progress bar for demo
+        var progressBar = new ProgressBar(new Position(2, 12), new Size(30, 3))
         {
             Minimum = 0,
             Maximum = 100,
@@ -160,48 +181,38 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
             ShowText = true,
             Style = ProgressBarStyle.Continuous
         };
-        _guiRenderer.AddControl(progressBar);
 
-        // Container with child controls
-        var container = new ContainerControl(new Position(45, 2), new Size(30, 18))
+        // Instructions
+        var instructions = new TextBox(new Position(35, 2), new Size(32, 10))
         {
-            Background = Colors.DarkRed,
-            Foreground = Colors.Yellow
-        };
-        
-        // Add controls to container
-        var containerLabel = new TextBox(new Position(1, 1), new Size(28, 2))
-        {
-            Text = "Container with child controls:",
+            Text = "Instructions:\n\n" +
+                   "• TAB - Navigate between controls\n" +
+                   "• Type in the edit boxes\n" +
+                   "• Use Backspace to delete\n" +
+                   "• Watch the progress bar\n" +
+                   "• ESC - Return to menu",
             Background = Colors.Transparent,
             Foreground = Colors.Yellow,
-            WordWrap = true
-        };
-        
-        var containerProgress = new ProgressBar(new Position(1, 4), new Size(28, 3))
-        {
-            Value = 75,
-            FillColor = Colors.Cyan,
-            BorderColor = Colors.White,
-            ShowText = true,
-            CustomText = "Container Progress"
+            WordWrap = true,
+            Alignment = TextAlignment.Left
         };
 
-        var containerEdit = new EditBox(new Position(1, 8), new Size(28, 3))
-        {
-            Text = "Edit inside container",
-            Background = Colors.Black,
-            Foreground = Colors.Cyan
-        };
+        // Add all controls to the window
+        mainWindow.AddChild(label1);
+        mainWindow.AddChild(editBox1);
+        mainWindow.AddChild(label2);
+        mainWindow.AddChild(editBox2);
+        mainWindow.AddChild(progressBar);
+        mainWindow.AddChild(instructions);
 
-        container.AddChild(containerLabel);
-        container.AddChild(containerProgress);
-        container.AddChild(containerEdit);
-        
-        _guiRenderer.AddControl(container);
+        // Auto-size the window to fit contents
+        mainWindow.AutoSizeHeight(15, 3);
 
-        // Set initial focus
-        _guiRenderer.SetFocus(editBox);
+        // Add the window to the renderer
+        _guiRenderer.AddControl(mainWindow);
+
+        // Set focus to first edit box
+        _guiRenderer.SetFocus(editBox1);
     }
 
     private void UpdateProgressBarDemo()
