@@ -63,12 +63,6 @@ jobs:
           fi
           echo "✅ DocFX build completed successfully"
 
-      - name: Verify documentation build
-        run: |
-
-      - name: Create CNAME file for GitHub Pages
-        run: echo "tgiachi.github.io" > _site/CNAME
-
       - name: Show deployment summary
         run: |
           echo "📊 Deployment Summary:"
