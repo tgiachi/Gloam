@@ -1,0 +1,55 @@
+# GitHub Pages Configuration for Gloam Documentation
+# This file configures how GitHub Pages serves the documentation
+
+# Repository information
+repository: tgiachi/gloam
+title: Gloam Engine Documentation
+description: Complete documentation for the Gloam roguelike game engine
+url: https://tgiachi.github.io
+baseurl: /gloam
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Collections
+collections:
+  examples:
+    output: true
+    permalink: /:collection/:name/
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .bundle/
+  - .sass-cache/
+  - .jekyll-cache/
+  - gemfiles/
+
+# Include files
+include:
+  - _pages
+
+# SEO and social
+author: Gloam Contributors
+social:
+  name: Gloam Engine
+  links:
+    - https://github.com/tgiachi/gloam
+
+# Custom variables
+logo: /images/logo.png
+github_username: tgiachi
+repo_name: gloam
+
+# Analytics (optional)
+# analytics: UA-XXXXXXXXX-X
