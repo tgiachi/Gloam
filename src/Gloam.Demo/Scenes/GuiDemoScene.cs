@@ -1,6 +1,6 @@
 using Gloam.Console.Render.Input;
+
 using Gloam.Console.Render.Rendering;
-using Gloam.Console.Render.Surfaces;
 using Gloam.Core.Contexts;
 using Gloam.Core.Input;
 using Gloam.Core.Interfaces;
@@ -71,10 +71,10 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
 {
     private readonly GuiDemoScene _scene;
     private GuiLayerRenderer? _guiRenderer;
-    private bool _initialized = false;
-    
+    private bool _initialized;
+
     // Demo data
-    private int _progressValue = 0;
+    private int _progressValue;
     private DateTime _lastProgressUpdate = DateTime.Now;
     private readonly TimeSpan _progressUpdateInterval = TimeSpan.FromMilliseconds(100);
 
@@ -216,7 +216,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
 
         // Find and update the progress bar
         // This is a simplified approach - in a real application you'd maintain references
-        foreach (var control in _guiRenderer.GetType().GetField("_controls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_guiRenderer) as System.Collections.IEnumerable ?? new object[0])
+        foreach (var control in _guiRenderer.GetType().GetField("_controls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_guiRenderer) as System.Collections.IEnumerable ?? Array.Empty<object>())
         {
             if (control is WindowControl window && window.Title == "GUI Controls Demo")
             {
@@ -226,7 +226,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         }
     }
 
-    private void FindAndUpdateProgressBars(IGuiControl control, int value)
+    private static void FindAndUpdateProgressBars(IGuiControl control, int value)
     {
         if (control is ProgressBar progressBar)
         {

@@ -224,7 +224,7 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
     /// </summary>
     /// <param name="control">The control to examine</param>
     /// <param name="focusableControls">The list to add focusable controls to</param>
-    private void CollectFocusableControls(IGuiControl control, List<IGuiControl> focusableControls)
+    private static void CollectFocusableControls(IGuiControl control, List<IGuiControl> focusableControls)
     {
         if (!control.IsVisible)
             return;
