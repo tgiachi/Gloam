@@ -192,11 +192,11 @@ public class GloamHostTests
     }
 
     [Test]
-    public void ConfigureServices_UnsupportedLoaderType_ShouldThrowNotImplementedException()
+    public void ConfigureServices_UnsupportedLoaderType_ShouldThrowNotSupportedException()
     {
         _config.LoaderType = (ContentLoaderType)999; // Invalid loader type
 
-        Assert.Throws<NotImplementedException>(() => new GloamHost(_config));
+        Assert.Throws<NotSupportedException>(() => new GloamHost(_config));
     }
 
     #endregion

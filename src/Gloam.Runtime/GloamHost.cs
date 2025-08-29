@@ -337,8 +337,17 @@ public class GloamHost : IGloamHost
                 }
             }
         }
+        else
+        {
+            // External mode: Keep running state for external loop control
+            // Don't change state here as external code manages the loop
+        }
 
-        State = HostState.Paused;
+        // Only set to Paused for internal mode when loop ends
+        if (config.LoopMode == Types.LoopMode.Internal)
+        {
+            State = HostState.Paused;
+        }
     }
 
     /// <summary>
