@@ -39,9 +39,11 @@ public sealed class GuiDemoScene : BaseScene
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromLeft,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            
+
             // Start transition without blocking
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
             _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+#pragma warning restore CA2012
         }
         
         return ValueTask.CompletedTask;
@@ -111,7 +113,9 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         // Handle menu return input
         if (context.InputDevice.WasPressed(Keys.Escape))
         {
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
             _ = _scene.ReturnToMenuAsync(ct);
+#pragma warning restore CA2012
         }
     }
 

@@ -49,9 +49,11 @@ public sealed class GameScene : BaseScene
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            
+
             // Start transition without blocking
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
             _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+#pragma warning restore CA2012
         }
         
         return ValueTask.CompletedTask;

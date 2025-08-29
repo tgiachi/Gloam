@@ -35,22 +35,28 @@ public sealed class MainMenuScene : BaseScene
         switch (selection)
         {
             case 1: // Start Game
-                var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(1000), PushDirection.FromLeft, 
+                var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(1000), PushDirection.FromLeft,
                     _sceneManager.CurrentScene, _sceneManager.Scenes["Game"]);
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
                 _ = _sceneManager.SwitchToSceneAsync("Game", pushTransition, ct);
+#pragma warning restore CA2012
                 break;
             case 2: // Settings (not implemented yet)
                 // Could switch to a SettingsScene when implemented
                 break;
             case 3: // Flame Demo
-                var fadeTransition = new FadeTransition(TimeSpan.FromMilliseconds(1200), FadeDirection.FadeInOut, 
+                var fadeTransition = new FadeTransition(TimeSpan.FromMilliseconds(1200), FadeDirection.FadeInOut,
                     _sceneManager.CurrentScene, _sceneManager.Scenes["Flame"]);
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
                 _ = _sceneManager.SwitchToSceneAsync("Flame", fadeTransition, ct);
+#pragma warning restore CA2012
                 break;
             case 4: // GUI Demo
-                var pushTransitionGui = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight, 
+                var pushTransitionGui = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight,
                     _sceneManager.CurrentScene, _sceneManager.Scenes["GuiDemo"]);
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
                 _ = _sceneManager.SwitchToSceneAsync("GuiDemo", pushTransitionGui, ct);
+#pragma warning restore CA2012
                 break;
             case 5: // Exit
                 Environment.Exit(0);

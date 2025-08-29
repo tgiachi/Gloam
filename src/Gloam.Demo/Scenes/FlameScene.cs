@@ -35,9 +35,11 @@ public sealed class FlameScene : BaseScene
         {
             var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(600), PushDirection.FromBottom,
                 _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            
+
             // Start transition without blocking - let it run in background
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
             _ = _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+#pragma warning restore CA2012
         }
         
         return ValueTask.CompletedTask;
@@ -257,7 +259,9 @@ internal sealed class FlameUILayer : BaseLayerRenderer
         // Handle input
         if (context.InputDevice.WasPressed(Keys.M) || context.InputDevice.WasPressed(Keys.Escape))
         {
+#pragma warning disable CA2012 // Fire-and-forget async call is intentional for scene transitions
             _ = _scene.ReturnToMenuAsync(ct);
+#pragma warning restore CA2012
         }
     }
 }
