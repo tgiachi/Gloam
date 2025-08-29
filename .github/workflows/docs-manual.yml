@@ -93,24 +93,31 @@ jobs:
         echo "- Main files:"
         ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
 
+    - name: Prepare artifact directory
+      run: |
+        # Create temp directory for artifact
+        mkdir -p temp-artifact
+
+        # Copy all content from _site to temp directory
+        cp -r docs/_site/* temp-artifact/
+
+        # Verify the copy
+        echo "🔍 Deployment Content Check:"
+        echo "- Total files: $(find temp-artifact/ -type f | wc -l)"
+        echo "- HTML files: $(find temp-artifact/ -name "*.html" | wc -l)"
+        echo "- Index exists: $([ -f temp-artifact/index.html ] && echo '✅ YES' || echo '❌ NO')"
+
+        if [ -f "temp-artifact/index.html" ]; then
+          echo "- Index size: $(stat -f%z temp-artifact/index.html) bytes"
+          echo "- First few lines:"
+          head -3 temp-artifact/index.html
+        fi
+
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
       with:
-        path: docs/_site/
+        path: temp-artifact/
         retention-days: 1
-
-    - name: Debug: Verify deployment content
-      run: |
-        echo "🔍 Deployment Content Check:"
-        echo "- Total files: $(find docs/_site/ -type f | wc -l)"
-        echo "- HTML files: $(find docs/_site/ -name "*.html" | wc -l)"
-        echo "- Index exists: $([ -f docs/_site/index.html ] && echo '✅ YES' || echo '❌ NO')"
-
-        if [ -f "docs/_site/index.html" ]; then
-          echo "- Index size: $(stat -f%z docs/_site/index.html) bytes"
-          echo "- First few lines:"
-          head -3 docs/_site/index.html
-        fi
 
     - name: Deploy to GitHub Pages
       id: deployment
