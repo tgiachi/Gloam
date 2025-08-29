@@ -55,17 +55,30 @@ jobs:
 
     - name: Build documentation site
       run: |
+        echo "🔧 Building documentation..."
         cd docs
-        docfx build --output _site
+        if ! docfx build --output _site; then
+          echo "❌ DocFX build failed"
+          exit 1
+        fi
+        echo "✅ DocFX build completed successfully"
 
     - name: Verify documentation build
       run: |
-        cd docs/_site
-        if [ ! -f "index.html" ]; then
-          echo "❌ Error: index.html not found in _site/"
+        if [ ! -d "docs/_site" ]; then
+          echo "❌ Error: docs/_site directory not found"
           exit 1
         fi
-        echo "✅ Found index.html and $(ls *.html | wc -l) HTML files"
+
+        if [ ! -f "docs/_site/index.html" ]; then
+          echo "❌ Error: index.html not found in docs/_site/"
+          ls -la docs/_site/ 2>/dev/null || echo "Directory docs/_site/ does not exist or is empty"
+          exit 1
+        fi
+
+        echo "✅ Found index.html and $(find docs/_site -name "*.html" | wc -l) HTML files"
+        echo "📁 Site structure:"
+        ls -la docs/_site/ | head -10
 
     - name: Add .nojekyll file
       run: touch docs/_site/.nojekyll
@@ -94,8 +107,20 @@ jobs:
         # Create temp directory for artifact
         mkdir -p temp-artifact
 
+        # Check if _site has content before copying
+        if [ ! -d "docs/_site" ] || [ ! "$(ls -A docs/_site)" ]; then
+          echo "❌ Error: docs/_site is empty or does not exist"
+          exit 1
+        fi
+
         # Copy all content from _site to temp directory
-        cp -r docs/_site/* temp-artifact/
+        cp -r docs/_site/* temp-artifact/ 2>/dev/null || true
+
+        # Verify the copy was successful
+        if [ ! "$(ls -A temp-artifact)" ]; then
+          echo "❌ Error: Failed to copy content to temp-artifact"
+          exit 1
+        fi
 
         # Verify the copy
         echo "📁 Artifact structure:"
@@ -107,6 +132,7 @@ jobs:
           head -3 temp-artifact/index.html
         else
           echo "❌ index.html NOT found in artifact"
+          ls -la temp-artifact/
           exit 1
         fi
 
