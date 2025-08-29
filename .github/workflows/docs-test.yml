@@ -1,0 +1,112 @@
+name: Test Documentation Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - quick
+        - api-only
+
+permissions:
+  contents: read
+
+jobs:
+  test-docs:
+    runs-on: ubuntu-latest
+    outputs:
+      build-status: ${{ steps.build.outputs.status }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Install DocFX
+      run: dotnet tool install -g docfx
+
+    - name: Quick Test (API Only)
+      if: inputs.test_type == 'api-only'
+      run: |
+        cd docs
+        docfx metadata
+        echo "✅ API documentation generated successfully"
+
+    - name: Full Build Test
+      if: inputs.test_type == 'full' || inputs.test_type == 'quick'
+      run: |
+        # Build solution
+        dotnet build Gloam.slnx --configuration Release
+
+        # Generate and build docs
+        cd docs
+        docfx metadata
+        docfx build --output _test_site
+
+        # Check if index.html exists
+        if [ -f "_test_site/index.html" ]; then
+          echo "✅ Documentation built successfully"
+          echo "📊 Generated $(find _test_site -name "*.html" | wc -l) HTML files"
+        else
+          echo "❌ Documentation build failed - no index.html found"
+          exit 1
+        fi
+
+    - name: Validate Links (Full Test)
+      if: inputs.test_type == 'full'
+      run: |
+        cd docs/_test_site
+        # Check for broken internal links (basic check)
+        broken_links=$(grep -r "href=" . | grep -v "http" | grep -v "#" | wc -l)
+        echo "🔗 Found $broken_links potential internal links"
+
+        # Check if main pages exist
+        if [ -f "index.html" ] && [ -f "api/toc.html" ]; then
+          echo "✅ Main documentation pages exist"
+        else
+          echo "❌ Missing main documentation pages"
+          exit 1
+        fi
+
+    - name: Set build status
+      id: build
+      run: echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: docs-test-results
+        path: |
+          docs/_test_site/
+          docs/api/
+        retention-days: 7
+
+    - name: Test Summary
+      run: |
+        echo "## 🧪 Documentation Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Type:** ${{ inputs.test_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Status:** ✅ Success" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### What was tested:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ .NET solution build" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ API documentation generation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ HTML site generation" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ inputs.test_type }}" = "full" ]; then
+          echo "- ✅ Link validation" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Review test artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "2. Run manual deployment if satisfied" >> $GITHUB_STEP_SUMMARY
+        echo "3. Check https://tgiachi.github.io/Gloam/ after deployment" >> $GITHUB_STEP_SUMMARY

@@ -66,6 +66,9 @@ jobs:
     - name: Add .nojekyll file
       run: touch docs/_site/.nojekyll
 
+    - name: Create CNAME file for GitHub Pages
+      run: echo "tgiachi.github.io" > docs/_site/CNAME
+
     - name: Setup Pages
       uses: actions/configure-pages@v4
 
