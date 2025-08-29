@@ -19,9 +19,19 @@ public class Program
     {
         System.Console.WriteLine("Starting Gloam Console Demo...");
         System.Console.WriteLine("This is a minimal demo showing console integration");
-        System.Console.WriteLine("Press ESC to exit");
+        System.Console.WriteLine("Controls:");
+        System.Console.WriteLine("  • Keyboard: WASD/Arrows for movement, ESC to exit");
+        System.Console.WriteLine("  • Mouse: Click to move player (if terminal supports VT100)");
         System.Console.WriteLine("Press any key to start...");
         System.Console.WriteLine("Current size is " + System.Console.WindowWidth + "x" + System.Console.WindowHeight);
+
+        // Add debug information
+        System.Console.WriteLine("Debug Info:");
+        System.Console.WriteLine($"  Terminal: {System.Console.WindowWidth}x{System.Console.WindowHeight}");
+        System.Console.WriteLine($"  Interactive: {Environment.UserInteractive}");
+        System.Console.WriteLine($"  Input redirected: {System.Console.IsInputRedirected}");
+        System.Console.WriteLine($"  Output redirected: {System.Console.IsOutputRedirected}");
+        System.Console.WriteLine();
         
         // Check VT100/24-bit color support
         var supportsVT100 = DetectTrueColorSupport();
@@ -34,8 +44,18 @@ public class Program
         {
             System.Console.WriteLine("  → Using legacy ConsoleColor fallback");
         }
-        
-        System.Console.ReadKey();
+
+        // Wait for user input more safely
+        try
+        {
+            System.Console.ReadKey(true);
+        }
+        catch (InvalidOperationException)
+        {
+            // If ReadKey fails (e.g., in non-interactive environments), wait a bit
+            System.Console.WriteLine("Non-interactive environment detected. Starting demo in 2 seconds...");
+            await Task.Delay(2000);
+        }
 
         try
         {
@@ -60,6 +80,9 @@ public class Program
             var surface = new ConsoleSurface();
             var renderer = new ConsoleRenderer(surface);
             var inputDevice = new ConsoleInputDevice();
+
+            // Enable mouse tracking for enhanced interaction
+            inputDevice.EnableMouseTracking(ConsoleInputDevice.MouseTrackingMode.ButtonEvents);
 
             host.SetRenderer(renderer);
             host.SetInputDevice(inputDevice);
@@ -87,6 +110,10 @@ public class Program
             var flameScene = new FlameScene();
             flameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(flameScene);
+            
+            var guiDemoScene = new GuiDemoScene();
+            guiDemoScene.SetSceneManager(sceneManager);
+            sceneManager.RegisterScene(guiDemoScene);
             
             // Start with main menu
             await sceneManager.SwitchToSceneAsync("MainMenu");

@@ -9,7 +9,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../Gloam.Core/Gloam.Core.csproj"/>
+        <ProjectReference Include="../Gloam.Core/Gloam.Core.csproj" />
+        <ProjectReference Include="..\Gloam.Core.Ui\Gloam.Core.Ui.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="dotnet-curses" Version="2.0.0" />
     </ItemGroup>
 
 </Project>

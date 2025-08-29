@@ -122,6 +122,21 @@ public sealed class GameScene : BaseScene
             newPos = new Position(currentPos.X + 1, currentPos.Y); // Move right
         }
 
+        // Check mouse input for position selection
+        var mouseState = inputDevice.Mouse;
+        if (mouseState.Pressed && mouseState.Button == Gloam.Core.Types.MouseButtonType.Left)
+        {
+            // Convert mouse coordinates to world coordinates (accounting for UI offset)
+            var worldX = mouseState.X - 2; // Subtract left margin
+            var worldY = mouseState.Y - 2; // Subtract top margin
+
+            // Check if click is within world bounds
+            if (worldX >= 0 && worldX < screenWidth - 4 && worldY >= 0 && worldY < screenHeight - 4)
+            {
+                newPos = new Position(worldX, worldY);
+            }
+        }
+
         // Apply movement if position changed
         if (newPos != currentPos)
         {

@@ -1,11 +1,12 @@
 <Solution>
     <Folder Name="/src/">
-        <Project Path="src/Gloam.Console.Render/Gloam.Console.Render.csproj"/>
-        <Project Path="src/Gloam.Demo/Gloam.Demo.csproj"/>
-        <Project Path="src\Gloam.Core\Gloam.Core.csproj"/>
-        <Project Path="src\Gloam.Data\Gloam.Data.csproj"/>
-        <Project Path="src\Gloam.Runtime\Gloam.Runtime.csproj"/>
+        <Project Path="src/Gloam.Console.Render/Gloam.Console.Render.csproj" />
+        <Project Path="src/Gloam.Core.Ui/Gloam.Core.Ui.csproj" />
+        <Project Path="src/Gloam.Demo/Gloam.Demo.csproj" />
+        <Project Path="src\Gloam.Core\Gloam.Core.csproj" />
+        <Project Path="src\Gloam.Data\Gloam.Data.csproj" />
+        <Project Path="src\Gloam.Runtime\Gloam.Runtime.csproj" />
     </Folder>
-    <Project Path="tests\Gloam.Tests\Gloam.Tests.csproj"/>
-    <Project Path="tools\Gloam.Cli\Gloam.Cli.csproj"/>
+    <Project Path="tests\Gloam.Tests\Gloam.Tests.csproj" />
+    <Project Path="tools\Gloam.Cli\Gloam.Cli.csproj" />
 </Solution>

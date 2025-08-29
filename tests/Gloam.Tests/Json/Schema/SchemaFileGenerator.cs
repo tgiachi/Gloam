@@ -65,7 +65,7 @@ public class SchemaFileGenerator
         var filePath = Path.Combine(OutputDirectory, fileName);
         await File.WriteAllTextAsync(filePath, schemaJson);
 
-        Console.WriteLine($"Generated schema file: {filePath}");
+        System.Console.WriteLine($"Generated schema file: {filePath}");
     }
 
     [Test]

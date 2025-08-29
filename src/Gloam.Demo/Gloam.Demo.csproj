@@ -10,9 +10,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="../Gloam.Core/Gloam.Core.csproj"/>
-        <ProjectReference Include="../Gloam.Runtime/Gloam.Runtime.csproj"/>
-        <ProjectReference Include="../Gloam.Console.Render/Gloam.Console.Render.csproj"/>
+        <ProjectReference Include="../Gloam.Core/Gloam.Core.csproj" />
+        <ProjectReference Include="../Gloam.Runtime/Gloam.Runtime.csproj" />
+        <ProjectReference Include="../Gloam.Console.Render/Gloam.Console.Render.csproj" />
+        <ProjectReference Include="..\Gloam.Core.Ui\Gloam.Core.Ui.csproj" />
     </ItemGroup>
 
 </Project>

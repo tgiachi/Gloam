@@ -47,7 +47,12 @@ public sealed class MainMenuScene : BaseScene
                     _sceneManager.CurrentScene, _sceneManager.Scenes["Flame"]);
                 await _sceneManager.SwitchToSceneAsync("Flame", pushTransitionFlame, ct);
                 break;
-            case 4: // Exit
+            case 4: // GUI Demo
+                var pushTransitionGui = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromRight, 
+                    _sceneManager.CurrentScene, _sceneManager.Scenes["GuiDemo"]);
+                await _sceneManager.SwitchToSceneAsync("GuiDemo", pushTransitionGui, ct);
+                break;
+            case 5: // Exit
                 Environment.Exit(0);
                 break;
         }
@@ -123,7 +128,8 @@ internal sealed class MenuUILayer : BaseLayerRenderer
             "1. Start Game",
             "2. Settings", 
             "3. Flame Demo",
-            "4. Exit"
+            "4. GUI Demo",
+            "5. Exit"
         };
 
         for (int i = 0; i < menuItems.Length; i++)
@@ -141,7 +147,7 @@ internal sealed class MenuUILayer : BaseLayerRenderer
         }
 
         // Instructions
-        var instructions = "Press ESC to exit, 1-4 to select";
+        var instructions = "Press ESC to exit, 1-5 to select";
         var instrX = centerX - instructions.Length / 2;
         var instrY = context.Screen.Height - 3;
 
@@ -168,6 +174,10 @@ internal sealed class MenuUILayer : BaseLayerRenderer
         else if (context.InputDevice.WasPressed(Keys.D4) || context.InputDevice.WasPressed(Keys.NumPad4))
         {
             await _scene.HandleMenuSelectionAsync(4, ct);
+        }
+        else if (context.InputDevice.WasPressed(Keys.D5) || context.InputDevice.WasPressed(Keys.NumPad5))
+        {
+            await _scene.HandleMenuSelectionAsync(5, ct);
         }
     }
 }
