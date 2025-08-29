@@ -1,6 +1,6 @@
 using Gloam.Console.Render.Input;
 using Gloam.Console.Render.Rendering;
-using Gloam.Console.Render.Surfaces;
+
 using Gloam.Core.Contexts;
 using Gloam.Core.Input;
 using Gloam.Core.Interfaces;
@@ -37,9 +37,26 @@ public sealed class GuiDemoScene : BaseScene
     {
         if (_sceneManager != null)
         {
-            var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromLeft,
-                _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
-            await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+            try
+            {
+                var pushTransition = new PushTransition(TimeSpan.FromMilliseconds(800), PushDirection.FromLeft,
+                    _sceneManager.CurrentScene, _sceneManager.Scenes["MainMenu"]);
+                await _sceneManager.SwitchToSceneAsync("MainMenu", pushTransition, ct);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't let it crash the application
+                System.Console.WriteLine($"Error switching to menu: {ex.Message}");
+                // Fallback: try to switch without transition
+                try
+                {
+                    await _sceneManager.SwitchToSceneAsync("MainMenu", ct: ct);
+                }
+                catch (Exception ex2)
+                {
+                    System.Console.WriteLine($"Fallback menu switch also failed: {ex2.Message}");
+                }
+            }
         }
     }
 
@@ -71,10 +88,10 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
 {
     private readonly GuiDemoScene _scene;
     private GuiLayerRenderer? _guiRenderer;
-    private bool _initialized = false;
-    
+    private bool _initialized;
+
     // Demo data
-    private int _progressValue = 0;
+    private int _progressValue;
     private DateTime _lastProgressUpdate = DateTime.Now;
     private readonly TimeSpan _progressUpdateInterval = TimeSpan.FromMilliseconds(100);
 
@@ -107,30 +124,38 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         // Handle menu return input
         if (context.InputDevice.WasPressed(Keys.Escape))
         {
-            await _scene.ReturnToMenuAsync(ct);
+            // Don't await here to avoid blocking the render loop
+            // The transition will happen asynchronously
+            _ = _scene.ReturnToMenuAsync(ct);
         }
     }
 
     private void InitializeGui(RenderLayerContext context)
     {
+        // GUI initialization temporarily disabled during Terminal.Gui migration
+        // This will be re-implemented with the new Terminal.Gui architecture
+        /*
         // Create console GUI renderer
         var consoleGuiRenderer = new ConsoleGuiRenderer();
-        
+
         // Create the GUI layer renderer
         _guiRenderer = new GuiLayerRenderer(consoleGuiRenderer, priority: 100, name: "GUI Demo Layer");
         _scene.SetGuiLayer(_guiRenderer);
+        */
 
+        // GUI controls temporarily disabled during Terminal.Gui migration
+        /*
         // Create a simple layout with direct controls
-        
+
         // Info text box
         var infoText = new TextBox(new Position(2, 2), new Size(40, 8))
         {
             Text = "Welcome to the Gloam GUI Demo!\n\n" +
-                   "Controls:\n" +
-                   "• TAB - Navigate between controls\n" +
-                   "• Type in the EditBox below\n" +
-                   "• Watch the ProgressBar animate\n" +
-                   "• ESC - Return to menu",
+                    "Controls:\n" +
+                    "• TAB - Navigate between controls\n" +
+                    "• Type in the EditBox below\n" +
+                    "• Watch the ProgressBar animate\n" +
+                    "• ESC - Return to menu",
             Alignment = TextAlignment.Left,
             WordWrap = true,
             Background = Colors.DarkBlue,
@@ -149,8 +174,17 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         };
         _guiRenderer.AddControl(editBox);
 
-        // ProgressBar
-        var progressBar = new ProgressBar(new Position(2, 17), new Size(40, 3))
+        // Window containing the ProgressBar
+        var progressWindow = new WindowControl(new Position(2, 17), new Size(42, 5))
+        {
+            Title = "GUI Controls Demo",
+            Background = Colors.DarkGray,
+            Foreground = Colors.White,
+            BorderColor = Colors.Gray
+        };
+
+        // ProgressBar inside the window
+        var progressBar = new ProgressBar(new Position(1, 1), new Size(40, 3))
         {
             Minimum = 0,
             Maximum = 100,
@@ -160,7 +194,9 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
             ShowText = true,
             Style = ProgressBarStyle.Continuous
         };
-        _guiRenderer.AddControl(progressBar);
+
+        progressWindow.AddChild(progressBar);
+        _guiRenderer.AddControl(progressWindow);
 
         // Container with child controls
         var container = new ContainerControl(new Position(45, 2), new Size(30, 18))
@@ -168,7 +204,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
             Background = Colors.DarkRed,
             Foreground = Colors.Yellow
         };
-        
+
         // Add controls to container
         var containerLabel = new TextBox(new Position(1, 1), new Size(28, 2))
         {
@@ -177,7 +213,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
             Foreground = Colors.Yellow,
             WordWrap = true
         };
-        
+
         var containerProgress = new ProgressBar(new Position(1, 4), new Size(28, 3))
         {
             Value = 75,
@@ -197,11 +233,12 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         container.AddChild(containerLabel);
         container.AddChild(containerProgress);
         container.AddChild(containerEdit);
-        
+
         _guiRenderer.AddControl(container);
 
         // Set initial focus
         _guiRenderer.SetFocus(editBox);
+        */
     }
 
     private void UpdateProgressBarDemo()
@@ -216,7 +253,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
 
         // Find and update the progress bar
         // This is a simplified approach - in a real application you'd maintain references
-        foreach (var control in _guiRenderer.GetType().GetField("_controls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_guiRenderer) as System.Collections.IEnumerable ?? new object[0])
+        foreach (var control in _guiRenderer.GetType().GetField("_controls", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(_guiRenderer) as System.Collections.IEnumerable ?? Array.Empty<object>())
         {
             if (control is WindowControl window && window.Title == "GUI Controls Demo")
             {
@@ -226,7 +263,7 @@ internal sealed class GuiDemoLayer : BaseLayerRenderer
         }
     }
 
-    private void FindAndUpdateProgressBars(IGuiControl control, int value)
+    private static void FindAndUpdateProgressBars(IGuiControl control, int value)
     {
         if (control is ProgressBar progressBar)
         {

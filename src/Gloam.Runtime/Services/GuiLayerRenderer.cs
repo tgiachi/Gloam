@@ -91,11 +91,8 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
         // Handle input first
         HandleInput(context);
 
-        // Set the renderer for the GUI renderer if it supports it
-        if (_guiRenderer is ConsoleGuiRenderer consoleGuiRenderer)
-        {
-            consoleGuiRenderer.SetRenderer(context.Renderer);
-        }
+        // Renderer setup removed - will be re-implemented with new architecture
+        // The new Terminal.Gui implementation handles rendering internally
 
         // Update all controls
         var deltaTime = context.FrameInfo.DeltaTime;
@@ -224,7 +221,7 @@ public class GuiLayerRenderer : BaseLayerRenderer, IGuiLayerRenderer
     /// </summary>
     /// <param name="control">The control to examine</param>
     /// <param name="focusableControls">The list to add focusable controls to</param>
-    private void CollectFocusableControls(IGuiControl control, List<IGuiControl> focusableControls)
+    private static void CollectFocusableControls(IGuiControl control, List<IGuiControl> focusableControls)
     {
         if (!control.IsVisible)
             return;

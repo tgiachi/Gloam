@@ -1,12 +1,11 @@
-using Gloam.Console.Render.Input;
-using Gloam.Console.Render.Layers;
-using Gloam.Console.Render.Rendering;
-using Gloam.Console.Render.Surfaces;
+using Gloam.Console.Render;
 using Gloam.Demo.Scenes;
 using Gloam.Core.Input;
+using Gloam.Core.Interfaces;
 using Gloam.Runtime;
 using Gloam.Runtime.Config;
 using Gloam.Runtime.Types;
+using Terminal.Gui;
 
 namespace Gloam.Demo;
 
@@ -32,7 +31,7 @@ public class Program
         System.Console.WriteLine($"  Input redirected: {System.Console.IsInputRedirected}");
         System.Console.WriteLine($"  Output redirected: {System.Console.IsOutputRedirected}");
         System.Console.WriteLine();
-        
+
         // Check VT100/24-bit color support
         var supportsVT100 = DetectTrueColorSupport();
         System.Console.WriteLine($"VT100/24-bit colors: {(supportsVT100 ? "✓ Supported" : "✗ Not supported")}");
@@ -76,16 +75,11 @@ public class Program
             // Create and configure the host
             await using var host = new GloamHost(hostConfig);
 
-            // Setup console rendering
-            var surface = new ConsoleSurface();
-            var renderer = new ConsoleRenderer(surface);
-            var inputDevice = new ConsoleInputDevice();
+            // Setup unified terminal rendering
+            var terminalRender = new TerminalRender();
 
-            // Enable mouse tracking for enhanced interaction
-            inputDevice.EnableMouseTracking(ConsoleInputDevice.MouseTrackingMode.ButtonEvents);
-
-            host.SetRenderer(renderer);
-            host.SetInputDevice(inputDevice);
+            host.SetRenderer(terminalRender);
+            host.SetInputDevice(terminalRender);
 
 
             // Initialize the host
@@ -93,16 +87,16 @@ public class Program
 
             // Setup scene system
             var sceneManager = host.SceneManager;
-            
-            // Add global layers (always visible)
-            sceneManager.AddGlobalLayer(new StatusLayerRenderer());
-            sceneManager.AddGlobalLayer(new TransitionLayer(sceneManager));
-            
+
+            // Global layers removed - will be re-implemented with Terminal.Gui
+            // sceneManager.AddGlobalLayer(new StatusLayerRenderer());
+            // sceneManager.AddGlobalLayer(new TransitionLayer(sceneManager));
+
             // Register scenes
             var mainMenuScene = new MainMenuScene();
             mainMenuScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(mainMenuScene);
-            
+
             var gameScene = new GameScene();
             gameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(gameScene);
@@ -110,18 +104,18 @@ public class Program
             var flameScene = new FlameScene();
             flameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(flameScene);
-            
+
             var guiDemoScene = new GuiDemoScene();
             guiDemoScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(guiDemoScene);
-            
+
             // Start with main menu
             await sceneManager.SwitchToSceneAsync("MainMenu");
 
             // Configure game loop for demo
             var gameLoopConfig = new GameLoopConfig
             {
-                KeepRunning = () => !ShouldExit(inputDevice),
+                KeepRunning = () => !ShouldExit(terminalRender),
                 RenderStep = TimeSpan.FromMilliseconds(16), // ~60 FPS
                 SleepTime = TimeSpan.FromMilliseconds(10)   // Light CPU usage
             };
@@ -129,7 +123,10 @@ public class Program
             // Start the demo
             System.Console.Clear();
             System.Console.WriteLine("Demo running! Press ESC to exit...");
+
+            Application.Run(terminalRender);
             await host.RunAsync(gameLoopConfig);
+
 
             return 0;
         }
@@ -142,7 +139,23 @@ public class Program
             System.Console.WriteLine($"Stack trace: {ex.StackTrace}");
             System.Console.ResetColor();
             System.Console.WriteLine("Press any key to exit...");
-            System.Console.ReadKey();
+            try
+            {
+                if (!System.Console.IsInputRedirected)
+                {
+                    System.Console.ReadKey();
+                }
+                else
+                {
+                    // If input is redirected, wait a bit before exiting
+                    System.Threading.Tasks.Task.Delay(2000).Wait();
+                }
+            }
+            catch
+            {
+                // If ReadKey fails for any reason, just wait a bit
+                System.Threading.Tasks.Task.Delay(2000).Wait();
+            }
             return 1;
         }
         finally
@@ -158,7 +171,7 @@ public class Program
     /// <summary>
     ///     Checks if the user wants to exit the demo
     /// </summary>
-    private static bool ShouldExit(ConsoleInputDevice inputDevice)
+    private static bool ShouldExit(IInputDevice inputDevice)
     {
         // Check for ESC key press
         return inputDevice.WasPressed(Keys.Escape);
@@ -186,7 +199,7 @@ public class Program
         if (!string.IsNullOrEmpty(term))
         {
             var termLower = term.ToLowerInvariant();
-            return termLower.Contains("256color") || 
+            return termLower.Contains("256color") ||
                    termLower.Contains("truecolor") ||
                    termLower.StartsWith("xterm-") ||
                    termLower.StartsWith("screen-") ||
