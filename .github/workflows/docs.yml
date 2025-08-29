@@ -66,9 +66,6 @@ jobs:
       - name: Verify documentation build
         run: |
 
-      - name: Add .nojekyll file
-        run: touch _site/.nojekyll
-
       - name: Create CNAME file for GitHub Pages
         run: echo "tgiachi.github.io" > _site/CNAME
 
