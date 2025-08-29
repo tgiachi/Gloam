@@ -74,7 +74,7 @@ jobs:
           echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
           echo "- Site size: $(du -sh docs/_site | cut -f1)"
           echo "- Main files:"
-          ls -la _site/ | grep -E '\.(html|css|js)$' | head -5
+          ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -86,7 +86,7 @@ jobs:
 
 
           # Copy all content from _site to temp directory
-          cp -r _site/* temp-artifact/ 2>/dev/null || true
+          cp -Rf docs/_site/* temp-artifact/ 2>/dev/null || true
 
           # Verify the copy was successful
           if [ ! "$(ls -A temp-artifact)" ]; then
@@ -98,7 +98,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: temp-artifact/
-          retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
