@@ -2,10 +2,10 @@ name: Deploy Documentation
 
 on:
   push:
-    branches: [ main ]  # Trigger on main branch pushes
+    branches: [main] # Trigger on main branch pushes
     tags:
-      - 'v*.*.*'  # Trigger on version tags like v1.0.0, v2.1.3, etc.
-  workflow_dispatch:  # Allow manual trigger
+      - "v*.*.*" # Trigger on version tags like v1.0.0, v2.1.3, etc.
+  workflow_dispatch: # Allow manual trigger
 
 permissions:
   contents: read
@@ -24,152 +24,152 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Fetch all history for proper git operations
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for proper git operations
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
 
-    - name: Cache NuGet packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-    - name: Install DocFX
-      run: dotnet tool install -g docfx
+      - name: Install DocFX
+        run: dotnet tool install -g docfx
 
-    - name: Build solution
-      run: dotnet build Gloam.slnx --configuration Release
+      - name: Build solution
+        run: dotnet build Gloam.slnx --configuration Release
 
-    - name: Generate API documentation
-      run: |
-        cd docs
-        docfx metadata
+      - name: Generate API documentation
+        run: |
+          cd docs
+          docfx metadata
 
-    - name: Build documentation site
-      run: |
-        echo "🔧 Building documentation..."
-        cd docs
-        if ! docfx build --output _site; then
-          echo "❌ DocFX build failed"
-          exit 1
-        fi
-        echo "✅ DocFX build completed successfully"
+      - name: Build documentation site
+        run: |
+          echo "🔧 Building documentation..."
+          cd docs
+          if ! docfx build; then
+            echo "❌ DocFX build failed"
+            exit 1
+          fi
+          echo "✅ DocFX build completed successfully"
 
-    - name: Verify documentation build
-      run: |
-        if [ ! -d "docs/_site" ]; then
-          echo "❌ Error: docs/_site directory not found"
-          exit 1
-        fi
+      - name: Verify documentation build
+        run: |
+          if [ ! -d "_site" ]; then
+            echo "❌ Error: docs/_site directory not found"
+            exit 1
+          fi
 
-        if [ ! -f "docs/_site/index.html" ]; then
-          echo "❌ Error: index.html not found in docs/_site/"
-          ls -la docs/_site/ 2>/dev/null || echo "Directory docs/_site/ does not exist or is empty"
-          exit 1
-        fi
+          if [ ! -f "_site/index.html" ]; then
+            echo "❌ Error: index.html not found in docs/_site/"
+            ls -la _site/ 2>/dev/null || echo "Directory docs/_site/ does not exist or is empty"
+            exit 1
+          fi
 
-        echo "✅ Found index.html and $(find docs/_site -name "*.html" | wc -l) HTML files"
-        echo "📁 Site structure:"
-        ls -la docs/_site/ | head -10
+          echo "✅ Found index.html and $(find _site -name "*.html" | wc -l) HTML files"
+          echo "📁 Site structure:"
+          ls -la _site/ | head -10
 
-    - name: Add .nojekyll file
-      run: touch docs/_site/.nojekyll
+      - name: Add .nojekyll file
+        run: touch _site/.nojekyll
 
-    - name: Create CNAME file for GitHub Pages
-      run: echo "tgiachi.github.io" > docs/_site/CNAME
+      - name: Create CNAME file for GitHub Pages
+        run: echo "tgiachi.github.io" > _site/CNAME
 
-    - name: Show deployment summary
-      run: |
-        echo "📊 Deployment Summary:"
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "- Type: Release (${GITHUB_REF#refs/tags/})"
-        else
-          echo "- Type: Development (main branch)"
-        fi
-        echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
-        echo "- Site size: $(du -sh docs/_site | cut -f1)"
-        echo "- Main files:"
-        ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
+      - name: Show deployment summary
+        run: |
+          echo "📊 Deployment Summary:"
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "- Type: Release (${GITHUB_REF#refs/tags/})"
+          else
+            echo "- Type: Development (main branch)"
+          fi
+          echo "- Files to deploy: $(find docs/_site -type f | wc -l)"
+          echo "- Site size: $(du -sh docs/_site | cut -f1)"
+          echo "- Main files:"
+          ls -la docs/_site/ | grep -E '\.(html|css|js)$' | head -5
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-    - name: Prepare artifact directory
-      run: |
-        # Create temp directory for artifact
-        mkdir -p temp-artifact
+      - name: Prepare artifact directory
+        run: |
+          # Create temp directory for artifact
+          mkdir -p temp-artifact
 
-        # Check if _site has content before copying
-        if [ ! -d "docs/_site" ] || [ ! "$(ls -A docs/_site)" ]; then
-          echo "❌ Error: docs/_site is empty or does not exist"
-          exit 1
-        fi
+          # Check if _site has content before copying
+          if [ ! -d "docs/_site" ] || [ ! "$(ls -A docs/_site)" ]; then
+            echo "❌ Error: docs/_site is empty or does not exist"
+            exit 1
+          fi
 
-        # Copy all content from _site to temp directory
-        cp -r docs/_site/* temp-artifact/ 2>/dev/null || true
+          # Copy all content from _site to temp directory
+          cp -r docs/_site/* temp-artifact/ 2>/dev/null || true
 
-        # Verify the copy was successful
-        if [ ! "$(ls -A temp-artifact)" ]; then
-          echo "❌ Error: Failed to copy content to temp-artifact"
-          exit 1
-        fi
+          # Verify the copy was successful
+          if [ ! "$(ls -A temp-artifact)" ]; then
+            echo "❌ Error: Failed to copy content to temp-artifact"
+            exit 1
+          fi
 
-        # Verify the copy
-        echo "📁 Artifact structure:"
-        ls -la temp-artifact/ | head -10
-        echo ""
-        echo "📄 Index file in artifact:"
-        if [ -f "temp-artifact/index.html" ]; then
-          echo "✅ index.html found in artifact"
-          head -3 temp-artifact/index.html
-        else
-          echo "❌ index.html NOT found in artifact"
-          ls -la temp-artifact/
-          exit 1
-        fi
+          # Verify the copy
+          echo "📁 Artifact structure:"
+          ls -la temp-artifact/ | head -10
+          echo ""
+          echo "📄 Index file in artifact:"
+          if [ -f "temp-artifact/index.html" ]; then
+            echo "✅ index.html found in artifact"
+            head -3 temp-artifact/index.html
+          else
+            echo "❌ index.html NOT found in artifact"
+            ls -la temp-artifact/
+            exit 1
+          fi
 
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: temp-artifact/
-        retention-days: 1
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: temp-artifact/
+          retention-days: 1
 
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
-    - name: Create deployment notes
-      run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          DEPLOY_TYPE="📦 Release"
-          TAG_NAME=${GITHUB_REF#refs/tags/}
-          echo "📚 Documentation deployed for release ${TAG_NAME}" >> deployment_notes.md
-          echo "" >> deployment_notes.md
-          echo "🔗 View documentation: ${{ steps.deployment.outputs.page_url }}" >> deployment_notes.md
-          echo "" >> deployment_notes.md
-          echo "Changes in this release:" >> deployment_notes.md
-          git log --oneline --pretty=format="- %s" HEAD~1..HEAD >> deployment_notes.md
-        else
-          DEPLOY_TYPE="🔄 Development"
-          echo "📚 Development documentation updated" >> deployment_notes.md
-          echo "" >> deployment_notes.md
-          echo "🔗 View documentation: ${{ steps.deployment.outputs.page_url }}" >> deployment_notes.md
-          echo "" >> deployment_notes.md
-          echo "Latest commits:" >> deployment_notes.md
-          git log --oneline -5 >> deployment_notes.md
-        fi
+      - name: Create deployment notes
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            DEPLOY_TYPE="📦 Release"
+            TAG_NAME=${GITHUB_REF#refs/tags/}
+            echo "📚 Documentation deployed for release ${TAG_NAME}" >> deployment_notes.md
+            echo "" >> deployment_notes.md
+            echo "🔗 View documentation: ${{ steps.deployment.outputs.page_url }}" >> deployment_notes.md
+            echo "" >> deployment_notes.md
+            echo "Changes in this release:" >> deployment_notes.md
+            git log --oneline --pretty=format="- %s" HEAD~1..HEAD >> deployment_notes.md
+          else
+            DEPLOY_TYPE="🔄 Development"
+            echo "📚 Development documentation updated" >> deployment_notes.md
+            echo "" >> deployment_notes.md
+            echo "🔗 View documentation: ${{ steps.deployment.outputs.page_url }}" >> deployment_notes.md
+            echo "" >> deployment_notes.md
+            echo "Latest commits:" >> deployment_notes.md
+            git log --oneline -5 >> deployment_notes.md
+          fi
 
-    - name: Upload deployment notes
-      uses: actions/upload-artifact@v4
-      with:
-        name: deployment-notes
-        path: deployment_notes.md
-        retention-days: 30
+      - name: Upload deployment notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-notes
+          path: deployment_notes.md
+          retention-days: 30
