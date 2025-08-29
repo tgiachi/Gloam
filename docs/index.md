@@ -40,10 +40,10 @@ await host.RunAsync(() => game.IsRunning, TimeSpan.FromMilliseconds(16), ct);
 
 ### Core Components
 
-- **[Gloam.Core](api/Gloam.Core.html)**: Core functionality including input, rendering interfaces, and utilities
-- **[Gloam.Data](api/Gloam.Data.html)**: Entity management, content loading, and JSON serialization
-- **[Gloam.Runtime](api/Gloam.Runtime.html)**: Game loop, dependency injection, and host services
-- **[Gloam.Cli](api/Gloam.Cli.html)**: Command-line tools for validation and development
+- **Gloam.Core**: Core functionality including input, rendering interfaces, and utilities  
+- **Gloam.Data**: Entity management, content loading, and JSON serialization
+- **Gloam.Runtime**: Game loop, dependency injection, and host services
+- **Gloam.Cli**: Command-line tools for validation and development
 
 ### Game Loop
 

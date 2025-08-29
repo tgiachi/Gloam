@@ -1,14 +1,14 @@
 - name: Home
-  href: index.html
+  href: index.md
 
 - name: Getting Started
-  href: getting-started.html
+  href: getting-started.md
 
 - name: Installation
-  href: installation.html
+  href: installation.md
 
 - name: Your First Game
-  href: first-game.html
+  href: first-game.md
 
 - name: API Reference
-  href: api/toc.html
+  href: api/

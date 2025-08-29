@@ -42,26 +42,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Install DocFX
-        run: dotnet tool install -g docfx
-
-      - name: Build solution
-        run: dotnet build Gloam.slnx --configuration Release
-
-      - name: Generate API documentation
+      - name: Install Task runner
         run: |
-          cd docs
-          docfx metadata
+          sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
-      - name: Build documentation site
-        run: |
-          echo "🔧 Building documentation..."
-          cd docs
-          if ! docfx build; then
-            echo "❌ DocFX build failed"
-            exit 1
-          fi
-          echo "✅ DocFX build completed successfully"
+      - name: Build solution and generate documentation
+        run: task docs-build
 
       - name: Show deployment summary
         run: |
