@@ -329,11 +329,15 @@ public class GloamHost : IGloamHost
                 // End frame cleanup for input
                 _inputDevice?.EndFrame();
 
-                // Sleep to avoid consuming too much CPU
-                var sleepMs = (int)config.SleepTime.TotalMilliseconds;
-                if (sleepMs > 0)
+                // Sleep to avoid consuming too much CPU - but only if we didn't render
+                // This keeps transitions smooth while still saving CPU when idle
+                if (!shouldRender)
                 {
-                    await Task.Delay(sleepMs, ct);
+                    var sleepMs = (int)config.SleepTime.TotalMilliseconds;
+                    if (sleepMs > 0)
+                    {
+                        await Task.Delay(sleepMs, ct);
+                    }
                 }
             }
         }
@@ -393,7 +397,8 @@ public class GloamHost : IGloamHost
 
         // Rendering (if it's time to render)
         var timeSinceLastRender = Stopwatch.GetElapsedTime(_lastRenderTimestamp, now);
-        if ((_isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null)
+        var shouldRender = (_isFirstFrame || timeSinceLastRender >= config.RenderStep) && _renderer != null;
+        if (shouldRender)
         {
             _renderer.BeginDraw();
 
@@ -422,8 +427,8 @@ public class GloamHost : IGloamHost
         // End frame cleanup for input
         _inputDevice?.EndFrame();
 
-        // Handle timing in external mode if requested
-        if (config.HandleTimingInExternalMode && config.SleepTime.TotalMilliseconds > 0)
+        // Handle timing in external mode if requested - but only if we didn't render
+        if (config.HandleTimingInExternalMode && !shouldRender && config.SleepTime.TotalMilliseconds > 0)
         {
             await Task.Delay((int)config.SleepTime.TotalMilliseconds, ct);
         }
