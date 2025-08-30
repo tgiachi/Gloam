@@ -268,7 +268,7 @@ public class GloamHost : IGloamHost
         _layerRenderingManager = Container.Resolve<ILayerRenderingManager>();
         _sceneManager = Container.Resolve<ISceneManager>();
 
-        if (config.LoopMode == Types.LoopMode.Internal)
+        if (config.LoopMode == LoopMode.Internal)
         {
             // Initialize timestamps for internal loop
             _startTimestamp = Stopwatch.GetTimestamp();

@@ -71,7 +71,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            RenderStep = TimeSpan.FromMilliseconds(30),
+            TargetFps = 1000.0 / 30, // ~33.33 FPS
             SleepTime = TimeSpan.FromMilliseconds(10)
         };
 
@@ -514,7 +514,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            RenderStep = TimeSpan.FromMilliseconds(20)
+            TargetFps = 1000.0 / 20 // 50 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -533,7 +533,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            RenderStep = TimeSpan.FromMilliseconds(50)
+            TargetFps = 1000.0 / 50 // 20 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -590,7 +590,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 10,
-            RenderStep = TimeSpan.FromMilliseconds(10)
+            TargetFps = 1000.0 / 10 // 100 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1));
@@ -613,7 +613,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 100,
-            RenderStep = TimeSpan.FromMilliseconds(1),
+            TargetFps = 1000.0 / 1, // 1000 FPS
             SleepTime = TimeSpan.FromMilliseconds(1)
         };
 
@@ -732,7 +732,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            RenderStep = TimeSpan.FromMilliseconds(20)
+            TargetFps = 1000.0 / 20 // 50 FPS
         };
 
         var startTime = DateTime.UtcNow;
@@ -757,7 +757,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            RenderStep = TimeSpan.FromMilliseconds(100)
+            TargetFps = 1000.0 / 100 // 10 FPS
         };
 
         var startTime = DateTime.UtcNow;
@@ -838,7 +838,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 2,
-            RenderStep = TimeSpan.FromMilliseconds(1) // Force render every loop
+            TargetFps = 1000.0 / 1 // 1000 FPS - Force render every loop
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -889,7 +889,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 2,
-            RenderStep = TimeSpan.FromMilliseconds(1) // Force render every loop
+            TargetFps = 1000.0 / 1 // 1000 FPS - Force render every loop
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -914,7 +914,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 2,
-            RenderStep = TimeSpan.FromMilliseconds(1)
+            TargetFps = 1000.0 / 1 // 1000 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
@@ -940,7 +940,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 2,
-            RenderStep = TimeSpan.FromMilliseconds(1)
+            TargetFps = 1000.0 / 1 // 1000 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
@@ -958,7 +958,7 @@ public class GloamHostTests
     #region Render Timing Tests
 
     [Test]
-    public async Task RunAsync_RenderStepTiming_ShouldRespectRenderInterval()
+    public async Task RunAsync_TargetFpsTiming_ShouldRespectRenderInterval()
     {
         _host = new GloamHost(_config);
         var mockRenderer = new Mock<IRenderer>();
@@ -970,7 +970,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 10,
-            RenderStep = TimeSpan.FromMilliseconds(50) // Render less frequently
+            TargetFps = 1000.0 / 50 // 20 FPS // Render less frequently
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
@@ -983,7 +983,7 @@ public class GloamHostTests
     }
 
     [Test]
-    public async Task RunAsync_FastRenderStep_ShouldRenderFrequently()
+    public async Task RunAsync_FastTargetFps_ShouldRenderFrequently()
     {
         _host = new GloamHost(_config);
         var mockRenderer = new Mock<IRenderer>();
@@ -995,7 +995,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            RenderStep = TimeSpan.FromMilliseconds(1) // Render very frequently
+            TargetFps = 1000.0 / 1 // 1000 FPS // Render very frequently
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -1022,7 +1022,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 3,
-            RenderStep = TimeSpan.FromMilliseconds(10)
+            TargetFps = 1000.0 / 10 // 100 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -1045,7 +1045,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            RenderStep = TimeSpan.FromMilliseconds(10)
+            TargetFps = 1000.0 / 10 // 100 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
@@ -1074,7 +1074,7 @@ public class GloamHostTests
         var config = new GameLoopConfig
         {
             KeepRunning = () => ++runCount <= 5,
-            RenderStep = TimeSpan.FromMilliseconds(1)
+            TargetFps = 1000.0 / 1 // 1000 FPS
         };
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));

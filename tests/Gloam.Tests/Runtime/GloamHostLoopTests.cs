@@ -53,7 +53,7 @@ public class GloamHostLoopTests
         {
             KeepRunning = () => loopCount++ < 5, // Run 5 iterations
             LoopMode = LoopMode.Internal,
-            RenderStep = TimeSpan.FromMilliseconds(1), // Fast rendering
+            TargetFps = 1000.0 / 1, // 1000 FPS - Fast rendering
             SleepTime = TimeSpan.Zero // No sleep for testing
         };
 

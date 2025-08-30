@@ -13,9 +13,9 @@ public sealed record GameLoopConfig
     public required Func<bool> KeepRunning { get; init; }
 
     /// <summary>
-    ///     Target frame rate for rendering (default: ~30 FPS)
+    ///     Target frames per second for rendering (default: 60 FPS)
     /// </summary>
-    public TimeSpan RenderStep { get; init; } = TimeSpan.FromMilliseconds(33);
+    public double TargetFps { get; init; } = 60;
 
     /// <summary>
     ///     Sleep time between loop iterations when no rendering is needed (default: 5ms)
@@ -32,4 +32,9 @@ public sealed record GameLoopConfig
     ///     If false, external timing management is expected (default: true)
     /// </summary>
     public bool HandleTimingInExternalMode { get; init; } = true;
+
+    /// <summary>
+    ///     Gets the rendering step interval calculated from TargetFps
+    /// </summary>
+    public TimeSpan RenderStep => TimeSpan.FromMilliseconds(1000.0 / TargetFps);
 }

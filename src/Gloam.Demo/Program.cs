@@ -32,7 +32,7 @@ public class Program
         System.Console.WriteLine($"  Input redirected: {System.Console.IsInputRedirected}");
         System.Console.WriteLine($"  Output redirected: {System.Console.IsOutputRedirected}");
         System.Console.WriteLine();
-        
+
         // Check VT100/24-bit color support
         var supportsVT100 = DetectTrueColorSupport();
         System.Console.WriteLine($"VT100/24-bit colors: {(supportsVT100 ? "✓ Supported" : "✗ Not supported")}");
@@ -90,16 +90,16 @@ public class Program
 
             // Setup scene system
             var sceneManager = host.SceneManager;
-            
+
             // Add global layers (always visible)
             sceneManager.AddGlobalLayer(new StatusLayerRenderer());
             sceneManager.AddGlobalLayer(new TransitionLayer(sceneManager));
-            
+
             // Register scenes
             var mainMenuScene = new MainMenuScene();
             mainMenuScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(mainMenuScene);
-            
+
             var gameScene = new GameScene();
             gameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(gameScene);
@@ -107,11 +107,11 @@ public class Program
             var flameScene = new FlameScene();
             flameScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(flameScene);
-            
+
             var guiDemoScene = new GuiDemoScene();
             guiDemoScene.SetSceneManager(sceneManager);
             sceneManager.RegisterScene(guiDemoScene);
-            
+
             // Start with main menu
             await sceneManager.SwitchToSceneAsync("MainMenu");
 
@@ -119,8 +119,8 @@ public class Program
             var gameLoopConfig = new GameLoopConfig
             {
                 KeepRunning = () => !ShouldExit(inputDevice),
-                RenderStep = TimeSpan.FromMilliseconds(16), // ~60 FPS
-                SleepTime = TimeSpan.FromMilliseconds(10)   // Light CPU usage
+                TargetFps = 20, // 60 FPS
+                SleepTime = TimeSpan.FromMilliseconds(50)   // Light CPU usage
             };
 
             // Start the demo
@@ -183,7 +183,7 @@ public class Program
         if (!string.IsNullOrEmpty(term))
         {
             var termLower = term.ToLowerInvariant();
-            return termLower.Contains("256color") || 
+            return termLower.Contains("256color") ||
                    termLower.Contains("truecolor") ||
                    termLower.StartsWith("xterm-") ||
                    termLower.StartsWith("screen-") ||

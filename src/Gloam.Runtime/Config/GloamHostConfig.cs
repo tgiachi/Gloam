@@ -17,10 +17,6 @@ public class GloamHostConfig
     /// </summary>
     public string AppVersion { get; set; } = "1.0.0";
 
-    /// <summary>
-    ///     Gets or sets the runtime configuration for game loop timing and behavior
-    /// </summary>
-    public RuntimeConfig RuntimeConfig { get; set; } = new();
 
     /// <summary>
     ///     Gets or sets the root directory for content loading
